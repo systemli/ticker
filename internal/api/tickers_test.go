@@ -140,6 +140,41 @@ func TestPutTicker(t *testing.T) {
 	})
 }
 
+func TestDeleteTicker(t *testing.T) {
+	r := setup()
+
+	ticker := model.NewTicker()
+
+	storage.DB.Save(&ticker)
+
+	r.DELETE("/v1/admin/tickers/2").
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 404, r.Code)
+	})
+
+	r.DELETE("/v1/admin/tickers/1").
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+
+		type jsonResp struct {
+			Data   map[string]model.Message `json:"data"`
+			Status string                   `json:"status"`
+			Error  interface{}              `json:"error"`
+		}
+
+		var jres jsonResp
+
+		err := json.Unmarshal(r.Body.Bytes(), &jres)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, jres.Status)
+		assert.Nil(t, jres.Data)
+		assert.Nil(t, jres.Error)
+	})
+}
+
 func setup() *gofight.RequestConfig {
 	gin.SetMode(gin.TestMode)
 
