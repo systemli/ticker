@@ -1,0 +1,135 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"path": "get",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "w5ducoAAam0RMZdhrdVPFzH249w=",
+			"path": "github.com/appleboy/gofight",
+			"revision": "75baa5975d3cbc68045c40d5a7f94d69c5c226a6",
+			"revisionTime": "2017-09-28T14:09:20Z"
+		},
+		{
+			"checksumSHA1": "OZn1WNNdCPu8bOy8BvXcBmCD3Ho=",
+			"path": "github.com/asdine/storm",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "KXHP3AdJVnDxab4J2mDknFi8SPQ=",
+			"path": "github.com/asdine/storm/codec",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "8B9a1JXYnmmzo353mN/z9MgKa2M=",
+			"path": "github.com/asdine/storm/codec/json",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "UohCA0ZSk6DO4wYTORS0NE58j1w=",
+			"path": "github.com/asdine/storm/index",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "9EciDShF1A0nvE8x6FRw5Re9kzo=",
+			"path": "github.com/asdine/storm/internal",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "xMrnqVXOk2L7vjtsMYfE73n+tKM=",
+			"path": "github.com/asdine/storm/q",
+			"revision": "dbd37722730b6cb703b5bd825c3f142d87358525",
+			"revisionTime": "2017-12-03T12:32:31Z"
+		},
+		{
+			"checksumSHA1": "15ji1OWdG/OwU8mv+h/+gux6VuU=",
+			"path": "github.com/coreos/bbolt",
+			"revision": "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d",
+			"revisionTime": "2017-12-07T01:27:08Z"
+		},
+		{
+			"checksumSHA1": "QeKwBtN2df+j+4stw3bQJ6yO4EY=",
+			"path": "github.com/gin-contrib/sse",
+			"revision": "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae",
+			"revisionTime": "2017-01-09T09:34:21Z"
+		},
+		{
+			"checksumSHA1": "cpELhz30Sco7IBwvI6FyuShnjnQ=",
+			"path": "github.com/gin-gonic/gin",
+			"revision": "d459835d2b077e44f7c9b453505ee29881d5d12d",
+			"revisionTime": "2017-07-02T09:28:26Z",
+			"version": "v1.2",
+			"versionExact": "v1.2"
+		},
+		{
+			"checksumSHA1": "YVt5lqmGq95m5tFdiz5pr2BF1Jo=",
+			"path": "github.com/gin-gonic/gin/binding",
+			"revision": "d459835d2b077e44f7c9b453505ee29881d5d12d",
+			"revisionTime": "2017-07-02T09:28:26Z",
+			"version": "v1.2",
+			"versionExact": "v1.2"
+		},
+		{
+			"checksumSHA1": "M3FwiqpVbXwo9t2FyI5/gKxCDKY=",
+			"path": "github.com/gin-gonic/gin/render",
+			"revision": "d459835d2b077e44f7c9b453505ee29881d5d12d",
+			"revisionTime": "2017-07-02T09:28:26Z",
+			"version": "v1.2",
+			"versionExact": "v1.2"
+		},
+		{
+			"checksumSHA1": "yqF125xVSkmfLpIVGrLlfE05IUk=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "1e59b77b52bf8e4b449a57e6f79f21226d571845",
+			"revisionTime": "2017-11-13T18:07:20Z"
+		},
+		{
+			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
+			"revisionTime": "2017-11-07T05:05:31Z"
+		},
+		{
+			"checksumSHA1": "9XoGmW4qFUnEekGyyTGSzhmB2PI=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "e4ec8152c15fc46bd5056ce65997a07c7d415325",
+			"revisionTime": "2015-02-18T22:18:46Z"
+		},
+		{
+			"checksumSHA1": "hI/72MODM59PadKtFvBr7Np9Amw=",
+			"path": "github.com/ugorji/go/codec",
+			"revision": "f0aa215a7d653544d39d0e27dfa10fa4b183f397",
+			"revisionTime": "2017-12-03T09:13:13Z"
+		},
+		{
+			"path": "go",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "gcAbdDsQhr/7HRKu9oiRwDgn6bc=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "b8f5ef32195cae6470b728e8ca677f0dbed1a004",
+			"revisionTime": "2017-12-08T14:03:20Z"
+		},
+		{
+			"checksumSHA1": "P/k5ZGf0lEBgpKgkwy++F7K1PSg=",
+			"path": "gopkg.in/go-playground/validator.v8",
+			"revision": "5f1438d3fca68893a817e4a66806cea46a9e4ebf",
+			"revisionTime": "2017-07-30T05:02:35Z"
+		},
+		{
+			"checksumSHA1": "fRgp9UZPllOlkPssv7frzQx4z9A=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "287cf08546ab5e7e37d55a84f7ed3fd1db036de5",
+			"revisionTime": "2017-11-16T09:02:43Z"
+		}
+	],
+	"rootPath": "git.codecoop.org/systemli/ticker"
+}
