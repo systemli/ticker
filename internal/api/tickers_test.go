@@ -147,6 +147,7 @@ func setup() *gofight.RequestConfig {
 		storage.DB = storage.OpenDB("ticker_test.db")
 	}
 	storage.DB.Drop("Ticker")
+	storage.DB.Drop("Message")
 
 	return gofight.New()
 }

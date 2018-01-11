@@ -17,25 +17,12 @@ func API() *gin.Engine {
 		v1.DELETE(`/admin/tickers/:id`, DeleteTicker)
 
 		// Endpoints for messages
-		v1.GET(`/admin/messages`, func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "to be implemented"})
-		})
-
-		v1.GET(`/admin/messages/:id`, func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "to be implemented"})
-		})
-
-		v1.POST(`/admin/messages`, func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "to be implemented"})
-		})
-
-		v1.PUT(`/admin/messages/:id`, func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "to be implemented"})
-		})
-
-		v1.DELETE(`/admin/messages/:id`, func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "to be implemented"})
-		})
+		//TODO: Authentication
+		v1.GET(`/admin/messages`, GetMessages)
+		v1.GET(`/admin/messages/:id`, GetMessage)
+		v1.POST(`/admin/messages`, PostMessage)
+		v1.PUT(`/admin/messages/:id`, PutMessage)
+		v1.DELETE(`/admin/messages/:id`, DeleteMessage)
 	}
 
 	return r
