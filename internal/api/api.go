@@ -1,10 +1,14 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
+)
 
 //Returns the Gin Engine
 func API() *gin.Engine {
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	v1 := r.Group("/v1").Use()
 	{
