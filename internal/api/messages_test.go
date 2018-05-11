@@ -10,6 +10,7 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/api"
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"git.codecoop.org/systemli/ticker/internal/storage"
+	"strings"
 )
 
 func TestGetMessages(t *testing.T) {
@@ -17,8 +18,8 @@ func TestGetMessages(t *testing.T) {
 
 	r.GET("/v1/admin/messages").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 200)
-		assert.Equal(t, r.Body.String(), `{"data":{"messages":[]},"status":"success","error":null}`)
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"messages":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -27,8 +28,8 @@ func TestGetMessage(t *testing.T) {
 
 	r.GET("/v1/admin/messages/1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 404)
-		assert.Equal(t, r.Body.String(), `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`)
+		assert.Equal(t, 404, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -43,7 +44,7 @@ func TestPostMessage(t *testing.T) {
 	r.POST("/v1/admin/messages").
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 200)
+		assert.Equal(t, 200, r.Code)
 
 		type jsonResp struct {
 			Data   map[string]model.Message `json:"data"`

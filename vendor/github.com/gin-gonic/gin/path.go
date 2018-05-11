@@ -1,7 +1,7 @@
 // Copyright 2013 Julien Schmidt. All rights reserved.
 // Based on the path package, Copyright 2009 The Go Authors.
 // Use of this source code is governed by a BSD-style license that can be found
-// at https://github.com/julienschmidt/httprouter/blob/master/LICENSE.
+// in the LICENSE file.
 
 package gin
 

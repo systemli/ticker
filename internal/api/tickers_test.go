@@ -11,6 +11,7 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/api"
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"git.codecoop.org/systemli/ticker/internal/storage"
+	"strings"
 )
 
 func TestGetTickers(t *testing.T) {
@@ -18,8 +19,8 @@ func TestGetTickers(t *testing.T) {
 
 	r.GET("/v1/admin/tickers").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 200)
-		assert.Equal(t, r.Body.String(), `{"data":{"tickers":[]},"status":"success","error":null}`)
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"tickers":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -28,8 +29,8 @@ func TestGetTicker(t *testing.T) {
 
 	r.GET("/v1/admin/tickers/1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 404)
-		assert.Equal(t, r.Body.String(), `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`)
+		assert.Equal(t, 404, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -50,7 +51,7 @@ func TestPostTicker(t *testing.T) {
 	r.POST("/v1/admin/tickers").
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 200)
+		assert.Equal(t, 200, r.Code)
 
 		type jsonResp struct {
 			Data   map[string]model.Ticker `json:"data"`
@@ -90,7 +91,7 @@ func TestPutTicker(t *testing.T) {
 		"title": "Ticker",
 		"domain": "prozessticker.org",
 		"description": "Beschreibung",
-		"active": true,
+		"active": false,
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org"
@@ -100,19 +101,19 @@ func TestPutTicker(t *testing.T) {
 	r.PUT("/v1/admin/tickers/100").
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 404)
+		assert.Equal(t, 404, r.Code)
 	})
 
 	r.PUT("/v1/admin/tickers/1").
 		SetBody(`malicious data`).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 400)
+		assert.Equal(t, 400, r.Code)
 	})
 
 	r.PUT("/v1/admin/tickers/1").
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, r.Code, 200)
+		assert.Equal(t, 200, r.Code)
 
 		type jsonResp struct {
 			Data   map[string]model.Ticker `json:"data"`
@@ -136,7 +137,7 @@ func TestPutTicker(t *testing.T) {
 		assert.Equal(t, 1, ticker.ID)
 		assert.Equal(t, "Ticker", ticker.Title)
 		assert.Equal(t, "prozessticker.org", ticker.Domain)
-		assert.Equal(t, true, ticker.Active)
+		assert.Equal(t, false, ticker.Active)
 	})
 }
 

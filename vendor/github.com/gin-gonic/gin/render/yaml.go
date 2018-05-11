@@ -17,7 +17,7 @@ type YAML struct {
 var yamlContentType = []string{"application/x-yaml; charset=utf-8"}
 
 func (r YAML) Render(w http.ResponseWriter) error {
-	r.WriteContentType(w)
+	writeContentType(w, yamlContentType)
 
 	bytes, err := yaml.Marshal(r.Data)
 	if err != nil {
@@ -26,8 +26,4 @@ func (r YAML) Render(w http.ResponseWriter) error {
 
 	w.Write(bytes)
 	return nil
-}
-
-func (r YAML) WriteContentType(w http.ResponseWriter) {
-	writeContentType(w, yamlContentType)
 }

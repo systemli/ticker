@@ -307,6 +307,13 @@ q.Re("Name", "^D")
 
 // In the given slice of values
 q.In("Group", []string{"Staff", "Admin"})
+
+// Comparing fields
+q.EqF("FieldName", "SecondFieldName")
+q.LtF("FieldName", "SecondFieldName")
+q.GtF("FieldName", "SecondFieldName")
+q.LteF("FieldName", "SecondFieldName")
+q.GteF("FieldName", "SecondFieldName")
 ```
 
 Matchers can also be combined with `And`, `Or` and `Not`:
@@ -597,6 +604,8 @@ Deleting data :
 db.Delete("sessions", someObjectId)
 db.Delete("weird storage", "754-3010")
 ```
+
+You can find other useful methods in the [documentation](https://godoc.org/github.com/asdine/storm#KeyValueStore).
 
 ## BoltDB
 

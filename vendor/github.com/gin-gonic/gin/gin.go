@@ -15,11 +15,10 @@ import (
 )
 
 // Version is Framework's version
-const Version = "v1.2"
+const Version = "v1.0rc2"
 
 var default404Body = []byte("404 page not found")
 var default405Body = []byte("405 method not allowed")
-var defaultAppEngine bool
 
 type HandlerFunc func(*Context)
 type HandlersChain []HandlerFunc
@@ -45,9 +44,7 @@ type (
 	// Create an instance of Engine, by using New() or Default()
 	Engine struct {
 		RouterGroup
-		delims      render.Delims
 		HTMLRender  render.HTMLRender
-		FuncMap     template.FuncMap
 		allNoRoute  HandlersChain
 		allNoMethod HandlersChain
 		noRoute     HandlersChain
@@ -81,17 +78,6 @@ type (
 		// handler.
 		HandleMethodNotAllowed bool
 		ForwardedByClientIP    bool
-
-		// #726 #755 If enabled, it will thrust some headers starting with
-		// 'X-AppEngine...' for better integration with that PaaS.
-		AppEngine bool
-
-		// If enabled, the url.RawPath will be used to find parameters.
-		UseRawPath bool
-		// If true, the path value will be unescaped.
-		// If UseRawPath is false (by default), the UnescapePathValues effectively is true,
-		// as url.Path gonna be used, which is already unescaped.
-		UnescapePathValues bool
 	}
 )
 
@@ -103,8 +89,6 @@ var _ IRouter = &Engine{}
 // - RedirectFixedPath:      false
 // - HandleMethodNotAllowed: false
 // - ForwardedByClientIP:    true
-// - UseRawPath:             false
-// - UnescapePathValues:     true
 func New() *Engine {
 	debugPrintWARNINGNew()
 	engine := &Engine{
@@ -113,16 +97,11 @@ func New() *Engine {
 			basePath: "/",
 			root:     true,
 		},
-		FuncMap:                template.FuncMap{},
 		RedirectTrailingSlash:  true,
 		RedirectFixedPath:      false,
 		HandleMethodNotAllowed: false,
 		ForwardedByClientIP:    true,
-		AppEngine:              defaultAppEngine,
-		UseRawPath:             false,
-		UnescapePathValues:     true,
 		trees:                  make(methodTrees, 0, 9),
-		delims:                 render.Delims{"{{", "}}"},
 	}
 	engine.RouterGroup.engine = engine
 	engine.pool.New = func() interface{} {
@@ -142,26 +121,21 @@ func (engine *Engine) allocateContext() *Context {
 	return &Context{engine: engine}
 }
 
-func (engine *Engine) Delims(left, right string) *Engine {
-	engine.delims = render.Delims{left, right}
-	return engine
-}
-
 func (engine *Engine) LoadHTMLGlob(pattern string) {
 	if IsDebugging() {
-		debugPrintLoadTemplate(template.Must(template.New("").Delims(engine.delims.Left, engine.delims.Right).Funcs(engine.FuncMap).ParseGlob(pattern)))
-		engine.HTMLRender = render.HTMLDebug{Glob: pattern, FuncMap: engine.FuncMap, Delims: engine.delims}
+		debugPrintLoadTemplate(template.Must(template.ParseGlob(pattern)))
+		engine.HTMLRender = render.HTMLDebug{Glob: pattern}
 	} else {
-		templ := template.Must(template.New("").Delims(engine.delims.Left, engine.delims.Right).Funcs(engine.FuncMap).ParseGlob(pattern))
+		templ := template.Must(template.ParseGlob(pattern))
 		engine.SetHTMLTemplate(templ)
 	}
 }
 
 func (engine *Engine) LoadHTMLFiles(files ...string) {
 	if IsDebugging() {
-		engine.HTMLRender = render.HTMLDebug{Files: files, FuncMap: engine.FuncMap, Delims: engine.delims}
+		engine.HTMLRender = render.HTMLDebug{Files: files}
 	} else {
-		templ := template.Must(template.New("").Delims(engine.delims.Left, engine.delims.Right).Funcs(engine.FuncMap).ParseFiles(files...))
+		templ := template.Must(template.ParseFiles(files...))
 		engine.SetHTMLTemplate(templ)
 	}
 }
@@ -170,12 +144,7 @@ func (engine *Engine) SetHTMLTemplate(templ *template.Template) {
 	if len(engine.trees) > 0 {
 		debugPrintWARNINGSetHTMLTemplate()
 	}
-
-	engine.HTMLRender = render.HTMLProduction{Template: templ.Funcs(engine.FuncMap)}
-}
-
-func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
-	engine.FuncMap = funcMap
+	engine.HTMLRender = render.HTMLProduction{Template: templ}
 }
 
 // NoRoute adds handlers for NoRoute. It return a 404 code by default.
@@ -298,26 +267,9 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	engine.pool.Put(c)
 }
 
-// Re-enter a context that has been rewritten.
-// This can be done by setting c.Request.Path to your new target.
-// Disclaimer: You can loop yourself to death with this, use wisely.
-func (engine *Engine) HandleContext(c *Context) {
-	c.reset()
-	engine.handleHTTPRequest(c)
-	engine.pool.Put(c)
-}
-
 func (engine *Engine) handleHTTPRequest(context *Context) {
 	httpMethod := context.Request.Method
-	var path string
-	var unescape bool
-	if engine.UseRawPath && len(context.Request.URL.RawPath) > 0 {
-		path = context.Request.URL.RawPath
-		unescape = engine.UnescapePathValues
-	} else {
-		path = context.Request.URL.Path
-		unescape = false
-	}
+	path := context.Request.URL.Path
 
 	// Find root of the tree for the given HTTP method
 	t := engine.trees
@@ -325,15 +277,15 @@ func (engine *Engine) handleHTTPRequest(context *Context) {
 		if t[i].method == httpMethod {
 			root := t[i].root
 			// Find route in tree
-			handlers, params, tsr := root.getValue(path, context.Params, unescape)
+			handlers, params, tsr := root.getValue(path, context.Params)
 			if handlers != nil {
 				context.handlers = handlers
 				context.Params = params
 				context.Next()
 				context.writermem.WriteHeaderNow()
 				return
-			}
-			if httpMethod != "CONNECT" && path != "/" {
+
+			} else if httpMethod != "CONNECT" && path != "/" {
 				if tsr && engine.RedirectTrailingSlash {
 					redirectTrailingSlash(context)
 					return
@@ -350,7 +302,7 @@ func (engine *Engine) handleHTTPRequest(context *Context) {
 	if engine.HandleMethodNotAllowed {
 		for _, tree := range engine.trees {
 			if tree.method != httpMethod {
-				if handlers, _, _ := tree.root.getValue(path, nil, unescape); handlers != nil {
+				if handlers, _, _ := tree.root.getValue(path, nil); handlers != nil {
 					context.handlers = engine.allNoMethod
 					serveError(context, 405, default405Body)
 					return
