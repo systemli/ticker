@@ -82,7 +82,7 @@ func PutTicker(c *gin.Context) {
 		return
 	}
 
-	err = DB.Update(&ticker)
+	err = DB.Save(&ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
