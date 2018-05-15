@@ -8,7 +8,12 @@ import (
 //Returns the Gin Engine
 func API() *gin.Engine {
 	r := gin.Default()
-	r.Use(cors.Default())
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowMethods = []string{`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`}
+
+	r.Use(cors.New(config))
 
 	v1 := r.Group("/v1").Use()
 	{
