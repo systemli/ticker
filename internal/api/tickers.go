@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/asdine/storm"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
@@ -15,8 +16,8 @@ import (
 func GetTickers(c *gin.Context) {
 	var tickers []Ticker
 
-	//TODO: Pagination
-	err := DB.All(&tickers)
+	//TODO: Discuss need of Pagination
+	err := DB.AllByIndex("CreationDate", &tickers, storm.Reverse())
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
