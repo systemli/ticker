@@ -61,12 +61,6 @@
 			"revisionTime": "2018-02-25T15:46:31Z"
 		},
 		{
-			"checksumSHA1": "QeKwBtN2df+j+4stw3bQJ6yO4EY=",
-			"path": "github.com/gin-contrib/sse",
-			"revision": "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae",
-			"revisionTime": "2017-01-09T09:34:21Z"
-		},
-		{
 			"checksumSHA1": "bvHZOqZm2Gl0XkMh4oOB8iZ7geQ=",
 			"path": "github.com/gin-gonic/gin",
 			"revision": "d5b353c5d5a560322e6d96121c814115562501f7",
@@ -97,6 +91,12 @@
 			"revisionTime": "2017-06-01T23:02:30Z"
 		},
 		{
+			"checksumSHA1": "b0T0Hzd+zYk+OCDTFMps+jwa/nY=",
+			"path": "github.com/manucorporat/sse",
+			"revision": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d",
+			"revisionTime": "2016-01-26T18:01:36Z"
+		},
+		{
 			"checksumSHA1": "U6lX43KDDlNOn+Z0Yyww+ZzHfFo=",
 			"path": "github.com/mattn/go-isatty",
 			"revision": "fc9e8d8ef48496124e79ae0df75490096eccf6fe",
@@ -109,14 +109,14 @@
 			"revisionTime": "2015-02-18T22:18:46Z"
 		},
 		{
-			"checksumSHA1": "hI/72MODM59PadKtFvBr7Np9Amw=",
-			"path": "github.com/ugorji/go/codec",
-			"revision": "f0aa215a7d653544d39d0e27dfa10fa4b183f397",
-			"revisionTime": "2017-12-03T09:13:13Z"
-		},
-		{
 			"path": "go",
 			"revision": ""
+		},
+		{
+			"checksumSHA1": "5ARrN3Zq+E9zazFb/N+b08Serys=",
+			"path": "golang.org/x/net/context",
+			"revision": "415f1917e1dbc946ec834288a8a1e5ff6eee2900",
+			"revisionTime": "2015-12-16T20:28:38Z"
 		},
 		{
 			"checksumSHA1": "e6tx+mrbPNlzXbr1VErnBPY+vmQ=",

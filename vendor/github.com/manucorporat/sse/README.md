@@ -1,19 +1,15 @@
-# Server-Sent Events
-
-[![GoDoc](https://godoc.org/github.com/gin-contrib/sse?status.svg)](https://godoc.org/github.com/gin-contrib/sse)
-[![Build Status](https://travis-ci.org/gin-contrib/sse.svg)](https://travis-ci.org/gin-contrib/sse)
-[![codecov](https://codecov.io/gh/gin-contrib/sse/branch/master/graph/badge.svg)](https://codecov.io/gh/gin-contrib/sse)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gin-contrib/sse)](https://goreportcard.com/report/github.com/gin-contrib/sse)
+#Server-Sent Events [![GoDoc](https://godoc.org/github.com/manucorporat/sse?status.svg)](https://godoc.org/github.com/manucorporat/sse) [![Build Status](https://travis-ci.org/manucorporat/sse.svg)](https://travis-ci.org/manucorporat/sse)
 
 Server-sent events (SSE) is a technology where a browser receives automatic updates from a server via HTTP connection. The Server-Sent Events EventSource API is [standardized as part of HTML5[1] by the W3C](http://www.w3.org/TR/2009/WD-eventsource-20091029/).
 
+- [Real world demostration using Gin](http://sse.getgin.io/)
 - [Read this great SSE introduction by the HTML5Rocks guys](http://www.html5rocks.com/en/tutorials/eventsource/basics/)
 - [Browser support](http://caniuse.com/#feat=eventsource)
 
-## Sample code
+##Sample code
 
 ```go
-import "github.com/gin-contrib/sse"
+import "github.com/manucorporat/sse"
 
 func httpHandler(w http.ResponseWriter, req *http.Request) {
 	// data can be a primitive like a string, an integer or a float
@@ -44,7 +40,7 @@ data: {"content":"hi!","date":1431540810,"user":"manu"}
  
 ```
 
-## Content-Type
+##Content-Type
 
 ```go
 fmt.Println(sse.ContentType)
@@ -53,6 +49,6 @@ fmt.Println(sse.ContentType)
 text/event-stream
 ```
 
-## Decoding support
+##Decoding support
 
 There is a client-side implementation of SSE coming soon.

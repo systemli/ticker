@@ -87,17 +87,13 @@ func writeData(w stringWriter, data interface{}) error {
 }
 
 func (r Event) Render(w http.ResponseWriter) error {
-	r.WriteContentType(w)
-	return Encode(w, r)
-}
-
-func (r Event) WriteContentType(w http.ResponseWriter) {
 	header := w.Header()
 	header["Content-Type"] = contentType
 
 	if _, exist := header["Cache-Control"]; !exist {
 		header["Cache-Control"] = noCache
 	}
+	return Encode(w, r)
 }
 
 func kindOfData(data interface{}) reflect.Kind {
