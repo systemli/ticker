@@ -16,7 +16,7 @@ import (
 func TestGetMessages(t *testing.T) {
 	r := setup()
 
-	r.GET("/v1/admin/messages").
+	r.GET("/v1/admin/messages?ticker=1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 		assert.Equal(t, `{"data":{"messages":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
