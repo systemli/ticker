@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
@@ -108,15 +109,12 @@ func DeleteTicker(c *gin.Context) {
 
 	err = DB.One("ID", id, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
 		return
 	}
 
-	err = DB.DeleteStruct(&ticker)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
-		return
-	}
+	DB.Select(q.Eq("Ticker", id)).Delete(new(Message))
+	DB.Select(q.Eq("ID", id)).Delete(new(Ticker))
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":   nil,
