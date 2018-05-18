@@ -16,7 +16,12 @@ import (
 func TestGetMessages(t *testing.T) {
 	r := setup()
 
-	r.GET("/v1/admin/messages?ticker=1").
+	ticker := new(model.Ticker)
+	ticker.ID = 1
+
+	storage.DB.Save(ticker)
+
+	r.GET("/v1/admin/tickers/1/messages").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 		assert.Equal(t, `{"data":{"messages":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
@@ -26,7 +31,12 @@ func TestGetMessages(t *testing.T) {
 func TestGetMessage(t *testing.T) {
 	r := setup()
 
-	r.GET("/v1/admin/messages/1").
+	ticker := new(model.Ticker)
+	ticker.ID = 1
+
+	storage.DB.Save(ticker)
+
+	r.GET("/v1/admin/tickers/1/messages/1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
@@ -36,12 +46,16 @@ func TestGetMessage(t *testing.T) {
 func TestPostMessage(t *testing.T) {
 	r := setup()
 
+	ticker := new(model.Ticker)
+	ticker.ID = 1
+
+	storage.DB.Save(ticker)
+
 	body := `{
-		"text": "message",
-		"ticker": 1
+		"text": "message"
 	}`
 
-	r.POST("/v1/admin/messages").
+	r.POST("/v1/admin/tickers/1/messages").
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -70,70 +84,26 @@ func TestPostMessage(t *testing.T) {
 	})
 }
 
-func TestPutMessage(t *testing.T) {
-	r := setup()
-
-	message := model.NewMessage()
-	message.Text = "Text"
-	message.Ticker = 1
-
-	storage.DB.Save(&message)
-
-	body := `{
-		"text": "New Text",
-		"ticker": 1
-	}`
-
-	r.PUT("/v1/admin/messages/100").
-		SetBody(body).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, 404, r.Code)
-	})
-
-	r.PUT("/v1/admin/messages/1").
-		SetBody(body).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, 200, r.Code)
-
-		type jsonResp struct {
-			Data   map[string]model.Message `json:"data"`
-			Status string                   `json:"status"`
-			Error  interface{}              `json:"error"`
-		}
-
-		var jres jsonResp
-
-		err := json.Unmarshal(r.Body.Bytes(), &jres)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		assert.Equal(t, model.ResponseSuccess, jres.Status)
-		assert.Equal(t, nil, jres.Error)
-		assert.Equal(t, 1, len(jres.Data))
-
-		message := jres.Data["message"]
-
-		assert.Equal(t, 1, message.ID)
-		assert.Equal(t, "New Text", message.Text)
-	})
-}
-
 func TestDeleteMessage(t *testing.T) {
 	r := setup()
 
+	ticker := new(model.Ticker)
+	ticker.ID = 1
+
+	storage.DB.Save(ticker)
+
 	message := model.NewMessage()
 	message.Text = "Text"
 	message.Ticker = 1
 
 	storage.DB.Save(&message)
 
-	r.DELETE("/v1/admin/messages/2").
+	r.DELETE("/v1/admin/tickers/1/messages/2").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
-	r.DELETE("/v1/admin/messages/1").
+	r.DELETE("/v1/admin/tickers/1/messages/1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 

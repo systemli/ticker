@@ -20,18 +20,15 @@ func API() *gin.Engine {
 		// Endpoints for tickers
 		//TODO: Authentication
 		v1.GET(`/admin/tickers`, GetTickers)
-		v1.GET(`/admin/tickers/:id`, GetTicker)
+		v1.GET(`/admin/tickers/:tickerID`, GetTicker)
 		v1.POST(`/admin/tickers`, PostTicker)
-		v1.PUT(`/admin/tickers/:id`, PutTicker)
-		v1.DELETE(`/admin/tickers/:id`, DeleteTicker)
+		v1.PUT(`/admin/tickers/:tickerID`, PutTicker)
+		v1.DELETE(`/admin/tickers/:tickerID`, DeleteTicker)
 
-		// Endpoints for messages
-		//TODO: Authentication
-		v1.GET(`/admin/messages`, GetMessages)
-		v1.GET(`/admin/messages/:id`, GetMessage)
-		v1.POST(`/admin/messages`, PostMessage)
-		v1.PUT(`/admin/messages/:id`, PutMessage)
-		v1.DELETE(`/admin/messages/:id`, DeleteMessage)
+		v1.GET(`/admin/tickers/:tickerID/messages`, GetMessages)
+		v1.GET(`/admin/tickers/:tickerID/messages/:messageID`, GetMessage)
+		v1.POST(`/admin/tickers/:tickerID/messages`, PostMessage)
+		v1.DELETE(`/admin/tickers/:tickerID/messages/:messageID`, DeleteMessage)
 	}
 
 	return r

@@ -7,7 +7,7 @@ type Message struct {
 	ID           int       `json:"id" storm:"id,increment"`
 	CreationDate time.Time `json:"creation_date" storm:"index"`
 	Text         string    `json:"text" binding:"required"`
-	Ticker       int       `json:"ticker" binding:"required" storm:"index"`
+	Ticker       int       `json:"ticker" storm:"index"`
 	//TODO: Geolocation, Tweet/Facebook-ID
 }
 
