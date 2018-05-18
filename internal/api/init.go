@@ -21,7 +21,7 @@ func GetInit(c *gin.Context) {
 		RefreshInterval: 10,
 	}
 
-	err = DB.One("Domain", domain, &ticker)
+	ticker, err := FindTicker(domain)
 	if err != nil {
 		c.JSON(http.StatusOK, JSONResponse{
 			Data:   map[string]interface{}{"ticker": nil, "settings": settings},
