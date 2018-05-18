@@ -18,13 +18,8 @@ func GetTickers(c *gin.Context) {
 	var tickers []Ticker
 
 	//TODO: Discuss need of Pagination
-	err := DB.AllByIndex("CreationDate", &tickers, storm.Reverse())
+	err := DB.All(&tickers, storm.Reverse())
 	if err != nil {
-		if err.Error() == "not found" {
-			c.JSON(http.StatusOK, NewJSONSuccessResponse("tickers", []string{}))
-			return
-		}
-
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
