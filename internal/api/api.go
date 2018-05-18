@@ -29,6 +29,8 @@ func API() *gin.Engine {
 		v1.GET(`/admin/tickers/:tickerID/messages/:messageID`, GetMessage)
 		v1.POST(`/admin/tickers/:tickerID/messages`, PostMessage)
 		v1.DELETE(`/admin/tickers/:tickerID/messages/:messageID`, DeleteMessage)
+
+		v1.GET(`/init`, GetInit)
 	}
 
 	return r
