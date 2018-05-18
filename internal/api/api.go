@@ -3,6 +3,8 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/cors"
+	"strings"
+	"net/url"
 )
 
 //Returns the Gin Engine
@@ -34,4 +36,25 @@ func API() *gin.Engine {
 	}
 
 	return r
+}
+
+//
+func GetDomain(c *gin.Context) (string, error) {
+	origin := c.Request.Header.Get("Origin")
+
+	u, err := url.Parse(origin)
+	if err != nil {
+		return "", err
+	}
+
+	domain := u.Host
+	if strings.HasPrefix(domain, "www.") {
+		domain = domain[4:]
+	}
+	if strings.Contains(domain, ":") {
+		parts := strings.Split(domain, ":")
+		domain = parts[0]
+	}
+
+	return domain, nil
 }

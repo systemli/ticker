@@ -2,9 +2,6 @@ package api
 
 import (
 	"net/http"
-	"net/url"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
@@ -18,23 +15,7 @@ type Settings struct {
 
 //GetInit returns the basic settings for the ticker.
 func GetInit(c *gin.Context) {
-	origin := c.Request.Header.Get("Origin")
-
-	u, err := url.Parse(origin)
-	if err != nil {
-		//TODO: Handle Error
-	}
-
-	domain := u.Host
-	if strings.HasPrefix(domain, "www.") {
-		domain = domain[4:]
-	}
-	if strings.Contains(domain, ":") {
-		parts := strings.Split(domain, ":")
-		domain = parts[0]
-	}
-
-	var ticker Ticker
+	domain, err := GetDomain(c)
 
 	settings := Settings{
 		RefreshInterval: 10,
