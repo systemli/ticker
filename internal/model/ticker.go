@@ -15,6 +15,7 @@ type Ticker struct {
 
 //Information holds some meta information for Ticker
 type Information struct {
+	Author   string `json:"author"`
 	URL      string `json:"url"`
 	Email    string `json:"email"`
 	Twitter  string `json:"twitter"`
