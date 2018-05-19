@@ -33,7 +33,7 @@ func TestGetInit(t *testing.T) {
 		SetHeader(map[string]string{"Origin": "http://www.demoticker.org/"}).
 		Run(api.API(), func(response gofight.HTTPResponse, request gofight.HTTPRequest) {
 		assert.Equal(t, response.Code, 200)
-		assert.Equal(t, strings.TrimSpace(response.Body.String()), `{"data":{"settings":{"refresh_interval":10},"ticker":{"id":1,"creation_date":"0001-01-01T00:00:00Z","domain":"demoticker.org","title":"Demoticker","description":"Description","active":true,"information":{"url":"","email":""}}},"status":"success","error":null}`)
+		assert.Equal(t, strings.TrimSpace(response.Body.String()), `{"data":{"settings":{"refresh_interval":10},"ticker":{"id":1,"creation_date":"0001-01-01T00:00:00Z","domain":"demoticker.org","title":"Demoticker","description":"Description","active":true,"information":{"author":"","url":"","email":"","twitter":"","facebook":""}}},"status":"success","error":null}`)
 
 	})
 }
