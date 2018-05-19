@@ -81,9 +81,11 @@ func TestPostTicker(t *testing.T) {
 func TestPutTicker(t *testing.T) {
 	r := setup()
 
-	var ticker model.Ticker
-
-	ticker.Domain = "demoticker.org"
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
+	}
 
 	storage.DB.Save(&ticker)
 
@@ -144,7 +146,10 @@ func TestPutTicker(t *testing.T) {
 func TestDeleteTicker(t *testing.T) {
 	r := setup()
 
-	ticker := model.NewTicker()
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
 
 	storage.DB.Save(&ticker)
 

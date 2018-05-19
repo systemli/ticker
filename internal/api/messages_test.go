@@ -16,10 +16,12 @@ import (
 func TestGetMessages(t *testing.T) {
 	r := setup()
 
-	ticker := new(model.Ticker)
-	ticker.ID = 1
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
 
-	storage.DB.Save(ticker)
+	storage.DB.Save(&ticker)
 
 	r.GET("/v1/admin/tickers/1/messages").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
@@ -31,10 +33,12 @@ func TestGetMessages(t *testing.T) {
 func TestGetMessage(t *testing.T) {
 	r := setup()
 
-	ticker := new(model.Ticker)
-	ticker.ID = 1
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
 
-	storage.DB.Save(ticker)
+	storage.DB.Save(&ticker)
 
 	r.GET("/v1/admin/tickers/1/messages/1").
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
@@ -46,10 +50,12 @@ func TestGetMessage(t *testing.T) {
 func TestPostMessage(t *testing.T) {
 	r := setup()
 
-	ticker := new(model.Ticker)
-	ticker.ID = 1
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
 
-	storage.DB.Save(ticker)
+	storage.DB.Save(&ticker)
 
 	body := `{
 		"text": "message"
@@ -87,10 +93,12 @@ func TestPostMessage(t *testing.T) {
 func TestDeleteMessage(t *testing.T) {
 	r := setup()
 
-	ticker := new(model.Ticker)
-	ticker.ID = 1
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
 
-	storage.DB.Save(ticker)
+	storage.DB.Save(&ticker)
 
 	message := model.NewMessage()
 	message.Text = "Text"
