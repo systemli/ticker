@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"strings"
 	"net/url"
+	"github.com/pkg/errors"
 )
 
 //Returns the Gin Engine
@@ -42,6 +43,10 @@ func API() *gin.Engine {
 //
 func GetDomain(c *gin.Context) (string, error) {
 	origin := c.Request.Header.Get("Origin")
+
+	if origin == "" {
+		return "", errors.New("Origin header not found")
+	}
 
 	u, err := url.Parse(origin)
 	if err != nil {

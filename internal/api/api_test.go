@@ -15,7 +15,7 @@ func TestGetDomainEmptyOrigin(t *testing.T) {
 
 	domain, err := api.GetDomain(&c)
 	assert.Equal(t, "", domain)
-	assert.Equal(t, nil, err)
+	assert.Equal(t, "Origin header not found", err.Error())
 }
 
 func TestGetDomainLocalhost(t *testing.T) {
