@@ -1,10 +1,11 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
-	"strings"
 	"net/url"
+	"strings"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 )
 
@@ -14,27 +15,36 @@ func API() *gin.Engine {
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
+	config.AllowCredentials = true
+	config.AllowHeaders = []string{`*`}
 	config.AllowMethods = []string{`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`}
 
 	r.Use(cors.New(config))
 
-	v1 := r.Group("/v1").Use()
+	// the jwt middleware
+	authMiddleware := AuthMiddleware()
+
+	admin := r.Group("/v1/admin").Use(authMiddleware.MiddlewareFunc())
 	{
-		// Endpoints for tickers
-		//TODO: Authentication
-		v1.GET(`/admin/tickers`, GetTickers)
-		v1.GET(`/admin/tickers/:tickerID`, GetTicker)
-		v1.POST(`/admin/tickers`, PostTicker)
-		v1.PUT(`/admin/tickers/:tickerID`, PutTicker)
-		v1.DELETE(`/admin/tickers/:tickerID`, DeleteTicker)
+		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 
-		v1.GET(`/admin/tickers/:tickerID/messages`, GetMessages)
-		v1.GET(`/admin/tickers/:tickerID/messages/:messageID`, GetMessage)
-		v1.POST(`/admin/tickers/:tickerID/messages`, PostMessage)
-		v1.DELETE(`/admin/tickers/:tickerID/messages/:messageID`, DeleteMessage)
+		admin.GET(`/tickers`, GetTickers)
+		admin.GET(`/tickers/:tickerID`, GetTicker)
+		admin.POST(`/tickers`, PostTicker)
+		admin.PUT(`/tickers/:tickerID`, PutTicker)
+		admin.DELETE(`/tickers/:tickerID`, DeleteTicker)
 
-		v1.GET(`/init`, GetInit)
-		v1.GET(`/timeline`, GetTimeline)
+		admin.GET(`/tickers/:tickerID/messages`, GetMessages)
+		admin.GET(`/tickers/:tickerID/messages/:messageID`, GetMessage)
+		admin.POST(`/tickers/:tickerID/messages`, PostMessage)
+		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessage)
+	}
+
+	public := r.Group("/v1").Use()
+	{
+		public.POST("/admin/login", authMiddleware.LoginHandler)
+		public.GET(`/init`, GetInit)
+		public.GET(`/timeline`, GetTimeline)
 	}
 
 	return r

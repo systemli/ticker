@@ -24,6 +24,7 @@ func TestGetMessages(t *testing.T) {
 	storage.DB.Save(&ticker)
 
 	r.GET("/v1/admin/tickers/1/messages").
+		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 		assert.Equal(t, `{"data":{"messages":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
@@ -41,6 +42,7 @@ func TestGetMessage(t *testing.T) {
 	storage.DB.Save(&ticker)
 
 	r.GET("/v1/admin/tickers/1/messages/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
@@ -62,6 +64,7 @@ func TestPostMessage(t *testing.T) {
 	}`
 
 	r.POST("/v1/admin/tickers/1/messages").
+		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -107,11 +110,13 @@ func TestDeleteMessage(t *testing.T) {
 	storage.DB.Save(&message)
 
 	r.DELETE("/v1/admin/tickers/1/messages/2").
+		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
 	r.DELETE("/v1/admin/tickers/1/messages/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 

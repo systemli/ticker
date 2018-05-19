@@ -7,6 +7,12 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "n1KlKL/EMFA6figPDpgpw1XGAqw=",
+			"path": "github.com/appleboy/gin-jwt",
+			"revision": "a2cab93652d826ce56deb44084b25e7dabbf8b57",
+			"revisionTime": "2018-05-03T06:15:02Z"
+		},
+		{
 			"checksumSHA1": "w5ducoAAam0RMZdhrdVPFzH249w=",
 			"path": "github.com/appleboy/gofight",
 			"revision": "75baa5975d3cbc68045c40d5a7f94d69c5c226a6",
