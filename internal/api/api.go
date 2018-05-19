@@ -33,6 +33,7 @@ func API() *gin.Engine {
 		v1.DELETE(`/admin/tickers/:tickerID/messages/:messageID`, DeleteMessage)
 
 		v1.GET(`/init`, GetInit)
+		v1.GET(`/timeline`, GetTimeline)
 	}
 
 	return r
