@@ -15,8 +15,10 @@ type Ticker struct {
 
 //Information holds some meta information for Ticker
 type Information struct {
-	URL   string `json:"url"`
-	Email string `json:"email"`
+	URL      string `json:"url"`
+	Email    string `json:"email"`
+	Twitter  string `json:"twitter"`
+	Facebook string `json:"facebook"`
 }
 
 //NewTicker creates new Ticker

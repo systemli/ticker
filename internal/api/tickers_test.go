@@ -44,7 +44,8 @@ func TestPostTicker(t *testing.T) {
 		"active": true,
 		"information": {
 			"url": "https://www.systemli.org",
-			"email": "admin@systemli.org"
+			"email": "admin@systemli.org",
+			"twitter": "systemli"
 		}
 	}`
 
@@ -75,6 +76,9 @@ func TestPostTicker(t *testing.T) {
 		assert.Equal(t, "Ticker", ticker.Title)
 		assert.Equal(t, "prozessticker.org", ticker.Domain)
 		assert.Equal(t, true, ticker.Active)
+		assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
+		assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
+		assert.Equal(t, "systemli", ticker.Information.Twitter)
 	})
 }
 
