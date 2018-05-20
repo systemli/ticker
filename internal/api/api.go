@@ -38,11 +38,17 @@ func API() *gin.Engine {
 		admin.GET(`/tickers/:tickerID/messages/:messageID`, GetMessage)
 		admin.POST(`/tickers/:tickerID/messages`, PostMessage)
 		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessage)
+
+		admin.GET(`/users`, GetUsers)
+		admin.GET(`/users/:userID`, GetUser)
+		admin.POST(`/users`, PostUser)
+		admin.PUT(`/users/:userID`, PutUser)
+		admin.DELETE(`/users/:userID`, DeleteUser)
 	}
 
 	public := r.Group("/v1").Use()
 	{
-		public.POST("/admin/login", authMiddleware.LoginHandler)
+		public.POST(`/admin/login`, authMiddleware.LoginHandler)
 		public.GET(`/init`, GetInit)
 		public.GET(`/timeline`, GetTimeline)
 	}

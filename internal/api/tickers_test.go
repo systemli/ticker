@@ -177,13 +177,11 @@ func TestDeleteTicker(t *testing.T) {
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 
-		type jsonResp struct {
+		var jres struct {
 			Data   map[string]model.Message `json:"data"`
 			Status string                   `json:"status"`
 			Error  interface{}              `json:"error"`
 		}
-
-		var jres jsonResp
 
 		err := json.Unmarshal(r.Body.Bytes(), &jres)
 		if err != nil {
@@ -204,6 +202,7 @@ func setup() *gofight.RequestConfig {
 	}
 	storage.DB.Drop("Ticker")
 	storage.DB.Drop("Message")
+	storage.DB.Drop("User")
 
 	r := gofight.New()
 
@@ -212,13 +211,12 @@ func setup() *gofight.RequestConfig {
 			SetBody(`{"username":"admin", "password":"admin"}`).
 			Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 
-			type res struct {
+			var response struct {
 				Code   int       `json:"code"`
 				Expire time.Time `json:"expire"`
 				Token  string    `json:"token"`
 			}
 
-			var response res
 			json.Unmarshal(r.Body.Bytes(), &response)
 
 			Token = response.Token
