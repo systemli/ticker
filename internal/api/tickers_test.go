@@ -204,11 +204,15 @@ func setup() *gofight.RequestConfig {
 	storage.DB.Drop("Message")
 	storage.DB.Drop("User")
 
+	u, _ := model.NewUser("admin@systemli.org", "password")
+
+	storage.DB.Save(u)
+
 	r := gofight.New()
 
 	if Token == "" {
 		r.POST("/v1/admin/login").
-			SetBody(`{"username":"admin", "password":"admin"}`).
+			SetBody(`{"username":"admin@systemli.org", "password":"password"}`).
 			Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 
 			var response struct {

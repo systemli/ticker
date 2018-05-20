@@ -19,14 +19,29 @@ func TestGetUsers(t *testing.T) {
 		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
-		assert.Equal(t, `{"data":{"users":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+
+		var response struct {
+			Data   map[string][]model.UserResponse `json:"data"`
+			Status string                        `json:"status"`
+			Error  interface{}                   `json:"error"`
+		}
+
+		err := json.Unmarshal(r.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, response.Status)
+		assert.Equal(t, nil, response.Error)
+		assert.Equal(t, 1, len(response.Data))
+		assert.Equal(t, "admin@systemli.org", response.Data["users"][0].Email)
 	})
 }
 
 func TestGetUser(t *testing.T) {
 	r := setup()
 
-	r.GET("/v1/admin/users/1").
+	r.GET("/v1/admin/users/2").
 		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
@@ -77,7 +92,7 @@ func TestPutUser(t *testing.T) {
 	storage.DB.Save(u)
 
 	body := `{
-		"email": "admin@systemli.org",
+		"email": "louis2@systemli.org",
 		"password": "password13",
 		"role": "user",
 		"is_super_admin": true,
@@ -105,7 +120,7 @@ func TestPutUser(t *testing.T) {
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
 		assert.Equal(t, u.ID, response.Data["user"].ID)
-		assert.Equal(t, "admin@systemli.org", response.Data["user"].Email)
+		assert.Equal(t, "louis2@systemli.org", response.Data["user"].Email)
 		assert.Equal(t, "user", response.Data["user"].Role)
 
 		var user model.User
@@ -124,18 +139,18 @@ func TestDeleteUser(t *testing.T) {
 	r := setup()
 
 	user := model.User{
-		ID:     1,
+		ID: 2,
 	}
 
 	storage.DB.Save(&user)
 
-	r.DELETE("/v1/admin/users/2").
+	r.DELETE("/v1/admin/users/3").
 		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
-	r.DELETE("/v1/admin/users/1").
+	r.DELETE("/v1/admin/users/2").
 		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
