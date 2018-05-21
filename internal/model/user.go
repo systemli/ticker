@@ -24,6 +24,7 @@ type UserResponse struct {
 	Email        string    `json:"email"`
 	Role         string    `json:"role"`
 	IsSuperAdmin bool      `json:"is_super_admin"`
+	Tickers      []int     `json:"tickers"`
 }
 
 //NewUser returns a new User.
@@ -49,6 +50,7 @@ func NewUserResponse(user User) *UserResponse {
 		Email:        user.Email,
 		Role:         user.Role,
 		IsSuperAdmin: user.IsSuperAdmin,
+		Tickers:      user.Tickers,
 	}
 }
 

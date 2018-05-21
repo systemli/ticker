@@ -127,6 +127,7 @@ func TestPutUser(t *testing.T) {
 		assert.Equal(t, "louis2@systemli.org", response.Data["user"].Email)
 		assert.Equal(t, "user", response.Data["user"].Role)
 		assert.True(t, response.Data["user"].IsSuperAdmin)
+		assert.Equal(t, []int{1, 2, 3}, response.Data["user"].Tickers)
 
 		var user model.User
 		err = storage.DB.One("ID", u.ID, &user)
