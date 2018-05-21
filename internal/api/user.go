@@ -146,6 +146,12 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
+	err = DB.DeleteStruct(&user)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"data":   nil,
 		"status": ResponseSuccess,
