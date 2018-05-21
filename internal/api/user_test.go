@@ -22,8 +22,8 @@ func TestGetUsers(t *testing.T) {
 
 		var response struct {
 			Data   map[string][]model.UserResponse `json:"data"`
-			Status string                        `json:"status"`
-			Error  interface{}                   `json:"error"`
+			Status string                          `json:"status"`
+			Error  interface{}                     `json:"error"`
 		}
 
 		err := json.Unmarshal(r.Body.Bytes(), &response)
@@ -78,6 +78,7 @@ func TestPostUser(t *testing.T) {
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
 		assert.Equal(t, "louis@systemli.org", response.Data["user"].Email)
+		assert.False(t, response.Data["user"].IsSuperAdmin)
 	})
 }
 
@@ -106,9 +107,9 @@ func TestPutUser(t *testing.T) {
 		assert.Equal(t, 200, r.Code)
 
 		var response struct {
-			Data   map[string]model.User `json:"data"`
-			Status string                `json:"status"`
-			Error  interface{}           `json:"error"`
+			Data   map[string]model.UserResponse `json:"data"`
+			Status string                        `json:"status"`
+			Error  interface{}                   `json:"error"`
 		}
 
 		err := json.Unmarshal(r.Body.Bytes(), &response)
@@ -122,6 +123,7 @@ func TestPutUser(t *testing.T) {
 		assert.Equal(t, u.ID, response.Data["user"].ID)
 		assert.Equal(t, "louis2@systemli.org", response.Data["user"].Email)
 		assert.Equal(t, "user", response.Data["user"].Role)
+		assert.True(t, response.Data["user"].IsSuperAdmin)
 
 		var user model.User
 		err = storage.DB.One("ID", u.ID, &user)
@@ -156,9 +158,9 @@ func TestDeleteUser(t *testing.T) {
 		assert.Equal(t, 200, r.Code)
 
 		var jres struct {
-			Data   map[string]model.Message `json:"data"`
-			Status string                   `json:"status"`
-			Error  interface{}              `json:"error"`
+			Data   map[string]interface{} `json:"data"`
+			Status string                 `json:"status"`
+			Error  interface{}            `json:"error"`
 		}
 
 		err := json.Unmarshal(r.Body.Bytes(), &jres)

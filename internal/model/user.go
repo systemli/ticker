@@ -23,6 +23,7 @@ type UserResponse struct {
 	CreationDate time.Time `json:"creation_date"`
 	Email        string    `json:"email"`
 	Role         string    `json:"role"`
+	IsSuperAdmin bool      `json:"is_super_admin"`
 }
 
 //NewUser returns a new User.
@@ -47,6 +48,7 @@ func NewUserResponse(user User) *UserResponse {
 		CreationDate: user.CreationDate,
 		Email:        user.Email,
 		Role:         user.Role,
+		IsSuperAdmin: user.IsSuperAdmin,
 	}
 }
 
