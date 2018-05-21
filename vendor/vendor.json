@@ -67,6 +67,12 @@
 			"revisionTime": "2018-02-25T15:46:31Z"
 		},
 		{
+			"checksumSHA1": "QeKwBtN2df+j+4stw3bQJ6yO4EY=",
+			"path": "github.com/gin-contrib/sse",
+			"revision": "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae",
+			"revisionTime": "2017-01-09T09:34:21Z"
+		},
+		{
 			"checksumSHA1": "MpR9RgPROnhWJpt8Npahzc+8798=",
 			"path": "github.com/gin-gonic/gin",
 			"revision": "bf7803815b0baa22ff7a10457932882dfbf09925",
@@ -81,6 +87,12 @@
 			"revisionTime": "2018-05-12T03:00:42Z",
 			"version": "v1.2",
 			"versionExact": "v1.2"
+		},
+		{
+			"checksumSHA1": "woO1qIxIeQ1bcbPSiMfAKk3r4xg=",
+			"path": "github.com/gin-gonic/gin/json",
+			"revision": "bf7803815b0baa22ff7a10457932882dfbf09925",
+			"revisionTime": "2018-05-12T03:00:42Z"
 		},
 		{
 			"checksumSHA1": "DGs8sdsCkNHsU9+fQMM9XHb+ZCE=",
@@ -109,14 +121,38 @@
 			"revisionTime": "2017-11-07T05:05:31Z"
 		},
 		{
+			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
+			"path": "github.com/pkg/errors",
+			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
+			"revisionTime": "2017-05-05T04:36:39Z"
+		},
+		{
 			"checksumSHA1": "9XoGmW4qFUnEekGyyTGSzhmB2PI=",
 			"path": "github.com/stretchr/testify/assert",
 			"revision": "e4ec8152c15fc46bd5056ce65997a07c7d415325",
 			"revisionTime": "2015-02-18T22:18:46Z"
 		},
 		{
+			"checksumSHA1": "d5ty9+omxFH0EI8uZc58dvnLy6c=",
+			"path": "github.com/ugorji/go/codec",
+			"revision": "f3cacc17c85ecb7f1b6a9e373ee85d1480919868",
+			"revisionTime": "2018-04-07T10:30:00Z"
+		},
+		{
 			"path": "go",
 			"revision": ""
+		},
+		{
+			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
+			"path": "golang.org/x/crypto/bcrypt",
+			"revision": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98",
+			"revisionTime": "2015-01-24T21:42:34Z"
+		},
+		{
+			"checksumSHA1": "udD2DzUPFZbMVXP0VNADhef4zKk=",
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98",
+			"revisionTime": "2015-01-24T21:42:34Z"
 		},
 		{
 			"checksumSHA1": "5ARrN3Zq+E9zazFb/N+b08Serys=",
@@ -129,6 +165,12 @@
 			"path": "golang.org/x/sys/unix",
 			"revision": "002cbb5f952456d0c50e0d2aff17ea5eca716979",
 			"revisionTime": "2016-10-16T18:36:00Z"
+		},
+		{
+			"checksumSHA1": "t37dLDJJHFiXijVk9izoM91M9Ho=",
+			"path": "gopkg.in/dgrijalva/jwt-go.v3",
+			"revision": "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e",
+			"revisionTime": "2018-03-08T23:13:08Z"
 		},
 		{
 			"checksumSHA1": "P/k5ZGf0lEBgpKgkwy++F7K1PSg=",
