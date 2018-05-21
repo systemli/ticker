@@ -2,14 +2,13 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/asdine/storm"
 	"github.com/gin-gonic/gin"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
-	"strconv"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 //GetUsers returns all Users
@@ -57,12 +56,7 @@ func PostUser(c *gin.Context) {
 		return
 	}
 
-	v := validator.New()
-	err = v.Struct(body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
-		return
-	}
+	//TODO: Validation
 
 	user, err := NewUser(body.Email, body.Password)
 	if err != nil {
