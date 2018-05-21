@@ -127,6 +127,12 @@
 			"revisionTime": "2017-05-05T04:36:39Z"
 		},
 		{
+			"checksumSHA1": "Pe6P0S4CwsAIO+AmaAb4Xv7MZOE=",
+			"path": "github.com/sethvargo/go-password/password",
+			"revision": "5e68a1664a916642585547c10af910927627055a",
+			"revisionTime": "2018-05-09T09:42:59Z"
+		},
+		{
 			"checksumSHA1": "9XoGmW4qFUnEekGyyTGSzhmB2PI=",
 			"path": "github.com/stretchr/testify/assert",
 			"revision": "e4ec8152c15fc46bd5056ce65997a07c7d415325",
