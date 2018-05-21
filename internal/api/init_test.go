@@ -1,13 +1,15 @@
 package api_test
 
 import (
+	"strings"
 	"testing"
-	"git.codecoop.org/systemli/ticker/internal/api"
+
 	"github.com/appleboy/gofight"
-	"github.com/docker/docker/pkg/testutil/assert"
+	"github.com/stretchr/testify/assert"
+
+	"git.codecoop.org/systemli/ticker/internal/api"
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"git.codecoop.org/systemli/ticker/internal/storage"
-	"strings"
 )
 
 func TestGetInit(t *testing.T) {
