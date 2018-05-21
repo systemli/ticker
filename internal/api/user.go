@@ -117,7 +117,7 @@ func PutUser(c *gin.Context) {
 	//TODO: Check permissions
 	user.IsSuperAdmin = body.IsSuperAdmin
 
-	if len(body.Tickers) > 0 {
+	if body.Tickers != nil {
 		//TODO: Merge existing Tickers
 		user.Tickers = body.Tickers
 	}
