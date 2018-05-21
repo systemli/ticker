@@ -54,7 +54,8 @@ func TestPostUser(t *testing.T) {
 
 	body := `{
 		"email": "louis@systemli.org",
-		"password": "password12"
+		"password": "password12",
+		"is_super_admin": true
 	}`
 
 	r.POST("/v1/admin/users").
@@ -64,9 +65,9 @@ func TestPostUser(t *testing.T) {
 		assert.Equal(t, 200, r.Code)
 
 		var response struct {
-			Data   map[string]model.User `json:"data"`
-			Status string                `json:"status"`
-			Error  interface{}           `json:"error"`
+			Data   map[string]model.UserResponse `json:"data"`
+			Status string                        `json:"status"`
+			Error  interface{}                   `json:"error"`
 		}
 
 		err := json.Unmarshal(r.Body.Bytes(), &response)
@@ -78,7 +79,7 @@ func TestPostUser(t *testing.T) {
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
 		assert.Equal(t, "louis@systemli.org", response.Data["user"].Email)
-		assert.False(t, response.Data["user"].IsSuperAdmin)
+		assert.True(t, response.Data["user"].IsSuperAdmin)
 	})
 }
 
@@ -91,6 +92,8 @@ func TestPutUser(t *testing.T) {
 	}
 
 	storage.DB.Save(u)
+
+	assert.False(t, u.IsSuperAdmin)
 
 	body := `{
 		"email": "louis2@systemli.org",

@@ -46,8 +46,9 @@ func GetUser(c *gin.Context) {
 //PostUser creates and returns a new Ticker
 func PostUser(c *gin.Context) {
 	var body struct {
-		Email    string `json:"email" binding:"required" validate:"email"`
-		Password string `json:"password" binding:"required" validate:"min=10"`
+		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
+		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
+		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
 	}
 
 	err := c.Bind(&body)
@@ -63,6 +64,8 @@ func PostUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
+
+	user.IsSuperAdmin = body.IsSuperAdmin
 
 	err = DB.Save(user)
 	if err != nil {
@@ -81,18 +84,19 @@ func PutUser(c *gin.Context) {
 		return
 	}
 
-	err = DB.One("ID", userID, &User{})
+	var user User
+	err = DB.One("ID", userID, &user)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
 
 	var body struct {
-		Email        string `json:"email" validate:"email"`
-		Password     string `json:"password" validate:"min=10"`
-		Role         string `json:"role"`
-		IsSuperAdmin bool   `json:"is_super_admin"`
-		Tickers      []int  `json:"tickers"`
+		Email        string `json:"email,omitempty" validate:"email"`
+		Password     string `json:"password,omitempty" validate:"min=10"`
+		Role         string `json:"role,omitempty"`
+		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
+		Tickers      []int  `json:"tickers,omitempty"`
 	}
 
 	err = c.Bind(&body)
@@ -100,9 +104,6 @@ func PutUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
-
-	var user User
-	user.ID = userID
 
 	if body.Email != "" {
 		user.Email = body.Email
@@ -121,7 +122,7 @@ func PutUser(c *gin.Context) {
 		user.Tickers = body.Tickers
 	}
 
-	err = DB.Update(&user)
+	err = DB.Save(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
