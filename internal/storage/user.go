@@ -1,12 +1,20 @@
 package storage
 
-import . "git.codecoop.org/systemli/ticker/internal/model"
+import (
+	"strconv"
+
+	. "git.codecoop.org/systemli/ticker/internal/model"
+)
 
 //
-func UserExists(email string) bool {
-	var user User
+func UserExists(userID string) bool {
+	id, err := strconv.Atoi(userID)
+	if err != nil {
+		return false
+	}
 
-	err := DB.One("Email", email, &user)
+	var user User
+	err = DB.One("ID", id, &user)
 	if err != nil {
 		return false
 	}
@@ -23,5 +31,5 @@ func UserAuthenticate(email, password string) (string, bool) {
 		return "", false
 	}
 
-	return user.Email, user.Authenticate(password)
+	return strconv.Itoa(user.ID), user.Authenticate(password)
 }
