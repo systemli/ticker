@@ -165,6 +165,17 @@ func DeleteUserHandler(c *gin.Context) {
 		return
 	}
 
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		return
+	}
+
+	if me.ID == userID {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "self deletion is forbidden"))
+		return
+	}
+
 	err = DB.One("ID", userID, &user)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))

@@ -205,4 +205,12 @@ func TestDeleteUserHandler(t *testing.T) {
 		assert.Nil(t, jres.Data)
 		assert.Nil(t, jres.Error)
 	})
+
+	r.DELETE("/v1/admin/users/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 400, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1000,"message":"self deletion is forbidden"}}`, strings.TrimSpace(r.Body.String()))
+
+	})
 }
