@@ -13,6 +13,16 @@ import (
 
 //GetUsers returns all Users
 func GetUsers(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	var users []User
 
 	//TODO: Discuss need of Pagination
@@ -27,6 +37,16 @@ func GetUsers(c *gin.Context) {
 
 //GetUser returns a User for the given id
 func GetUser(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
@@ -45,6 +65,16 @@ func GetUser(c *gin.Context) {
 
 //PostUser creates and returns a new Ticker
 func PostUser(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	var body struct {
 		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
 		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
@@ -78,6 +108,16 @@ func PostUser(c *gin.Context) {
 
 //PutUser updates a user
 func PutUser(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
@@ -133,6 +173,16 @@ func PutUser(c *gin.Context) {
 
 //DeleteUser deletes a existing User
 func DeleteUser(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {

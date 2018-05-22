@@ -1,9 +1,10 @@
 package model
 
 const (
-	ErrorUnspecified = 1000
-	ErrorNotFound    = 1001
-	ErrorCredentials = 1002
+	ErrorUnspecified             = 1000
+	ErrorNotFound                = 1001
+	ErrorCredentials             = 1002
+	ErrorInsufficientPermissions = 1003
 
 	ResponseSuccess = `success`
 	ResponseError   = `error`

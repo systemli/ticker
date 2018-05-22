@@ -205,6 +205,7 @@ func setup() *gofight.RequestConfig {
 	storage.DB.Drop("User")
 
 	u, _ := model.NewUser("admin@systemli.org", "password")
+	u.IsSuperAdmin = true
 
 	storage.DB.Save(u)
 
