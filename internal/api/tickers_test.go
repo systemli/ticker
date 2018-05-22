@@ -17,7 +17,7 @@ import (
 
 var Token string
 
-func TestGetTickers(t *testing.T) {
+func TestGetTickersHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/tickers").
@@ -28,7 +28,7 @@ func TestGetTickers(t *testing.T) {
 	})
 }
 
-func TestGetTicker(t *testing.T) {
+func TestGetTickerHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/tickers/1").
@@ -39,7 +39,7 @@ func TestGetTicker(t *testing.T) {
 	})
 }
 
-func TestPostTicker(t *testing.T) {
+func TestPostTickerHandler(t *testing.T) {
 	r := setup()
 
 	body := `{
@@ -88,7 +88,7 @@ func TestPostTicker(t *testing.T) {
 	})
 }
 
-func TestPutTicker(t *testing.T) {
+func TestPutTickerHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
@@ -156,7 +156,7 @@ func TestPutTicker(t *testing.T) {
 	})
 }
 
-func TestDeleteTicker(t *testing.T) {
+func TestDeleteTickerHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{

@@ -12,7 +12,7 @@ import (
 	"fmt"
 )
 
-func TestGetUsers(t *testing.T) {
+func TestGetUsersHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/users").
@@ -38,7 +38,7 @@ func TestGetUsers(t *testing.T) {
 	})
 }
 
-func TestGetUser(t *testing.T) {
+func TestGetUserHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/users/2").
@@ -49,7 +49,7 @@ func TestGetUser(t *testing.T) {
 	})
 }
 
-func TestPostUser(t *testing.T) {
+func TestPostUserHandler(t *testing.T) {
 	r := setup()
 
 	body := `{
@@ -83,7 +83,7 @@ func TestPostUser(t *testing.T) {
 	})
 }
 
-func TestPutUser(t *testing.T) {
+func TestPutUserHandler(t *testing.T) {
 	r := setup()
 
 	u, err := model.NewUser("louis@systemli.org", "password")
@@ -141,7 +141,7 @@ func TestPutUser(t *testing.T) {
 	})
 }
 
-func TestDeleteUser(t *testing.T) {
+func TestDeleteUserHandler(t *testing.T) {
 	r := setup()
 
 	user := model.User{

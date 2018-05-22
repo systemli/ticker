@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func TestGetMessages(t *testing.T) {
+func TestGetMessagesHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
@@ -31,7 +31,7 @@ func TestGetMessages(t *testing.T) {
 	})
 }
 
-func TestGetMessage(t *testing.T) {
+func TestGetMessageHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
@@ -49,7 +49,7 @@ func TestGetMessage(t *testing.T) {
 	})
 }
 
-func TestPostMessage(t *testing.T) {
+func TestPostMessageHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
@@ -93,7 +93,7 @@ func TestPostMessage(t *testing.T) {
 	})
 }
 
-func TestDeleteMessage(t *testing.T) {
+func TestDeleteMessageHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{

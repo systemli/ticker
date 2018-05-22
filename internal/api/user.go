@@ -11,8 +11,8 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-//GetUsers returns all Users
-func GetUsers(c *gin.Context) {
+//GetUsersHandler returns all Users
+func GetUsersHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
@@ -30,8 +30,8 @@ func GetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
 }
 
-//GetUser returns a User for the given id
-func GetUser(c *gin.Context) {
+//GetUserHandler returns a User for the given id
+func GetUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
@@ -53,8 +53,8 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(user)))
 }
 
-//PostUser creates and returns a new Ticker
-func PostUser(c *gin.Context) {
+//PostUserHandler creates and returns a new Ticker
+func PostUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
@@ -91,8 +91,8 @@ func PostUser(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(*user)))
 }
 
-//PutUser updates a user
-func PutUser(c *gin.Context) {
+//PutUserHandler updates a user
+func PutUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
@@ -151,8 +151,8 @@ func PutUser(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(user)))
 }
 
-//DeleteUser deletes a existing User
-func DeleteUser(c *gin.Context) {
+//DeleteUserHandler deletes a existing User
+func DeleteUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return

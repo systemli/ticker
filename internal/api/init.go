@@ -13,8 +13,8 @@ type Settings struct {
 	RefreshInterval int `json:"refresh_interval,omitempty"`
 }
 
-//GetInit returns the basic settings for the ticker.
-func GetInit(c *gin.Context) {
+//GetInitHandler returns the basic settings for the ticker.
+func GetInitHandler(c *gin.Context) {
 	domain, err := GetDomain(c)
 
 	settings := Settings{

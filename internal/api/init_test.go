@@ -12,7 +12,7 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-func TestGetInit(t *testing.T) {
+func TestGetInitHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/init").

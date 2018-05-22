@@ -11,8 +11,8 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-//GetMessages returns all Messages with paging
-func GetMessages(c *gin.Context) {
+//GetMessagesHandler returns all Messages with paging
+func GetMessagesHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
@@ -55,8 +55,8 @@ func GetMessages(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("messages", messages))
 }
 
-//GetMessage returns a Message for the given id
-func GetMessage(c *gin.Context) {
+//GetMessageHandler returns a Message for the given id
+func GetMessageHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
@@ -94,8 +94,8 @@ func GetMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", message))
 }
 
-//PostMessage creates and returns a new Message
-func PostMessage(c *gin.Context) {
+//PostMessageHandler creates and returns a new Message
+func PostMessageHandler(c *gin.Context) {
 	message := NewMessage()
 	err := c.Bind(&message)
 	if err != nil {
@@ -140,8 +140,8 @@ func PostMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", message))
 }
 
-//DeleteTicker deletes a existing Ticker
-func DeleteMessage(c *gin.Context) {
+//DeleteTickerHandler deletes a existing Ticker
+func DeleteMessageHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))

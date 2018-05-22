@@ -10,7 +10,8 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/util"
 )
 
-func GetTimeline(c *gin.Context) {
+//GetTimelineHandler returns the public timeline for a ticker.
+func GetTimelineHandler(c *gin.Context) {
 	domain, err := GetDomain(c)
 	if err != nil {
 		c.JSON(http.StatusOK, JSONResponse{

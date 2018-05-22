@@ -29,29 +29,29 @@ func API() *gin.Engine {
 	{
 		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 
-		admin.GET(`/tickers`, GetTickers)
-		admin.GET(`/tickers/:tickerID`, GetTicker)
-		admin.POST(`/tickers`, PostTicker)
-		admin.PUT(`/tickers/:tickerID`, PutTicker)
-		admin.DELETE(`/tickers/:tickerID`, DeleteTicker)
+		admin.GET(`/tickers`, GetTickersHandler)
+		admin.GET(`/tickers/:tickerID`, GetTickerHandler)
+		admin.POST(`/tickers`, PostTickerHandler)
+		admin.PUT(`/tickers/:tickerID`, PutTickerHandler)
+		admin.DELETE(`/tickers/:tickerID`, DeleteTickerHandler)
 
-		admin.GET(`/tickers/:tickerID/messages`, GetMessages)
-		admin.GET(`/tickers/:tickerID/messages/:messageID`, GetMessage)
-		admin.POST(`/tickers/:tickerID/messages`, PostMessage)
-		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessage)
+		admin.GET(`/tickers/:tickerID/messages`, GetMessagesHandler)
+		admin.GET(`/tickers/:tickerID/messages/:messageID`, GetMessageHandler)
+		admin.POST(`/tickers/:tickerID/messages`, PostMessageHandler)
+		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessageHandler)
 
-		admin.GET(`/users`, GetUsers)
-		admin.GET(`/users/:userID`, GetUser)
-		admin.POST(`/users`, PostUser)
-		admin.PUT(`/users/:userID`, PutUser)
-		admin.DELETE(`/users/:userID`, DeleteUser)
+		admin.GET(`/users`, GetUsersHandler)
+		admin.GET(`/users/:userID`, GetUserHandler)
+		admin.POST(`/users`, PostUserHandler)
+		admin.PUT(`/users/:userID`, PutUserHandler)
+		admin.DELETE(`/users/:userID`, DeleteUserHandler)
 	}
 
 	public := r.Group("/v1").Use()
 	{
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
-		public.GET(`/init`, GetInit)
-		public.GET(`/timeline`, GetTimeline)
+		public.GET(`/init`, GetInitHandler)
+		public.GET(`/timeline`, GetTimelineHandler)
 	}
 
 	return r

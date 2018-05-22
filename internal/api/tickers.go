@@ -12,8 +12,8 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-//GetTickers returns all Ticker with paging
-func GetTickers(c *gin.Context) {
+//GetTickersHandler returns all Ticker with paging
+func GetTickersHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
@@ -35,8 +35,8 @@ func GetTickers(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("tickers", tickers))
 }
 
-//GetTicker returns a Ticker for the given id
-func GetTicker(c *gin.Context) {
+//GetTickerHandler returns a Ticker for the given id
+func GetTickerHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
@@ -66,8 +66,8 @@ func GetTicker(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", ticker))
 }
 
-//PostTicker creates and returns a new Ticker
-func PostTicker(c *gin.Context) {
+//PostTickerHandler creates and returns a new Ticker
+func PostTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
@@ -89,8 +89,8 @@ func PostTicker(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", ticker))
 }
 
-//PutTicker updates and returns a existing Ticker
-func PutTicker(c *gin.Context) {
+//PutTickerHandler updates and returns a existing Ticker
+func PutTickerHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
@@ -132,8 +132,8 @@ func PutTicker(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", ticker))
 }
 
-//DeleteTicker deletes a existing Ticker
-func DeleteTicker(c *gin.Context) {
+//DeleteTickerHandler deletes a existing Ticker
+func DeleteTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
