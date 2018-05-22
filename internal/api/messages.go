@@ -13,7 +13,11 @@ import (
 
 //GetMessages returns all Messages with paging
 func GetMessages(c *gin.Context) {
-	var ticker Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
@@ -21,6 +25,14 @@ func GetMessages(c *gin.Context) {
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, "ticker not found"))
@@ -45,7 +57,11 @@ func GetMessages(c *gin.Context) {
 
 //GetMessage returns a Message for the given id
 func GetMessage(c *gin.Context) {
-	var ticker Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
@@ -53,6 +69,14 @@ func GetMessage(c *gin.Context) {
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, "ticker not found"))
@@ -60,9 +84,7 @@ func GetMessage(c *gin.Context) {
 	}
 
 	var message Message
-
 	messageID, err := strconv.Atoi(c.Param("messageID"))
-
 	err = DB.One("ID", messageID, &message)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
@@ -74,12 +96,17 @@ func GetMessage(c *gin.Context) {
 
 //PostMessage creates and returns a new Message
 func PostMessage(c *gin.Context) {
-	var ticker Ticker
 
 	message := NewMessage()
 	err := c.Bind(&message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		return
+	}
+
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
 		return
 	}
 
@@ -89,6 +116,14 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
@@ -108,7 +143,11 @@ func PostMessage(c *gin.Context) {
 
 //DeleteTicker deletes a existing Ticker
 func DeleteMessage(c *gin.Context) {
-	var ticker Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
@@ -116,6 +155,14 @@ func DeleteMessage(c *gin.Context) {
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))

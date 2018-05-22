@@ -12,13 +12,22 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-
 //GetTickers returns all Ticker with paging
 func GetTickers(c *gin.Context) {
-	var tickers []Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
 
-	//TODO: Discuss need of Pagination
-	err := DB.All(&tickers, storm.Reverse())
+	var tickers []Ticker
+	var err error
+	if me.(User).IsSuperAdmin {
+		err = DB.All(&tickers, storm.Reverse())
+	} else {
+		allowed := me.(User).Tickers
+		err = DB.Select(q.In("ID", allowed)).Reverse().Find(&tickers)
+	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
@@ -29,13 +38,26 @@ func GetTickers(c *gin.Context) {
 
 //GetTicker returns a Ticker for the given id
 func GetTicker(c *gin.Context) {
-	var ticker Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
@@ -47,6 +69,16 @@ func GetTicker(c *gin.Context) {
 
 //PostTicker creates and returns a new Ticker
 func PostTicker(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	ticker := NewTicker()
 	err := c.Bind(&ticker)
 	if err != nil {
@@ -65,13 +97,26 @@ func PostTicker(c *gin.Context) {
 
 //PutTicker updates and returns a existing Ticker
 func PutTicker(c *gin.Context) {
-	var ticker Ticker
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
 		return
 	}
 
+	if !me.(User).IsSuperAdmin {
+		if !contains(me.(User).Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			return
+		}
+	}
+
+	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
@@ -95,6 +140,16 @@ func PutTicker(c *gin.Context) {
 
 //DeleteTicker deletes a existing Ticker
 func DeleteTicker(c *gin.Context) {
+	me, exists := c.Get(UserKey)
+	if !exists {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		return
+	}
+	if !me.(User).IsSuperAdmin {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		return
+	}
+
 	var ticker Ticker
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
@@ -116,4 +171,13 @@ func DeleteTicker(c *gin.Context) {
 		"status": ResponseSuccess,
 		"error":  nil,
 	})
+}
+
+func contains(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
