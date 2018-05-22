@@ -13,15 +13,24 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/storage"
 	"strings"
 	"time"
+	"fmt"
 )
 
-var Token string
+var AdminToken string
+var UserToken string
 
 func TestGetTickersHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/tickers").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"tickers":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.GET("/v1/admin/tickers").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 		assert.Equal(t, `{"data":{"tickers":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
@@ -32,10 +41,17 @@ func TestGetTickerHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/tickers/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.GET("/v1/admin/tickers/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -55,7 +71,7 @@ func TestPostTickerHandler(t *testing.T) {
 	}`
 
 	r.POST("/v1/admin/tickers").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -86,6 +102,14 @@ func TestPostTickerHandler(t *testing.T) {
 		assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 		assert.Equal(t, "systemli", ticker.Information.Twitter)
 	})
+
+	r.POST("/v1/admin/tickers").
+		SetBody(body).
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestPutTickerHandler(t *testing.T) {
@@ -111,21 +135,21 @@ func TestPutTickerHandler(t *testing.T) {
 	}`
 
 	r.PUT("/v1/admin/tickers/100").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
 	r.PUT("/v1/admin/tickers/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(`malicious data`).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 400, r.Code)
 	})
 
 	r.PUT("/v1/admin/tickers/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -154,6 +178,14 @@ func TestPutTickerHandler(t *testing.T) {
 		assert.Equal(t, "prozessticker.org", ticker.Domain)
 		assert.Equal(t, false, ticker.Active)
 	})
+
+	r.PUT("/v1/admin/tickers/1").
+		SetBody(body).
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestDeleteTickerHandler(t *testing.T) {
@@ -167,13 +199,13 @@ func TestDeleteTickerHandler(t *testing.T) {
 	storage.DB.Save(&ticker)
 
 	r.DELETE("/v1/admin/tickers/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
 	r.DELETE("/v1/admin/tickers/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 
@@ -192,6 +224,13 @@ func TestDeleteTickerHandler(t *testing.T) {
 		assert.Nil(t, jres.Data)
 		assert.Nil(t, jres.Error)
 	})
+
+	r.DELETE("/v1/admin/tickers/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func setup() *gofight.RequestConfig {
@@ -204,30 +243,42 @@ func setup() *gofight.RequestConfig {
 	storage.DB.Drop("Message")
 	storage.DB.Drop("User")
 
-	u, _ := model.NewUser("admin@systemli.org", "password")
-	u.IsSuperAdmin = true
+	admin, _ := model.NewUser("admin@systemli.org", "password")
+	admin.IsSuperAdmin = true
 
-	storage.DB.Save(u)
+	storage.DB.Save(admin)
 
-	r := gofight.New()
+	user, _ := model.NewUser("louis@systemli.org", "password")
+	storage.DB.Save(user)
 
-	if Token == "" {
-		r.POST("/v1/admin/login").
-			SetBody(`{"username":"admin@systemli.org", "password":"password"}`).
-			Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-
-			var response struct {
-				Code   int       `json:"code"`
-				Expire time.Time `json:"expire"`
-				Token  string    `json:"token"`
-			}
-
-			json.Unmarshal(r.Body.Bytes(), &response)
-
-			Token = response.Token
-		})
-
+	if AdminToken == "" {
+		AdminToken = token("admin@systemli.org", "password")
+	}
+	if UserToken == "" {
+		UserToken = token("louis@systemli.org", "password")
 	}
 
-	return r
+	return gofight.New()
+}
+
+func token(username, password string) string {
+	var token string
+
+	r := gofight.New()
+	r.POST("/v1/admin/login").
+		SetBody(fmt.Sprintf(`{"username":"%s", "password":"%s"}`, username, password)).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+
+		var response struct {
+			Code   int       `json:"code"`
+			Expire time.Time `json:"expire"`
+			Token  string    `json:"token"`
+		}
+
+		json.Unmarshal(r.Body.Bytes(), &response)
+
+		token = response.Token
+	})
+
+	return token
 }

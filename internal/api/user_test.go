@@ -9,14 +9,13 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"encoding/json"
 	"git.codecoop.org/systemli/ticker/internal/storage"
-	"fmt"
 )
 
 func TestGetUsersHandler(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 
@@ -34,18 +33,40 @@ func TestGetUsersHandler(t *testing.T) {
 		assert.Equal(t, model.ResponseSuccess, response.Status)
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
-		assert.Equal(t, "admin@systemli.org", response.Data["users"][0].Email)
+		assert.Equal(t, 2, len(response.Data["users"]))
+		assert.Equal(t, "louis@systemli.org", response.Data["users"][0].Email)
+		assert.Equal(t, "admin@systemli.org", response.Data["users"][1].Email)
+	})
+
+	r.GET("/v1/admin/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
 func TestGetUserHandler(t *testing.T) {
 	r := setup()
 
-	r.GET("/v1/admin/users/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+	r.GET("/v1/admin/users/2000").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.GET("/v1/admin/users/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+	})
+
+	r.GET("/v1/admin/users/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -53,13 +74,13 @@ func TestPostUserHandler(t *testing.T) {
 	r := setup()
 
 	body := `{
-		"email": "louis@systemli.org",
+		"email": "user@systemli.org",
 		"password": "password12",
 		"is_super_admin": true
 	}`
 
 	r.POST("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -78,33 +99,40 @@ func TestPostUserHandler(t *testing.T) {
 		assert.Equal(t, model.ResponseSuccess, response.Status)
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
-		assert.Equal(t, "louis@systemli.org", response.Data["user"].Email)
+		assert.Equal(t, "user@systemli.org", response.Data["user"].Email)
 		assert.True(t, response.Data["user"].IsSuperAdmin)
+	})
+
+	r.POST("/v1/admin/users").
+		SetBody(body).
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
 func TestPutUserHandler(t *testing.T) {
 	r := setup()
 
-	u, err := model.NewUser("louis@systemli.org", "password")
-	if err != nil {
-		t.Fail()
-	}
-
-	storage.DB.Save(u)
-
-	assert.False(t, u.IsSuperAdmin)
-
 	body := `{
-		"email": "louis2@systemli.org",
+		"email": "new@systemli.org",
 		"password": "password13",
 		"role": "user",
 		"is_super_admin": true,
 		"tickers": [1,2,3]
 	}`
 
-	r.PUT(fmt.Sprintf(`/v1/admin/users/%d`, u.ID)).
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+	r.PUT("/v1/admin/users/2").
+		SetBody(body).
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.PUT(`/v1/admin/users/2`).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
@@ -123,14 +151,14 @@ func TestPutUserHandler(t *testing.T) {
 		assert.Equal(t, model.ResponseSuccess, response.Status)
 		assert.Equal(t, nil, response.Error)
 		assert.Equal(t, 1, len(response.Data))
-		assert.Equal(t, u.ID, response.Data["user"].ID)
-		assert.Equal(t, "louis2@systemli.org", response.Data["user"].Email)
+		assert.Equal(t, 2, response.Data["user"].ID)
+		assert.Equal(t, "new@systemli.org", response.Data["user"].Email)
 		assert.Equal(t, "user", response.Data["user"].Role)
 		assert.True(t, response.Data["user"].IsSuperAdmin)
 		assert.Equal(t, []int{1, 2, 3}, response.Data["user"].Tickers)
 
 		var user model.User
-		err = storage.DB.One("ID", u.ID, &user)
+		err = storage.DB.One("ID", 2, &user)
 		if err != nil {
 			t.Fail()
 		}
@@ -144,20 +172,21 @@ func TestPutUserHandler(t *testing.T) {
 func TestDeleteUserHandler(t *testing.T) {
 	r := setup()
 
-	user := model.User{
-		ID: 2,
-	}
-
-	storage.DB.Save(&user)
-
 	r.DELETE("/v1/admin/users/3").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 404, r.Code)
 	})
 
 	r.DELETE("/v1/admin/users/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + Token}).
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.DELETE("/v1/admin/users/2").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
 

@@ -26,6 +26,10 @@ func GetTickersHandler(c *gin.Context) {
 	} else {
 		allowed := me.Tickers
 		err = DB.Select(q.In("ID", allowed)).Reverse().Find(&tickers)
+		if err == storm.ErrNotFound {
+			err = nil
+			tickers = []Ticker{}
+		}
 	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
