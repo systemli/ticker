@@ -13,12 +13,7 @@ import (
 
 //GetUsers returns all Users
 func GetUsers(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
-		return
-	}
-	if !me.(User).IsSuperAdmin {
+	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
 	}
@@ -37,12 +32,7 @@ func GetUsers(c *gin.Context) {
 
 //GetUser returns a User for the given id
 func GetUser(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
-		return
-	}
-	if !me.(User).IsSuperAdmin {
+	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
 	}
@@ -65,12 +55,7 @@ func GetUser(c *gin.Context) {
 
 //PostUser creates and returns a new Ticker
 func PostUser(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
-		return
-	}
-	if !me.(User).IsSuperAdmin {
+	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
 	}
@@ -108,12 +93,7 @@ func PostUser(c *gin.Context) {
 
 //PutUser updates a user
 func PutUser(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
-		return
-	}
-	if !me.(User).IsSuperAdmin {
+	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
 	}
@@ -173,12 +153,7 @@ func PutUser(c *gin.Context) {
 
 //DeleteUser deletes a existing User
 func DeleteUser(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
-		return
-	}
-	if !me.(User).IsSuperAdmin {
+	if !IsAdmin(c) {
 		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 		return
 	}

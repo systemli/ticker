@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"git.codecoop.org/systemli/ticker/internal/model"
 )
 
 //Returns the Gin Engine
@@ -79,4 +80,23 @@ func GetDomain(c *gin.Context) (string, error) {
 	}
 
 	return domain, nil
+}
+
+func Me(c *gin.Context) (model.User, error) {
+	var user model.User
+	u, exists := c.Get(UserKey)
+	if !exists {
+		return user, errors.New("user not found")
+	}
+
+	return u.(model.User), nil
+}
+
+func IsAdmin(c *gin.Context) bool {
+	u, err := Me(c)
+	if err != nil {
+		return false
+	}
+
+	return u.IsSuperAdmin
 }

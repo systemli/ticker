@@ -13,8 +13,8 @@ import (
 
 //GetMessages returns all Messages with paging
 func GetMessages(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
+	me, err := Me(c)
+	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
 		return
 	}
@@ -25,8 +25,8 @@ func GetMessages(c *gin.Context) {
 		return
 	}
 
-	if !me.(User).IsSuperAdmin {
-		if !contains(me.(User).Tickers, tickerID) {
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
 			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 			return
 		}
@@ -57,8 +57,8 @@ func GetMessages(c *gin.Context) {
 
 //GetMessage returns a Message for the given id
 func GetMessage(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
+	me, err := Me(c)
+	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
 		return
 	}
@@ -69,8 +69,8 @@ func GetMessage(c *gin.Context) {
 		return
 	}
 
-	if !me.(User).IsSuperAdmin {
-		if !contains(me.(User).Tickers, tickerID) {
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
 			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 			return
 		}
@@ -96,7 +96,6 @@ func GetMessage(c *gin.Context) {
 
 //PostMessage creates and returns a new Message
 func PostMessage(c *gin.Context) {
-
 	message := NewMessage()
 	err := c.Bind(&message)
 	if err != nil {
@@ -104,8 +103,8 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	me, exists := c.Get(UserKey)
-	if !exists {
+	me, err := Me(c)
+	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
 		return
 	}
@@ -116,8 +115,8 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
-	if !me.(User).IsSuperAdmin {
-		if !contains(me.(User).Tickers, tickerID) {
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
 			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 			return
 		}
@@ -143,8 +142,8 @@ func PostMessage(c *gin.Context) {
 
 //DeleteTicker deletes a existing Ticker
 func DeleteMessage(c *gin.Context) {
-	me, exists := c.Get(UserKey)
-	if !exists {
+	me, err := Me(c)
+	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
 		return
 	}
@@ -155,8 +154,8 @@ func DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	if !me.(User).IsSuperAdmin {
-		if !contains(me.(User).Tickers, tickerID) {
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
 			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
 			return
 		}
