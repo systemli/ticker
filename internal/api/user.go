@@ -134,11 +134,18 @@ func PutUserHandler(c *gin.Context) {
 	if body.Role != "" {
 		user.Role = body.Role
 	}
-	//TODO: Check permissions
-	user.IsSuperAdmin = body.IsSuperAdmin
+
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		return
+	}
+	// You only can set/unset other users SuperAdmin property
+	if me.ID != user.ID {
+		user.IsSuperAdmin = body.IsSuperAdmin
+	}
 
 	if body.Tickers != nil {
-		//TODO: Merge existing Tickers
 		user.Tickers = body.Tickers
 	}
 

@@ -167,6 +167,33 @@ func TestPutUserHandler(t *testing.T) {
 		assert.Equal(t, true, user.IsSuperAdmin)
 		assert.Equal(t, []int{1, 2, 3}, user.Tickers)
 	})
+
+	body = `{
+		"is_super_admin": false
+	}`
+
+	r.PUT("/v1/admin/users/1").
+		SetBody(body).
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+
+		var response struct {
+			Data   map[string]model.UserResponse `json:"data"`
+			Status string                        `json:"status"`
+			Error  interface{}                   `json:"error"`
+		}
+
+		err := json.Unmarshal(r.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, response.Status)
+		assert.Equal(t, nil, response.Error)
+		assert.Equal(t, 1, len(response.Data))
+		assert.True(t, response.Data["user"].IsSuperAdmin)
+	})
 }
 
 func TestDeleteUserHandler(t *testing.T) {
