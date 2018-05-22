@@ -109,12 +109,6 @@
 			"revisionTime": "2018-05-18T21:57:37Z"
 		},
 		{
-			"checksumSHA1": "b0T0Hzd+zYk+OCDTFMps+jwa/nY=",
-			"path": "github.com/manucorporat/sse",
-			"revision": "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d",
-			"revisionTime": "2016-01-26T18:01:36Z"
-		},
-		{
 			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
 			"path": "github.com/mattn/go-isatty",
 			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
@@ -159,12 +153,6 @@
 			"path": "golang.org/x/crypto/blowfish",
 			"revision": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98",
 			"revisionTime": "2015-01-24T21:42:34Z"
-		},
-		{
-			"checksumSHA1": "5ARrN3Zq+E9zazFb/N+b08Serys=",
-			"path": "golang.org/x/net/context",
-			"revision": "415f1917e1dbc946ec834288a8a1e5ff6eee2900",
-			"revisionTime": "2015-12-16T20:28:38Z"
 		},
 		{
 			"checksumSHA1": "e6tx+mrbPNlzXbr1VErnBPY+vmQ=",
