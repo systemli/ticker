@@ -24,7 +24,7 @@ func API() *gin.Engine {
 	// the jwt middleware
 	authMiddleware := AuthMiddleware()
 
-	admin := r.Group("/v1/admin").Use(authMiddleware.MiddlewareFunc())
+	admin := r.Group("/v1/admin").Use(authMiddleware.MiddlewareFunc()).Use(UserMiddleware())
 	{
 		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 

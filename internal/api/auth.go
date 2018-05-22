@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/appleboy/gin-jwt"
@@ -10,6 +12,9 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
+const UserKey = "user"
+
+//
 func AuthMiddleware() *jwt.GinJWTMiddleware {
 	return &jwt.GinJWTMiddleware{
 		Realm:         "test zone",
@@ -20,6 +25,32 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 		Authorizator:  Authorizator,
 		Unauthorized:  Unauthorized,
 		TimeFunc:      time.Now,
+	}
+}
+
+//
+func UserMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user identifier not found"))
+			return
+		}
+
+		id, err := strconv.Atoi(userID.(string))
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user identifier not found"))
+			return
+		}
+
+		var user User
+		err = DB.One("ID", id, &user)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+			return
+		}
+
+		c.Set(UserKey, user)
 	}
 }
 
