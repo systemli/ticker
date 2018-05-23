@@ -4,9 +4,6 @@
 
   * Clone Repo to your $GOPATH (e.g. `/home/$USER/go/src/git.codecoop.org/systemli/ticker`) 
   * install go (e.g. `sudo apt install golang-go`)
-  * Download additional repos 
-    * `go get github.com/sirupsen/logrus`
-    * `go github.com/sethvargo/go-password/password`
   * [optional] adjust config.yml.dist
   * switch to ticker directory (e.g. `cd /home/$USER/go/src/git.codecoop.org/systemli/ticker`)
   * run `go run main.go -config config.yml.dist`
