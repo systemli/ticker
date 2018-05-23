@@ -1,12 +1,32 @@
 # ticker
 
-## development
+## Setup 
+
+  * Clone Repo to your $GOPATH (e.g. `/home/$USER/go/src/git.codecoop.org/systemli/ticker`) 
+  * install go (e.g. `sudo apt install golang-go`)
+  * Download additional repos 
+    * `go get github.com/sirupsen/logrus`
+    * `go github.com/sethvargo/go-password/password`
+  * [optional] adjust config.yml.dist
+  * switch to ticker directory (e.g. `cd /home/$USER/go/src/git.codecoop.org/systemli/ticker`)
+  * run `go run main.go -config config.yml.dist`
+
+  If everything works correct, you should see the following output:
+```
+user@laptop:ticker: $ go run main.go -config config.yml.dist                      
+INFO[0000] admin user created (change password now!)     email=admin@systemli.org password="ApasswordString"
+INFO[0000] starting ticker at localhost:8080            
+```
+
+## Development
 
 ```
 go run main.go -config config.yml.dist
 ```
 
-## configuration
+## Configuration
+
+  * Example config.yml.dist
 
 ```
 # listen binds ticker to specific address and port
@@ -21,7 +41,7 @@ database: "ticker.db"
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 ```
 
-## testing
+## Testing
 
 ```
 go test ./... -cover
