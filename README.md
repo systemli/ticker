@@ -3,7 +3,7 @@
 ## development
 
 ```
-go run main.go -config config.yml
+go run main.go -config config.yml.dist
 ```
 
 ## configuration

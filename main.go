@@ -17,6 +17,7 @@ func main() {
 
 func init() {
 	var cp = flag.String("config", "config.yml", "path to config.yml")
+	flag.Parse()
 
 	Config = LoadConfig(*cp)
 	DB = OpenDB(Config.Database)
