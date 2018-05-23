@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	"github.com/sethvargo/go-password/password"
 )
 
 var Config *config
@@ -19,11 +20,13 @@ type config struct {
 
 //NewConfig returns config with default values.
 func NewConfig() *config {
+	secret, _ := password.Generate(64, 12, 12, false, false)
+
 	return &config{
 		Listen:    ":8080",
 		LogLevel:  "debug",
 		Initiator: "admin@systemli.org",
-		Secret:    "secret",
+		Secret:    secret,
 		Database:  "ticker.db",
 	}
 }
