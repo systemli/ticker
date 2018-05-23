@@ -20,3 +20,9 @@ database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 ```
+
+## testing
+
+```
+go test ./... -cover
+```
