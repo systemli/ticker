@@ -42,6 +42,14 @@ func NewUser(email, password string) (*User, error) {
 	return user, nil
 }
 
+//NewAdminUser returns a Admin User.
+func NewAdminUser(email, password string) (*User, error) {
+	user, err := NewUser(email, password)
+	user.IsSuperAdmin = true
+
+	return user, err
+}
+
 //
 func NewUserResponse(user User) *UserResponse {
 	return &UserResponse{

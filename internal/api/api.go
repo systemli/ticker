@@ -7,12 +7,19 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/toorop/gin-logrus"
+	"github.com/sirupsen/logrus"
+
 	"git.codecoop.org/systemli/ticker/internal/model"
 )
 
 //Returns the Gin Engine
 func API() *gin.Engine {
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+
+	r := gin.New()
+	r.Use(Logger())
+	r.Use(gin.Recovery())
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
@@ -55,6 +62,14 @@ func API() *gin.Engine {
 	}
 
 	return r
+}
+
+func Logger() gin.HandlerFunc {
+	lvl, _ := logrus.ParseLevel(model.Config.LogLevel)
+	logger := logrus.New()
+	logger.SetLevel(lvl)
+
+	return ginlogrus.Logger(logger)
 }
 
 //

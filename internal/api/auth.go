@@ -17,8 +17,8 @@ const UserKey = "user"
 //
 func AuthMiddleware() *jwt.GinJWTMiddleware {
 	return &jwt.GinJWTMiddleware{
-		Realm:         "test zone",
-		Key:           []byte("secret key"),
+		Realm:         "ticker admin",
+		Key:           []byte(Config.Secret),
 		Timeout:       time.Hour,
 		MaxRefresh:    time.Hour,
 		Authenticator: Authenticator,

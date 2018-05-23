@@ -236,6 +236,8 @@ func TestDeleteTickerHandler(t *testing.T) {
 func setup() *gofight.RequestConfig {
 	gin.SetMode(gin.TestMode)
 
+	model.Config = model.NewConfig()
+
 	if storage.DB == nil {
 		storage.DB = storage.OpenDB("ticker_test.db")
 	}

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"log"
-
+	"flag"
 	"github.com/sethvargo/go-password/password"
+
+	log "github.com/sirupsen/logrus"
 
 	. "git.codecoop.org/systemli/ticker/internal/api"
 	. "git.codecoop.org/systemli/ticker/internal/model"
@@ -11,16 +12,31 @@ import (
 )
 
 func main() {
-	API().Run(":8080")
+	API().Run(Config.Listen)
 }
 
 func init() {
-	//TODO: Config/Flags for database and ports
-	DB = OpenDB("ticker.db")
+	var cp = flag.String("config", "config.yml", "path to config.yml")
 
+	Config = LoadConfig(*cp)
+	DB = OpenDB(Config.Database)
+
+	firstRun()
+
+	log.Print("starting ticker at ", Config.Listen)
+
+	lvl, err := log.ParseLevel(Config.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetLevel(lvl)
+}
+
+func firstRun() {
 	count, err := DB.Count(&User{})
 	if err != nil {
-		log.Fatal("Error using database")
+		log.Fatal("error using database")
 	}
 
 	if count == 0 {
@@ -29,22 +45,16 @@ func init() {
 			log.Fatal(err)
 		}
 
-		//TODO: Make Email configurable
-		user, err := NewUser("admin@systemli.org", pw)
+		user, err := NewAdminUser(Config.Initiator, pw)
 		if err != nil {
-			log.Fatal("Could not create first user")
+			log.Fatal("could not create first user")
 		}
-		user.IsSuperAdmin = true
 
 		err = DB.Save(user)
 		if err != nil {
-			log.Fatal("Could not persist first user")
+			log.Fatal("could not persist first user")
 		}
 
-		log.Println("First run: Creating User")
-		log.Println("=======================================")
-		log.Printf("Password: %s\n", pw)
-		log.Println("Please change the password immediately!")
-		log.Println("=======================================")
+		log.WithField("email", user.Email).WithField("password", pw).Info("admin user created (change password now!)")
 	}
 }

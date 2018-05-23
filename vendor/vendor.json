@@ -103,10 +103,10 @@
 			"versionExact": "v1.2"
 		},
 		{
-			"checksumSHA1": "3Xl2eFF4Q+bZkX2RIrIZUkYDRdk=",
+			"checksumSHA1": "8e94vVGc8ssfxcpgDSGLmp1hRJM=",
 			"path": "github.com/golang/protobuf/proto",
-			"revision": "70c277a8a150a8e069492e6600926300405c2884",
-			"revisionTime": "2018-05-18T21:57:37Z"
+			"revision": "3a3da3a4e26776cc22a79ef46d5d58477532dede",
+			"revisionTime": "2018-05-22T22:42:51Z"
 		},
 		{
 			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
@@ -127,10 +127,22 @@
 			"revisionTime": "2018-05-09T09:42:59Z"
 		},
 		{
+			"checksumSHA1": "5fRTP+zI9WQqNzyHbi2qarMGauQ=",
+			"path": "github.com/sirupsen/logrus",
+			"revision": "ea8897e79973357ba785ac2533559a6297e83c44",
+			"revisionTime": "2018-05-23T07:42:43Z"
+		},
+		{
 			"checksumSHA1": "9XoGmW4qFUnEekGyyTGSzhmB2PI=",
 			"path": "github.com/stretchr/testify/assert",
 			"revision": "e4ec8152c15fc46bd5056ce65997a07c7d415325",
 			"revisionTime": "2015-02-18T22:18:46Z"
+		},
+		{
+			"checksumSHA1": "+Tc7BSC1TkFi0Iz7aJ24jmkmx5E=",
+			"path": "github.com/toorop/gin-logrus",
+			"revision": "fd3afab50f4f71a32c5409c164d19f2c01cca5af",
+			"revisionTime": "2017-07-02T17:29:39Z"
 		},
 		{
 			"checksumSHA1": "d5ty9+omxFH0EI8uZc58dvnLy6c=",
@@ -143,22 +155,34 @@
 			"revision": ""
 		},
 		{
-			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
+			"checksumSHA1": "oCH3J96RWvO8W4xjix47PModpio=",
 			"path": "golang.org/x/crypto/bcrypt",
-			"revision": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98",
-			"revisionTime": "2015-01-24T21:42:34Z"
+			"revision": "1a580b3eff7814fc9b40602fd35256c63b50f491",
+			"revisionTime": "2018-05-14T23:55:10Z"
 		},
 		{
-			"checksumSHA1": "udD2DzUPFZbMVXP0VNADhef4zKk=",
+			"checksumSHA1": "oVPHWesOmZ02vLq2fglGvf+AMgk=",
 			"path": "golang.org/x/crypto/blowfish",
-			"revision": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98",
-			"revisionTime": "2015-01-24T21:42:34Z"
+			"revision": "1a580b3eff7814fc9b40602fd35256c63b50f491",
+			"revisionTime": "2018-05-14T23:55:10Z"
 		},
 		{
-			"checksumSHA1": "e6tx+mrbPNlzXbr1VErnBPY+vmQ=",
+			"checksumSHA1": "BGm8lKZmvJbf/YOJLeL1rw2WVjA=",
+			"path": "golang.org/x/crypto/ssh/terminal",
+			"revision": "1a580b3eff7814fc9b40602fd35256c63b50f491",
+			"revisionTime": "2018-05-14T23:55:10Z"
+		},
+		{
+			"checksumSHA1": "bhyCzakhRB7Ymqof3UU3PYxOai0=",
 			"path": "golang.org/x/sys/unix",
-			"revision": "002cbb5f952456d0c50e0d2aff17ea5eca716979",
-			"revisionTime": "2016-10-16T18:36:00Z"
+			"revision": "88eb85aaee56831ad49eaf7aa80d73de9814cde2",
+			"revisionTime": "2018-05-22T12:53:54Z"
+		},
+		{
+			"checksumSHA1": "hO0KyV0+6a0ZtZQfWabCVGzBIww=",
+			"path": "golang.org/x/sys/windows",
+			"revision": "88eb85aaee56831ad49eaf7aa80d73de9814cde2",
+			"revisionTime": "2018-05-22T12:53:54Z"
 		},
 		{
 			"checksumSHA1": "t37dLDJJHFiXijVk9izoM91M9Ho=",
@@ -177,6 +201,11 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183",
 			"revisionTime": "2018-03-28T19:50:20Z"
+		},
+		{
+			"checksumSHA1": "n9yy9EH83S4k4hv41FQTrnLARDw=",
+			"path": "vendor",
+			"revision": ""
 		}
 	],
 	"rootPath": "git.codecoop.org/systemli/ticker"
