@@ -14,7 +14,7 @@ type config struct {
 	LogLevel  string `yaml:"log_level"`
 	Initiator string `yaml:"initiator"`
 	Secret    string `yaml:"secret"`
-	Database  string `yaml:"databse"`
+	Database  string `yaml:"database"`
 }
 
 //NewConfig returns config with default values.
