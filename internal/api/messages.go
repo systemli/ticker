@@ -15,19 +15,19 @@ import (
 func GetMessagesHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -35,7 +35,7 @@ func GetMessagesHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, "ticker not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, ErrorTickerNotFound))
 		return
 	}
 
@@ -48,7 +48,7 @@ func GetMessagesHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -59,19 +59,19 @@ func GetMessagesHandler(c *gin.Context) {
 func GetMessageHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -79,7 +79,7 @@ func GetMessageHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, "ticker not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, ErrorTickerNotFound))
 		return
 	}
 
@@ -87,7 +87,7 @@ func GetMessageHandler(c *gin.Context) {
 	messageID, err := strconv.Atoi(c.Param("messageID"))
 	err = DB.One("ID", messageID, &message)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
@@ -99,25 +99,25 @@ func PostMessageHandler(c *gin.Context) {
 	message := NewMessage()
 	err := c.Bind(&message)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -125,7 +125,7 @@ func PostMessageHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
@@ -133,7 +133,7 @@ func PostMessageHandler(c *gin.Context) {
 
 	err = DB.Save(&message)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -144,19 +144,19 @@ func PostMessageHandler(c *gin.Context) {
 func DeleteMessageHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -164,13 +164,13 @@ func DeleteMessageHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
 	messageID, err := strconv.Atoi(c.Param("messageID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -178,13 +178,13 @@ func DeleteMessageHandler(c *gin.Context) {
 
 	err = DB.One("ID", messageID, &message)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = DB.DeleteStruct(&message)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 

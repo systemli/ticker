@@ -14,7 +14,7 @@ import (
 //GetUsersHandler returns all Users
 func GetUsersHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
@@ -23,7 +23,7 @@ func GetUsersHandler(c *gin.Context) {
 	//TODO: Discuss need of Pagination
 	err := DB.All(&users, storm.Reverse())
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -33,20 +33,20 @@ func GetUsersHandler(c *gin.Context) {
 //GetUserHandler returns a User for the given id
 func GetUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
 	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = DB.One("ID", userID, &user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
@@ -56,7 +56,7 @@ func GetUserHandler(c *gin.Context) {
 //PostUserHandler creates and returns a new Ticker
 func PostUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
@@ -68,7 +68,7 @@ func PostUserHandler(c *gin.Context) {
 
 	err := c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -76,7 +76,7 @@ func PostUserHandler(c *gin.Context) {
 
 	user, err := NewUser(body.Email, body.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -84,7 +84,7 @@ func PostUserHandler(c *gin.Context) {
 
 	err = DB.Save(user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -94,20 +94,20 @@ func PostUserHandler(c *gin.Context) {
 //PutUserHandler updates a user
 func PutUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	var user User
 	err = DB.One("ID", userID, &user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -121,7 +121,7 @@ func PutUserHandler(c *gin.Context) {
 
 	err = c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -137,7 +137,7 @@ func PutUserHandler(c *gin.Context) {
 
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 	// You only can set/unset other users SuperAdmin property
@@ -151,7 +151,7 @@ func PutUserHandler(c *gin.Context) {
 
 	err = DB.Save(&user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -161,37 +161,37 @@ func PutUserHandler(c *gin.Context) {
 //DeleteUserHandler deletes a existing User
 func DeleteUserHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
 	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if me.ID == userID {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "self deletion is forbidden"))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, "self deletion is forbidden"))
 		return
 	}
 
 	err = DB.One("ID", userID, &user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
 	err = DB.DeleteStruct(&user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 

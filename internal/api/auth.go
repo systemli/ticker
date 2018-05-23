@@ -33,20 +33,20 @@ func UserMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
-			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user identifier not found"))
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserIdentifierMissing))
 			return
 		}
 
 		id, err := strconv.Atoi(userID.(string))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user identifier not found"))
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserIdentifierMissing))
 			return
 		}
 
 		var user User
 		err = DB.One("ID", id, &user)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 			return
 		}
 
@@ -66,5 +66,5 @@ func Authorizator(userID string, c *gin.Context) bool {
 
 //
 func Unauthorized(c *gin.Context, code int, message string) {
-	c.JSON(code, NewJSONErrorResponse(ErrorCredentials, message))
+	c.JSON(code, NewJSONErrorResponse(ErrorCodeCredentials, message))
 }

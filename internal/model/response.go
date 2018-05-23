@@ -1,10 +1,15 @@
 package model
 
 const (
-	ErrorUnspecified             = 1000
-	ErrorNotFound                = 1001
-	ErrorCredentials             = 1002
-	ErrorInsufficientPermissions = 1003
+	ErrorCodeDefault                 = 1000
+	ErrorCodeNotFound                = 1001
+	ErrorCodeCredentials             = 1002
+	ErrorCodeInsufficientPermissions = 1003
+
+	ErrorInsufficientPermissions = "insufficient permissions"
+	ErrorUserIdentifierMissing   = "user identifier not found"
+	ErrorUserNotFound            = "user not found"
+	ErrorTickerNotFound          = "ticker not found"
 
 	ResponseSuccess = `success`
 	ResponseError   = `error`

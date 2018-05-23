@@ -16,7 +16,7 @@ import (
 func GetTickersHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
@@ -32,7 +32,7 @@ func GetTickersHandler(c *gin.Context) {
 		}
 	}
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -43,19 +43,19 @@ func GetTickersHandler(c *gin.Context) {
 func GetTickerHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -63,7 +63,7 @@ func GetTickerHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 
@@ -73,20 +73,20 @@ func GetTickerHandler(c *gin.Context) {
 //PostTickerHandler creates and returns a new Ticker
 func PostTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
 	ticker := NewTicker()
 	err := c.Bind(&ticker)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = DB.Save(&ticker)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -97,19 +97,19 @@ func PostTickerHandler(c *gin.Context) {
 func PutTickerHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, "user not found"))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 			return
 		}
 	}
@@ -117,19 +117,19 @@ func PutTickerHandler(c *gin.Context) {
 	var ticker Ticker
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = c.Bind(&ticker)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = DB.Save(&ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
@@ -139,20 +139,20 @@ func PutTickerHandler(c *gin.Context) {
 //DeleteTickerHandler deletes a existing Ticker
 func DeleteTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorInsufficientPermissions, "insufficient permissions"))
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
 		return
 	}
 
 	var ticker Ticker
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorUnspecified, err.Error()))
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
 	err = DB.One("ID", tickerID, &ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
 		return
 	}
 

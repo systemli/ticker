@@ -18,7 +18,7 @@ func GetTimelineHandler(c *gin.Context) {
 			Data:   map[string]interface{}{"messages": nil},
 			Status: ResponseError,
 			Error: map[string]interface{}{
-				"code":    ErrorUnspecified,
+				"code":    ErrorCodeDefault,
 				"message": `Could not find a ticker.`,
 			},
 		})
@@ -31,7 +31,7 @@ func GetTimelineHandler(c *gin.Context) {
 			Data:   map[string]interface{}{"messages": nil},
 			Status: ResponseError,
 			Error: map[string]interface{}{
-				"code":    ErrorUnspecified,
+				"code":    ErrorCodeDefault,
 				"message": `Could not find a ticker.`,
 			},
 		})

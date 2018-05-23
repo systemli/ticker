@@ -86,7 +86,7 @@ func Me(c *gin.Context) (model.User, error) {
 	var user model.User
 	u, exists := c.Get(UserKey)
 	if !exists {
-		return user, errors.New("user not found")
+		return user, errors.New(model.ErrorUserNotFound)
 	}
 
 	return u.(model.User), nil
