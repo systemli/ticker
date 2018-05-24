@@ -55,10 +55,34 @@
 			"revisionTime": "2018-04-30T18:00:54Z"
 		},
 		{
+			"checksumSHA1": "b55VMQZmwBl4iSpI9BfdesJI9vQ=",
+			"path": "github.com/cenkalti/backoff",
+			"revision": "4dc77674aceaabba2c7e3da25d4c823edfb73f99",
+			"revisionTime": "2015-08-14T09:43:33Z"
+		},
+		{
 			"checksumSHA1": "qFaKrhSla38BRAyaGz2UaZvH/Dk=",
 			"path": "github.com/coreos/bbolt",
 			"revision": "af9db2027c98c61ecd8e17caa5bd265792b9b9a2",
 			"revisionTime": "2018-03-18T00:15:26Z"
+		},
+		{
+			"checksumSHA1": "MJSqXrMNKdSZKx0ehqlfM5cvv5U=",
+			"path": "github.com/dghubble/go-twitter/twitter",
+			"revision": "093ee2cf4e32ef608cded0ace84d5d82a52da4fa",
+			"revisionTime": "2018-01-27T04:07:13Z"
+		},
+		{
+			"checksumSHA1": "zSAENn9MzTCRqsEb4QXDZglhIbE=",
+			"path": "github.com/dghubble/oauth1",
+			"revision": "c0a405baf29f5ed2616bc1ef6b778532c960aa5b",
+			"revisionTime": "2018-05-22T04:49:49Z"
+		},
+		{
+			"checksumSHA1": "LrOnRW6KCAcKDnKPs+Hibtb7Duk=",
+			"path": "github.com/dghubble/sling",
+			"revision": "38781bc2cb5cb513689208cbff1f7c4fc93cc0d2",
+			"revisionTime": "2018-05-19T22:13:10Z"
 		},
 		{
 			"checksumSHA1": "8682CypcUWdUlGSK8C2DGB/CcTk=",
@@ -107,6 +131,12 @@
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "3a3da3a4e26776cc22a79ef46d5d58477532dede",
 			"revisionTime": "2018-05-22T22:42:51Z"
+		},
+		{
+			"checksumSHA1": "Evpv9y6iPdy+8FeAVDmKrqV1sqo=",
+			"path": "github.com/google/go-querystring/query",
+			"revision": "2a60fc2ba6c19de80291203597d752e9ba58e4c0",
+			"revisionTime": "2015-10-28T18:53:53Z"
 		},
 		{
 			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",

@@ -11,6 +11,7 @@ type Ticker struct {
 	Description  string      `json:"description" binding:"required"`
 	Active       bool        `json:"active"`
 	Information  Information `json:"information"`
+	Twitter      Twitter     `json:"twitter"`
 }
 
 //Information holds some meta information for Ticker
@@ -22,9 +23,18 @@ type Information struct {
 	Facebook string `json:"facebook"`
 }
 
+type Twitter struct {
+	Token  string
+	Secret string
+}
+
 //NewTicker creates new Ticker
 func NewTicker() Ticker {
 	return Ticker{
 		CreationDate: time.Now(),
 	}
+}
+
+func (tw *Twitter) Enabled() bool {
+	return tw.Token != "" && tw.Secret != ""
 }

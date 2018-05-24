@@ -57,6 +57,9 @@ func API() *gin.Engine {
 	public := r.Group("/v1").Use()
 	{
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
+		public.POST(`/admin/auth/twitter/request_token`, PostTwitterRequestTokenHandler)
+		public.POST(`/admin/auth/twitter`, PostAuthTwitterHandler)
+
 		public.GET(`/init`, GetInitHandler)
 		public.GET(`/timeline`, GetTimelineHandler)
 	}

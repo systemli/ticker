@@ -16,6 +16,10 @@ type config struct {
 	Initiator string `yaml:"initiator"`
 	Secret    string `yaml:"secret"`
 	Database  string `yaml:"database"`
+	Twitter struct {
+		ConsumerKey    string `yaml:"consumer_key"`
+		ConsumerSecret string `yaml:"consumer_secret"`
+	} `yaml:"twitter"`
 }
 
 //NewConfig returns config with default values.
@@ -29,6 +33,11 @@ func NewConfig() *config {
 		Secret:    secret,
 		Database:  "ticker.db",
 	}
+}
+
+//TwitterEnabled returns true if required keys not empty.
+func (c *config) TwitterEnabled() bool {
+	return c.Twitter.ConsumerKey != "" && c.Twitter.ConsumerSecret != ""
 }
 
 //LoadConfig loads config from file.
