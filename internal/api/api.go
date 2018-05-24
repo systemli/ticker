@@ -24,7 +24,7 @@ func API() *gin.Engine {
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
 	config.AllowCredentials = true
-	config.AllowHeaders = []string{`*`}
+	config.AllowHeaders = []string{"Authorization", "Origin", "Content-Length", "Content-Type"}
 	config.AllowMethods = []string{`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`}
 
 	r.Use(cors.New(config))
