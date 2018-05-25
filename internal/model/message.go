@@ -8,7 +8,8 @@ type Message struct {
 	CreationDate time.Time `json:"creation_date" storm:"index"`
 	Text         string    `json:"text" binding:"required"`
 	Ticker       int       `json:"ticker" storm:"index"`
-	//TODO: Geolocation, Tweet/Facebook-ID
+	TweetID      string    `json:"tweet_id"`
+	//TODO: Geolocation, Facebook-ID
 }
 
 //NewMessage creates new Message

@@ -6,7 +6,9 @@ import (
 
 	"github.com/asdine/storm"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
+	"git.codecoop.org/systemli/ticker/internal/bridge"
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
@@ -131,6 +133,15 @@ func PostMessageHandler(c *gin.Context) {
 
 	message.Ticker = tickerID
 
+	if ticker.Twitter.Active {
+		id, err := bridge.Twitter.Update(ticker, message)
+		if err == nil {
+			message.TweetID = id
+		} else {
+			log.Error(err)
+		}
+	}
+
 	err = DB.Save(&message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
@@ -180,6 +191,13 @@ func DeleteMessageHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
+	}
+
+	if message.TweetID != "" {
+		err = bridge.Twitter.Delete(ticker, message.TweetID)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	err = DB.DeleteStruct(&message)

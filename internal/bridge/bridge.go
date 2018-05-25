@@ -46,6 +46,19 @@ func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (str
 	return id, nil
 }
 
+func (tb *TwitterBridge) Delete(ticker model.Ticker, tweetID string) error {
+	client := tb.client(ticker.Twitter.Token, ticker.Twitter.Secret)
+
+	id, err := strconv.ParseInt(tweetID, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = client.Statuses.Destroy(id, nil)
+
+	return err
+}
+
 //User returns the user information.
 func (tb *TwitterBridge) User(ticker model.Ticker) (*twitter.User, error) {
 	token := oauth1.NewToken(ticker.Twitter.Token, ticker.Twitter.Secret)
