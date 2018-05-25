@@ -10,6 +10,7 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/api"
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"git.codecoop.org/systemli/ticker/internal/storage"
+	"encoding/json"
 )
 
 func TestGetInitHandler(t *testing.T) {
@@ -35,7 +36,20 @@ func TestGetInitHandler(t *testing.T) {
 		SetHeader(map[string]string{"Origin": "http://www.demoticker.org/"}).
 		Run(api.API(), func(response gofight.HTTPResponse, request gofight.HTTPRequest) {
 		assert.Equal(t, response.Code, 200)
-		assert.Equal(t, strings.TrimSpace(response.Body.String()), `{"data":{"settings":{"refresh_interval":10},"ticker":{"id":1,"creation_date":"0001-01-01T00:00:00Z","domain":"demoticker.org","title":"Demoticker","description":"Description","active":true,"information":{"author":"","url":"","email":"","twitter":"","facebook":""}}},"status":"success","error":null}`)
 
+		var data struct {
+			Data   map[string]interface{}
+			Status string
+			Error  map[string]interface{}
+		}
+
+		err := json.Unmarshal(response.Body.Bytes(), &data)
+		if err != nil {
+			t.Fail()
+		}
+
+		assert.Nil(t, data.Error)
+		assert.Equal(t, model.ResponseSuccess, data.Status)
+		assert.Equal(t,2, len(data.Data))
 	})
 }
