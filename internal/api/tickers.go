@@ -79,7 +79,7 @@ func PostTickerHandler(c *gin.Context) {
 		return
 	}
 
-	ticker := new(Ticker)
+	ticker := NewTicker()
 	err := updateTicker(ticker, c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))

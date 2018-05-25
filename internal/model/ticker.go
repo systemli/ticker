@@ -63,8 +63,8 @@ type TwitterResponse struct {
 }
 
 //NewTicker creates new Ticker
-func NewTicker() Ticker {
-	return Ticker{
+func NewTicker() *Ticker {
+	return &Ticker{
 		CreationDate: time.Now(),
 	}
 }
