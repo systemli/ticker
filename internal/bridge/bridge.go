@@ -46,6 +46,26 @@ func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (str
 	return id, nil
 }
 
+//User returns the user information.
+func (tb *TwitterBridge) User(ticker model.Ticker) (*twitter.User, error) {
+	token := oauth1.NewToken(ticker.Twitter.Token, ticker.Twitter.Secret)
+	httpClient := tb.config().Client(oauth1.NoContext, token)
+
+	// Twitter client
+	client := twitter.NewClient(httpClient)
+	user, _, err := client.Accounts.VerifyCredentials(&twitter.AccountVerifyParams{
+		IncludeEmail:    twitter.Bool(false),
+		IncludeEntities: twitter.Bool(false),
+		SkipStatus:      twitter.Bool(true),
+	})
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 func (tb *TwitterBridge) config() *oauth1.Config {
 	return oauth1.NewConfig(tb.ConsumerKey, tb.ConsumerSecret)
 }

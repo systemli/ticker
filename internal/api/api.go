@@ -40,6 +40,7 @@ func API() *gin.Engine {
 		admin.GET(`/tickers/:tickerID`, GetTickerHandler)
 		admin.POST(`/tickers`, PostTickerHandler)
 		admin.PUT(`/tickers/:tickerID`, PutTickerHandler)
+		admin.PUT(`/tickers/:tickerID/twitter`, PutTickerTwitterHandler)
 		admin.DELETE(`/tickers/:tickerID`, DeleteTickerHandler)
 
 		admin.GET(`/tickers/:tickerID/messages`, GetMessagesHandler)

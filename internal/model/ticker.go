@@ -1,21 +1,51 @@
 package model
 
-import "time"
+import (
+	"time"
+	"github.com/dghubble/go-twitter/twitter"
+)
 
 //Ticker represents the structure of an Ticker configuration
 type Ticker struct {
-	ID           int         `json:"id" storm:"id,increment"`
-	CreationDate time.Time   `json:"creation_date" storm:"index"`
-	Domain       string      `json:"domain" binding:"required" storm:"unique"`
-	Title        string      `json:"title" binding:"required"`
-	Description  string      `json:"description" binding:"required"`
-	Active       bool        `json:"active"`
-	Information  Information `json:"information"`
-	Twitter      Twitter     `json:"twitter"`
+	ID           int       `storm:"id,increment"`
+	CreationDate time.Time `storm:"index"`
+	Domain       string    `storm:"unique"`
+	Title        string
+	Description  string
+	Active       bool
+	Information  Information
+	Twitter      Twitter
 }
 
 //Information holds some meta information for Ticker
 type Information struct {
+	Author   string
+	URL      string
+	Email    string
+	Twitter  string
+	Facebook string
+}
+
+//Twitter holds all required twitter information.
+type Twitter struct {
+	Active bool
+	Token  string
+	Secret string
+	User   twitter.User
+}
+
+type TickerResponse struct {
+	ID           int                 `json:"id"`
+	CreationDate time.Time           `json:"creation_date"`
+	Domain       string              `json:"domain"`
+	Title        string              `json:"title"`
+	Description  string              `json:"description"`
+	Active       bool                `json:"active"`
+	Information  InformationResponse `json:"information"`
+	Twitter      TwitterResponse     `json:"twitter"`
+}
+
+type InformationResponse struct {
 	Author   string `json:"author"`
 	URL      string `json:"url"`
 	Email    string `json:"email"`
@@ -23,9 +53,13 @@ type Information struct {
 	Facebook string `json:"facebook"`
 }
 
-type Twitter struct {
-	Token  string
-	Secret string
+type TwitterResponse struct {
+	Active      bool   `json:"active"`
+	Connected   bool   `json:"connected"`
+	Name        string `json:"name"`
+	ScreenName  string `json:"screen_name"`
+	Description string `json:"description"`
+	ImageURL    string `json:"image_url"`
 }
 
 //NewTicker creates new Ticker
@@ -35,6 +69,49 @@ func NewTicker() Ticker {
 	}
 }
 
-func (tw *Twitter) Enabled() bool {
+//
+func NewTickerResponse(ticker *Ticker) *TickerResponse {
+	info := InformationResponse{
+		Author:   ticker.Information.Author,
+		URL:      ticker.Information.URL,
+		Email:    ticker.Information.Email,
+		Twitter:  ticker.Information.Twitter,
+		Facebook: ticker.Information.Facebook,
+	}
+
+	tw := TwitterResponse{
+		Active:      ticker.Twitter.Active,
+		Connected:   ticker.Twitter.Connected(),
+		Name:        ticker.Twitter.User.Name,
+		ScreenName:  ticker.Twitter.User.ScreenName,
+		Description: ticker.Twitter.User.Description,
+		ImageURL:    ticker.Twitter.User.ProfileImageURLHttps,
+	}
+
+	return &TickerResponse{
+		ID:           ticker.ID,
+		CreationDate: ticker.CreationDate,
+		Domain:       ticker.Domain,
+		Title:        ticker.Title,
+		Description:  ticker.Description,
+		Active:       ticker.Active,
+		Information:  info,
+		Twitter:      tw,
+	}
+}
+
+//
+func NewTickersReponse(tickers []*Ticker) []*TickerResponse {
+	var tr []*TickerResponse
+
+	for _, ticker := range tickers {
+		tr = append(tr, NewTickerResponse(ticker))
+	}
+
+	return tr
+}
+
+//Connected returns true when twitter can be used.
+func (tw *Twitter) Connected() bool {
 	return tw.Token != "" && tw.Secret != ""
 }
