@@ -41,7 +41,7 @@ func GetMessagesHandler(c *gin.Context) {
 		return
 	}
 
-	var messages []Message
+	var messages []*Message
 	//TODO: Pagination
 	err = DB.Find("Ticker", tickerID, &messages, storm.Reverse())
 	if err != nil {
@@ -54,7 +54,7 @@ func GetMessagesHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("messages", messages))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("messages", NewMessagesResponse(messages)))
 }
 
 //GetMessageHandler returns a Message for the given id
@@ -93,13 +93,15 @@ func GetMessageHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", message))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(&message)))
 }
 
 //PostMessageHandler creates and returns a new Message
 func PostMessageHandler(c *gin.Context) {
-	message := NewMessage()
-	err := c.Bind(&message)
+	var body struct {
+		Text string `json:"text" binding:"required"`
+	}
+	err := c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
@@ -131,10 +133,12 @@ func PostMessageHandler(c *gin.Context) {
 		return
 	}
 
+	message := NewMessage()
+	message.Text = body.Text
 	message.Ticker = tickerID
 
 	if ticker.Twitter.Active {
-		id, err := bridge.Twitter.Update(ticker, message)
+		id, err := bridge.Twitter.Update(ticker, *message)
 		if err == nil {
 			message.TweetID = id
 		} else {
@@ -142,13 +146,13 @@ func PostMessageHandler(c *gin.Context) {
 		}
 	}
 
-	err = DB.Save(&message)
+	err = DB.Save(message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", message))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(message)))
 }
 
 //DeleteTickerHandler deletes a existing Ticker

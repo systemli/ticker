@@ -66,7 +66,7 @@ func TestGetMessageHandler(t *testing.T) {
 	message.Text = "text"
 	message.Ticker = ticker.ID
 
-	storage.DB.Save(&message)
+	storage.DB.Save(message)
 
 	r.GET("/v1/admin/tickers/1/messages/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
@@ -196,7 +196,7 @@ func TestDeleteMessageHandler(t *testing.T) {
 	message.Text = "Text"
 	message.Ticker = 1
 
-	storage.DB.Save(&message)
+	storage.DB.Save(message)
 
 	r.DELETE("/v1/admin/tickers/1/messages/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).

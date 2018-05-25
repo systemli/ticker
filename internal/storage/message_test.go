@@ -40,7 +40,7 @@ func TestFindByTicker(t *testing.T) {
 	m1.Ticker = ticker.ID
 	m1.Text = "First Message"
 
-	err = storage.DB.Save(&m1)
+	err = storage.DB.Save(m1)
 
 	messages, err = storage.FindByTicker(ticker, pagination)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestFindByTicker(t *testing.T) {
 	m2.Ticker = ticker.ID
 	m2.Text = "Second Message"
 
-	err = storage.DB.Save(&m2)
+	err = storage.DB.Save(m2)
 
 	c = createContext("")
 	pagination = util.NewPagination(&c)
