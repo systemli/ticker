@@ -9,11 +9,6 @@ import (
 
 var Twitter *TwitterBridge
 
-type bridge interface {
-	Initialized() bool
-	Update(ticker model.Ticker, message model.Message) (string, error)
-}
-
 //
 type TwitterBridge struct {
 	ConsumerKey    string
@@ -34,16 +29,15 @@ func (tb *TwitterBridge) Initialized() bool {
 }
 
 //
-func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (string, error) {
+func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (*twitter.Tweet, error) {
 	client := tb.client(ticker.Twitter.Token, ticker.Twitter.Secret)
 
 	tweet, _, err := client.Statuses.Update(message.Text, nil)
 	if err != nil {
-		return "", err
+		return tweet, err
 	}
-	id := strconv.FormatInt(tweet.ID, 10)
 
-	return id, nil
+	return tweet, nil
 }
 
 func (tb *TwitterBridge) Delete(ticker model.Ticker, tweetID string) error {

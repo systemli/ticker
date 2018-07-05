@@ -138,9 +138,9 @@ func PostMessageHandler(c *gin.Context) {
 	message.Ticker = tickerID
 
 	if ticker.Twitter.Active {
-		id, err := bridge.Twitter.Update(ticker, *message)
+		tweet, err := bridge.Twitter.Update(ticker, *message)
 		if err == nil {
-			message.TweetID = id
+			message.Tweet = Tweet{ID: tweet.IDStr, UserName: tweet.User.ScreenName}
 		} else {
 			log.Error(err)
 		}
@@ -197,8 +197,8 @@ func DeleteMessageHandler(c *gin.Context) {
 		return
 	}
 
-	if message.TweetID != "" {
-		err = bridge.Twitter.Delete(ticker, message.TweetID)
+	if message.Tweet.ID != "" {
+		err = bridge.Twitter.Delete(ticker, message.Tweet.ID)
 		if err != nil {
 			log.Error(err)
 		}

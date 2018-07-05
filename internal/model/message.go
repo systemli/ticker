@@ -1,15 +1,23 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 //Message represents a single message
 type Message struct {
 	ID           int       `storm:"id,increment"`
 	CreationDate time.Time `storm:"index"`
-	Text         string
 	Ticker       int       `storm:"index"`
-	TweetID      string
+	Text         string
+	Tweet        Tweet
 	//TODO: Geolocation, Facebook-ID
+}
+
+//
+type Tweet struct {
+	ID       string
+	UserName string
 }
 
 type MessageResponse struct {
@@ -18,6 +26,7 @@ type MessageResponse struct {
 	Text         string    `json:"text"`
 	Ticker       int       `json:"ticker"`
 	TweetID      string    `json:"tweet_id"`
+	TweetUser    string    `json:"tweet_user"`
 }
 
 //NewMessage creates new Message
@@ -34,7 +43,8 @@ func NewMessageResponse(message *Message) *MessageResponse {
 		CreationDate: message.CreationDate,
 		Text:         message.Text,
 		Ticker:       message.Ticker,
-		TweetID:      message.TweetID,
+		TweetID:      message.Tweet.ID,
+		TweetUser:    message.Tweet.UserName,
 	}
 }
 
