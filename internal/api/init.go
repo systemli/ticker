@@ -13,17 +13,18 @@ func GetInitHandler(c *gin.Context) {
 	domain, err := GetDomain(c)
 
 	type settings struct {
-		RefreshInterval  int              `json:"refresh_interval,omitempty"`
-		InactiveSettings InactiveSettings `json:"inactive_settings,omitempty"`
+		RefreshInterval  int         `json:"refresh_interval,omitempty"`
+		InactiveSettings interface{} `json:"inactive_settings,omitempty"`
 	}
 
 	s := settings{
 		RefreshInterval: 10000,
 	}
 
+
 	ticker, err := FindTicker(domain)
 	if err != nil || !ticker.Active {
-		s.InactiveSettings = *DefaultInactiveSettings()
+		s.InactiveSettings = GetInactiveSettings().Value
 
 		c.JSON(http.StatusOK, JSONResponse{
 			Data:   map[string]interface{}{"ticker": nil, "settings": s},
