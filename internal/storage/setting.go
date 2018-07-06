@@ -1,6 +1,8 @@
 package storage
 
-import . "git.codecoop.org/systemli/ticker/internal/model"
+import (
+	. "git.codecoop.org/systemli/ticker/internal/model"
+)
 
 //FindSetting lookup for a setting in storage
 func FindSetting(name string) (*Setting, error) {
@@ -32,4 +34,19 @@ func GetRefreshInterval() *Setting {
 	}
 
 	return setting
+}
+
+//GetRefreshIntervalValue returns concrete integer value
+func GetRefreshIntervalValue() int {
+	setting := GetRefreshInterval()
+
+	var value int
+	switch sv := setting.Value.(type) {
+	case float64:
+		value = int(sv)
+	default:
+		value = sv.(int)
+	}
+
+	return value
 }
