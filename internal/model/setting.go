@@ -1,14 +1,16 @@
 package model
 
 const (
-	SettingInactiveName        = `inactive_settings`
-	SettingInactiveHeadline    = `The ticker is currently inactive.`
-	SettingInactiveSubHeadline = `Please contact us if you want to use it.`
-	SettingInactiveDescription = `...`
-	SettingInactiveAuthor      = `systemli.org Ticker Team`
-	SettingInactiveEmail       = `admin@systemli.org`
-	SettingInactiveHomepage    = `https://www.systemli.org/`
-	SettingInactiveTwitter     = `systemli`
+	SettingInactiveName           = `inactive_settings`
+	SettingRefreshInterval        = `refresh_interval`
+	SettingInactiveHeadline       = `The ticker is currently inactive.`
+	SettingInactiveSubHeadline    = `Please contact us if you want to use it.`
+	SettingInactiveDescription    = `...`
+	SettingInactiveAuthor         = `systemli.org Ticker Team`
+	SettingInactiveEmail          = `admin@systemli.org`
+	SettingInactiveHomepage       = `https://www.systemli.org/`
+	SettingInactiveTwitter        = `systemli`
+	SettingDefaultRefreshInterval = 10000
 )
 
 //Setting represents an global setting for ticker

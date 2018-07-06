@@ -23,3 +23,13 @@ func GetInactiveSettings() *Setting {
 
 	return setting
 }
+
+//GetRefreshInterval returns the refresh interval
+func GetRefreshInterval() *Setting {
+	setting, err := FindSetting(SettingRefreshInterval)
+	if err != nil {
+		return NewSetting(SettingRefreshInterval, SettingDefaultRefreshInterval)
+	}
+
+	return setting
+}

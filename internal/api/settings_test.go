@@ -19,18 +19,18 @@ func TestGetSettingHandler(t *testing.T) {
 	r.GET("/v1/admin/settings/refresh_interval").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-		assert.Equal(t, 404, r.Code)
-		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"setting not found"}}`, strings.TrimSpace(r.Body.String()))
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"setting":{"id":0,"name":"refresh_interval","value":10000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 	})
 
-	setting := model.NewSetting("refresh_interval", 10000)
+	setting := model.NewSetting("refresh_interval", 20000)
 	storage.DB.Save(setting)
 
 	r.GET("/v1/admin/settings/refresh_interval").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 		assert.Equal(t, 200, r.Code)
-		assert.Equal(t, `{"data":{"setting":{"id":1,"name":"refresh_interval","value":10000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+		assert.Equal(t, `{"data":{"setting":{"id":1,"name":"refresh_interval","value":20000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 	})
 }
 
@@ -126,5 +126,46 @@ func TestPutInactiveSettingsHandler(t *testing.T) {
 		assert.Equal(t, "admin@systemli.org", value["email"])
 		assert.Equal(t, "https://www.systemli.org", value["homepage"])
 		assert.Equal(t, "systemli", value["twitter"])
+	})
+}
+
+func TestPutRefreshIntervalHandler(t *testing.T) {
+	r := setup()
+
+	body := `{
+		"refresh_interval": 20000
+	}`
+
+	r.PUT("/v1/admin/settings/refresh_interval").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+
+		type res struct {
+			Data   map[string]model.Setting `json:"data"`
+			Status string                   `json:"status"`
+			Error  interface{}              `json:"error"`
+		}
+
+		var response res
+
+		err := json.Unmarshal(r.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, response.Status)
+		assert.Equal(t, nil, response.Error)
+		assert.Equal(t, 1, len(response.Data))
+
+		setting := response.Data["setting"]
+
+		assert.Equal(t, 1, setting.ID)
+		assert.Equal(t, "refresh_interval", setting.Name)
+
+		value := setting.Value
+
+		assert.Equal(t, 20000, value)
 	})
 }

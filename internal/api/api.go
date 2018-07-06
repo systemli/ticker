@@ -56,6 +56,7 @@ func API() *gin.Engine {
 
 		admin.GET(`/settings/:name`, GetSettingHandler)
 		admin.PUT(`/settings/inactive_settings`, PutInactiveSettingsHandler)
+		admin.PUT(`/settings/refresh_interval`, PutRefreshIntervalHandler)
 	}
 
 	public := r.Group("/v1").Use()
