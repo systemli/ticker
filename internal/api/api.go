@@ -53,6 +53,9 @@ func API() *gin.Engine {
 		admin.POST(`/users`, PostUserHandler)
 		admin.PUT(`/users/:userID`, PutUserHandler)
 		admin.DELETE(`/users/:userID`, DeleteUserHandler)
+
+		admin.GET(`/settings/:name`, GetSettingHandler)
+		admin.PUT(`/settings/inactive_settings`, PutInactiveSettingsHandler)
 	}
 
 	public := r.Group("/v1").Use()

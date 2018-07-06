@@ -8,23 +8,25 @@ import (
 	. "git.codecoop.org/systemli/ticker/internal/storage"
 )
 
-//Settings holds options for frontend settings
-type Settings struct {
-	RefreshInterval int `json:"refresh_interval,omitempty"`
-}
-
 //GetInitHandler returns the basic settings for the ticker.
 func GetInitHandler(c *gin.Context) {
 	domain, err := GetDomain(c)
 
-	settings := Settings{
-		RefreshInterval: 10,
+	type settings struct {
+		RefreshInterval  int              `json:"refresh_interval,omitempty"`
+		InactiveSettings InactiveSettings `json:"inactive_settings,omitempty"`
+	}
+
+	s := settings{
+		RefreshInterval: 10000,
 	}
 
 	ticker, err := FindTicker(domain)
-	if err != nil {
+	if err != nil || !ticker.Active {
+		s.InactiveSettings = *DefaultInactiveSettings()
+
 		c.JSON(http.StatusOK, JSONResponse{
-			Data:   map[string]interface{}{"ticker": nil, "settings": settings},
+			Data:   map[string]interface{}{"ticker": nil, "settings": s},
 			Status: ResponseSuccess,
 			Error:  nil,
 		})
@@ -33,7 +35,7 @@ func GetInitHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, JSONResponse{
 		//TODO: Build NewTickerPublicResponse to hide unnecessary information
-		Data:   map[string]interface{}{"ticker": NewTickerResponse(ticker), "settings": settings},
+		Data:   map[string]interface{}{"ticker": NewTickerResponse(ticker), "settings": s},
 		Status: ResponseSuccess,
 		Error:  nil,
 	})

@@ -1,7 +1,6 @@
 package api_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/appleboy/gofight"
@@ -18,9 +17,31 @@ func TestGetInitHandler(t *testing.T) {
 
 	r.GET("/v1/init").
 		SetHeader(map[string]string{"Origin": "http://www.demoticker.org/"}).
-		Run(api.API(), func(response gofight.HTTPResponse, request gofight.HTTPRequest) {
-		assert.Equal(t, response.Code, 200)
-		assert.Equal(t, strings.TrimSpace(response.Body.String()), `{"data":{"settings":{"refresh_interval":10},"ticker":null},"status":"success","error":null}`)
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, r.Code, 200)
+
+		type res struct {
+			Data   map[string]interface{} `json:"data"`
+			Status string                 `json:"status"`
+			Error  interface{}            `json:"error"`
+		}
+
+		var response res
+
+		err := json.Unmarshal(r.Body.Bytes(), &response)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, response.Status)
+		assert.Equal(t, nil, response.Error)
+		assert.Equal(t, 2, len(response.Data))
+
+		settings := response.Data["settings"].(map[string]interface{})
+		assert.Equal(t, 10000, settings["refresh_interval"])
+
+		ticker := response.Data["ticker"]
+		assert.Nil(t, ticker)
 	})
 
 	ticker := new(model.Ticker)
@@ -50,6 +71,9 @@ func TestGetInitHandler(t *testing.T) {
 
 		assert.Nil(t, data.Error)
 		assert.Equal(t, model.ResponseSuccess, data.Status)
-		assert.Equal(t,2, len(data.Data))
+		assert.Equal(t, 2, len(data.Data))
+
+		ticker := data.Data["ticker"]
+		assert.NotNil(t, ticker)
 	})
 }

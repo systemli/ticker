@@ -244,6 +244,7 @@ func setup() *gofight.RequestConfig {
 	storage.DB.Drop("Ticker")
 	storage.DB.Drop("Message")
 	storage.DB.Drop("User")
+	storage.DB.Drop("Setting")
 
 	admin, _ := model.NewUser("admin@systemli.org", "password")
 	admin.IsSuperAdmin = true
