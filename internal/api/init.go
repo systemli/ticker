@@ -18,7 +18,7 @@ func GetInitHandler(c *gin.Context) {
 	}
 
 	s := settings{
-		RefreshInterval: GetRefreshInterval().Value.(int),
+		RefreshInterval: int(GetRefreshInterval().Value.(float64)),
 	}
 
 	ticker, err := FindTicker(domain)
