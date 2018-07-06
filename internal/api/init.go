@@ -32,7 +32,8 @@ func GetInitHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, JSONResponse{
-		Data:   map[string]interface{}{"ticker": ticker, "settings": settings},
+		//TODO: Build NewTickerPublicResponse to hide unnecessary information
+		Data:   map[string]interface{}{"ticker": NewTickerResponse(ticker), "settings": settings},
 		Status: ResponseSuccess,
 		Error:  nil,
 	})

@@ -42,7 +42,7 @@ func GetTimelineHandler(c *gin.Context) {
 	messages, err := FindByTicker(ticker, pagination)
 
 	c.JSON(http.StatusOK, JSONResponse{
-		Data:   map[string]interface{}{"messages": messages},
+		Data:   map[string]interface{}{"messages": NewMessagesResponse(messages)},
 		Status: ResponseSuccess,
 		Error:  nil,
 	})

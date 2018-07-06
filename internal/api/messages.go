@@ -41,7 +41,7 @@ func GetMessagesHandler(c *gin.Context) {
 		return
 	}
 
-	var messages []*Message
+	var messages []Message
 	//TODO: Pagination
 	err = DB.Find("Ticker", tickerID, &messages, storm.Reverse())
 	if err != nil {
@@ -93,7 +93,7 @@ func GetMessageHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(&message)))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(message)))
 }
 
 //PostMessageHandler creates and returns a new Message
@@ -152,7 +152,7 @@ func PostMessageHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(message)))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(*message)))
 }
 
 //DeleteTickerHandler deletes a existing Ticker

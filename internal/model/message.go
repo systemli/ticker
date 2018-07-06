@@ -37,7 +37,7 @@ func NewMessage() *Message {
 }
 
 //
-func NewMessageResponse(message *Message) *MessageResponse {
+func NewMessageResponse(message Message) *MessageResponse {
 	return &MessageResponse{
 		ID:           message.ID,
 		CreationDate: message.CreationDate,
@@ -49,7 +49,7 @@ func NewMessageResponse(message *Message) *MessageResponse {
 }
 
 //
-func NewMessagesResponse(messages []*Message) []*MessageResponse {
+func NewMessagesResponse(messages []Message) []*MessageResponse {
 	var mr []*MessageResponse
 
 	for _, message := range messages {

@@ -8,7 +8,7 @@ import (
 )
 
 //
-func FindByTicker(ticker Ticker, pagination *Pagination) ([]Message, error) {
+func FindByTicker(ticker *Ticker, pagination *Pagination) ([]Message, error) {
 	var messages []Message
 
 	if !ticker.Active {

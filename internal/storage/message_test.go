@@ -17,7 +17,7 @@ import (
 func TestFindByTicker(t *testing.T) {
 	setup()
 
-	ticker := model.Ticker{
+	ticker := &model.Ticker{
 		ID:          1,
 		Active:      true,
 		Title:       "Demoticker",
@@ -115,7 +115,7 @@ func TestFindByTicker(t *testing.T) {
 func TestFindByTickerInactive(t *testing.T) {
 	setup()
 
-	ticker := model.Ticker{
+	ticker := &model.Ticker{
 		ID:     1,
 		Active: false,
 	}
