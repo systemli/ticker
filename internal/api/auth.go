@@ -19,8 +19,8 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 	return &jwt.GinJWTMiddleware{
 		Realm:         "ticker admin",
 		Key:           []byte(Config.Secret),
-		Timeout:       time.Hour,
-		MaxRefresh:    time.Hour,
+		Timeout:       time.Hour * 24,
+		MaxRefresh:    time.Hour * 24,
 		Authenticator: Authenticator,
 		Authorizator:  Authorizator,
 		Unauthorized:  Unauthorized,
