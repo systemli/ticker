@@ -34,23 +34,9 @@ func TestUserMiddleware(t *testing.T) {
 	assert.Equal(t, `{"data":{},"status":"error","error":{"code":1000,"message":"user identifier not found"}}`, w.Body.String())
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/login?user=string", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, 400, w.Code)
-	assert.Equal(t, `{"data":{},"status":"error","error":{"code":1000,"message":"user identifier not found"}}`, w.Body.String())
-
-	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/login?user=2000", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 	assert.Equal(t, `{"data":{},"status":"error","error":{"code":1000,"message":"user not found"}}`, w.Body.String())
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/login?user=1", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, "", w.Body.String())
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/appleboy/gin-jwt"
@@ -31,20 +30,15 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 //
 func UserMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserIdentifierMissing))
-			return
-		}
+		email := c.GetString("userID")
 
-		id, err := strconv.Atoi(userID.(string))
-		if err != nil {
+		if email == "" {
 			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserIdentifierMissing))
 			return
 		}
 
 		var user User
-		err = DB.One("ID", id, &user)
+		err := DB.One("Email", email, &user)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
 			return
@@ -55,13 +49,13 @@ func UserMiddleware() gin.HandlerFunc {
 }
 
 //
-func Authenticator(userID string, password string, c *gin.Context) (string, bool) {
+func Authenticator(userID string, password string, c *gin.Context) (interface{}, bool) {
 	return UserAuthenticate(userID, password)
 }
 
 //
-func Authorizator(userID string, c *gin.Context) bool {
-	return UserExists(userID)
+func Authorizator(data interface{}, c *gin.Context) bool {
+	return UserExists(data.(string))
 }
 
 //

@@ -1,7 +1,6 @@
 package storage_test
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,7 @@ func TestUserExists(t *testing.T) {
 
 	DB.Save(u)
 
-	assert.True(t, UserExists(strconv.Itoa(u.ID)))
+	assert.True(t, UserExists(u.Email))
 	assert.False(t, UserExists("99"))
 }
 
@@ -34,15 +33,15 @@ func TestUserAuthenticate(t *testing.T) {
 
 	DB.Save(u)
 
-	id, auth := UserAuthenticate("louis@systemli.org", "password")
-	assert.Equal(t, strconv.Itoa(u.ID), id)
+	user, auth := UserAuthenticate("louis@systemli.org", "password")
+	assert.Equal(t, u.ID, user.ID)
 	assert.True(t, auth)
 
-	id, auth = UserAuthenticate("louis@systemli.org", "wrong")
-	assert.Equal(t, strconv.Itoa(u.ID), id)
+	user, auth = UserAuthenticate("louis@systemli.org", "wrong")
+	assert.Equal(t, u.ID, user.ID)
 	assert.False(t, auth)
 
-	id, auth = UserAuthenticate("admin@systemli.org", "password")
-	assert.Equal(t, "", id)
+	user, auth = UserAuthenticate("admin@systemli.org", "password")
+	assert.Equal(t, 0, user.ID)
 	assert.False(t, auth)
 }
