@@ -5,10 +5,10 @@ import (
 )
 
 //
-func UserExists(email string) bool {
+func UserExists(data interface{}) bool {
 	var user User
 
-	err := DB.One("Email", email, &user)
+	err := DB.One("ID", int(data.(float64)), &user)
 	if err != nil {
 		return false
 	}
