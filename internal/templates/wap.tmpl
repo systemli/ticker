@@ -1,0 +1,26 @@
+<!DOCTYPE wml PUBLIC "-//WAPFORUM//DTD WML 1.1//EN" "http://www.wapforum.org/DTD/wml_1.1.xml">
+<wml>
+    <head>
+        <meta name="keyword" content="{{.Title}}" />
+        <meta name="author" content="{{.Author}}" />
+    </head>
+    <template>
+        <do type="accept" label="Ticker" name="ticker">
+            <go href="#ticker"/>
+        </do>
+        <do type="accept" label="Reload" name="reload">
+            <refresh/>
+        </do>
+    </template>
+    <card id="ticker" title="Ticker">
+        <do type="x-reload" label="Reload" name="reload">
+            <refresh/>
+        </do>
+        {{range .Messages}}
+        <p>
+            <strong><small>{{.CreationDate}}</small></strong><br />
+            {{.Text}}
+        </p>
+        {{end}}
+    </card>
+</wml>

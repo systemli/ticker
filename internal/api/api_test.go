@@ -6,10 +6,12 @@ import (
 	"git.codecoop.org/systemli/ticker/internal/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"net/url"
 )
 
 func TestGetDomainEmptyOrigin(t *testing.T) {
 	req := http.Request{}
+	req.URL = &url.URL{}
 
 	c := gin.Context{Request: &req,}
 

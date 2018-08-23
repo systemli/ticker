@@ -67,7 +67,11 @@ func API() *gin.Engine {
 
 		public.GET(`/init`, GetInitHandler)
 		public.GET(`/timeline`, GetTimelineHandler)
+
 	}
+
+	r.LoadHTMLGlob("internal/templates/*")
+	r.GET("/wap", GetWAPHandler)
 
 	return r
 }
@@ -85,7 +89,12 @@ func GetDomain(c *gin.Context) (string, error) {
 	origin := c.Request.Header.Get("Origin")
 
 	if origin == "" {
-		return "", errors.New("Origin header not found")
+		origin = c.Request.URL.Query().Get("origin")
+		if origin == "" {
+			return "", errors.New("Origin header not found")
+		} else {
+			return origin, nil
+		}
 	}
 
 	u, err := url.Parse(origin)
