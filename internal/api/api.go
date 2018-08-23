@@ -66,7 +66,6 @@ func API() *gin.Engine {
 
 	}
 
-	r.LoadHTMLGlob("internal/templates/*")
 	r.GET("/wap", GetWAPHandler)
 
 	return r

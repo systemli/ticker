@@ -13,7 +13,10 @@ import (
 )
 
 func main() {
-	API().Run(Config.Listen)
+	api := API()
+	api.LoadHTMLGlob("internal/templates/*")
+
+	api.Run(Config.Listen)
 }
 
 func init() {

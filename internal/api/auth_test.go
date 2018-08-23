@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/http"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 )
 
 func TestUserMiddleware(t *testing.T) {
@@ -18,7 +19,12 @@ func TestUserMiddleware(t *testing.T) {
 	router.Use(func(c *gin.Context) {
 		user := c.Query("user")
 		if user != "" {
-			c.Set("userID", user)
+			uID, err := strconv.Atoi(user)
+			if err != nil {
+				t.Fail()
+			}
+
+			c.Set("userID", float64(uID))
 		}
 	})
 	router.Use(api.UserMiddleware())
