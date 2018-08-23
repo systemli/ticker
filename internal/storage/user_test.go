@@ -19,8 +19,8 @@ func TestUserExists(t *testing.T) {
 
 	DB.Save(u)
 
-	assert.True(t, UserExists(u.Email))
-	assert.False(t, UserExists("99"))
+	assert.True(t, UserExists(float64(u.ID)))
+	assert.False(t, UserExists(float64(99)))
 }
 
 func TestUserAuthenticate(t *testing.T) {
