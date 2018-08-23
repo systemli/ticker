@@ -33,3 +33,6 @@ run:
 release:
 	$(GOGET) -u github.com/mitchellh/gox
 	$(GOX) $(GOX_ARGS)
+
+docker:
+	docker build --rm --force-rm --no-cache -t systemli/ticker .
