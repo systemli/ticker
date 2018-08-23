@@ -32,18 +32,24 @@ func GetUsersHandler(c *gin.Context) {
 
 //GetUserHandler returns a User for the given id
 func GetUserHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
-		return
-	}
-
-	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
 	}
 
+	u, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	if !IsAdmin(c) && userID != u.ID {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+		return
+	}
+
+	var user User
 	err = DB.One("ID", userID, &user)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
