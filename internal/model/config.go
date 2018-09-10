@@ -3,9 +3,9 @@ package model
 import (
 	"io/ioutil"
 
+	"github.com/sethvargo/go-password/password"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"github.com/sethvargo/go-password/password"
 )
 
 var Config *config
@@ -16,7 +16,7 @@ type config struct {
 	Initiator string `yaml:"initiator"`
 	Secret    string `yaml:"secret"`
 	Database  string `yaml:"database"`
-	Twitter struct {
+	Twitter   struct {
 		ConsumerKey    string `yaml:"consumer_key"`
 		ConsumerSecret string `yaml:"consumer_secret"`
 	} `yaml:"twitter"`

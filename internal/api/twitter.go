@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/dghubble/oauth1"
+	"github.com/gin-gonic/gin"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
 )

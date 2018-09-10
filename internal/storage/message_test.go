@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"git.codecoop.org/systemli/ticker/internal/storage"
 	"git.codecoop.org/systemli/ticker/internal/model"
+	"git.codecoop.org/systemli/ticker/internal/storage"
 	"git.codecoop.org/systemli/ticker/internal/util"
 )
 
@@ -139,7 +139,7 @@ func createContext(query string) gin.Context {
 		},
 	}
 
-	return gin.Context{Request: &req,}
+	return gin.Context{Request: &req}
 }
 
 func setup() {

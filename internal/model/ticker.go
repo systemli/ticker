@@ -1,8 +1,8 @@
 package model
 
 import (
-	"time"
 	"github.com/dghubble/go-twitter/twitter"
+	"time"
 )
 
 //Ticker represents the structure of an Ticker configuration
@@ -13,6 +13,7 @@ type Ticker struct {
 	Title        string
 	Description  string
 	Active       bool
+	PrependTime  bool `json:"prepend_time"`
 	Information  Information
 	Twitter      Twitter
 }
@@ -41,6 +42,7 @@ type TickerResponse struct {
 	Title        string              `json:"title"`
 	Description  string              `json:"description"`
 	Active       bool                `json:"active"`
+	PrependTime  bool                `json:"prepend_time"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
 }
@@ -95,6 +97,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Title:        ticker.Title,
 		Description:  ticker.Description,
 		Active:       ticker.Active,
+		PrependTime:  ticker.PrependTime,
 		Information:  info,
 		Twitter:      tw,
 	}

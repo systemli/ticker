@@ -1,9 +1,9 @@
 package model_test
 
 import (
-	"testing"
 	"git.codecoop.org/systemli/ticker/internal/model"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestNewUser(t *testing.T) {

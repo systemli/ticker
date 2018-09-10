@@ -3,12 +3,11 @@ package api_test
 import (
 	"testing"
 
-
-	"github.com/gin-gonic/gin"
 	"git.codecoop.org/systemli/ticker/internal/api"
-	"net/http/httptest"
-	"net/http"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 )
 

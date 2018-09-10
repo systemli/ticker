@@ -18,7 +18,7 @@ func TestDefaultPagination(t *testing.T) {
 		},
 	}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 	p := NewPagination(&c)
 
 	assert.Equal(t, p.GetLimit(), 10)
@@ -33,7 +33,7 @@ func TestCustomPagination(t *testing.T) {
 		},
 	}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 	p := NewPagination(&c)
 
 	assert.Equal(t, p.GetLimit(), 20)

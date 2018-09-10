@@ -1,8 +1,8 @@
 package api
 
 import (
-	"net/http"
 	"github.com/gin-gonic/gin"
+	"net/http"
 
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
