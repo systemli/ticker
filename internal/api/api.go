@@ -3,8 +3,8 @@ package api
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/toorop/gin-logrus"
 	"github.com/sirupsen/logrus"
+	"github.com/toorop/gin-logrus"
 
 	"git.codecoop.org/systemli/ticker/internal/model"
 )

@@ -4,14 +4,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/q"
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/gin-gonic/gin"
 
+	"git.codecoop.org/systemli/ticker/internal/bridge"
 	. "git.codecoop.org/systemli/ticker/internal/model"
 	. "git.codecoop.org/systemli/ticker/internal/storage"
-	"git.codecoop.org/systemli/ticker/internal/bridge"
 )
 
 //GetTickersHandler returns all Ticker with paging
@@ -255,6 +255,7 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 		Title       string `json:"title" binding:"required"`
 		Description string `json:"description" binding:"required"`
 		Active      bool   `json:"active"`
+		PrependTime bool   `json:"prepend_time"`
 		Information struct {
 			Author   string `json:"author"`
 			URL      string `json:"url"`
@@ -273,6 +274,7 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Title = body.Title
 	t.Description = body.Description
 	t.Active = body.Active
+	t.PrependTime = body.PrependTime
 	t.Information.Author = body.Information.Author
 	t.Information.URL = body.Information.URL
 	t.Information.Email = body.Information.Email

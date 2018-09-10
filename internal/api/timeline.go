@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	. "git.codecoop.org/systemli/ticker/internal/storage"
 	. "git.codecoop.org/systemli/ticker/internal/model"
+	. "git.codecoop.org/systemli/ticker/internal/storage"
 	. "git.codecoop.org/systemli/ticker/internal/util"
 )
 

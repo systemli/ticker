@@ -2,8 +2,8 @@ package bridge
 
 import (
 	"git.codecoop.org/systemli/ticker/internal/model"
-	"github.com/dghubble/oauth1"
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 	"strconv"
 )
 

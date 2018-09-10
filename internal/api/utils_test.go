@@ -1,19 +1,19 @@
 package api_test
 
 import (
-	"testing"
-	"net/http"
 	"git.codecoop.org/systemli/ticker/internal/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"net/url"
+	"testing"
 )
 
 func TestGetDomainEmptyOrigin(t *testing.T) {
 	req := http.Request{}
 	req.URL = &url.URL{}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 
 	domain, err := api.GetDomain(&c)
 	assert.Equal(t, "", domain)
@@ -27,7 +27,7 @@ func TestGetDomainLocalhost(t *testing.T) {
 		},
 	}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 
 	domain, err := api.GetDomain(&c)
 	assert.Equal(t, "localhost", domain)
@@ -41,7 +41,7 @@ func TestGetDomainLocalhostPort(t *testing.T) {
 		},
 	}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 
 	domain, err := api.GetDomain(&c)
 	assert.Equal(t, "localhost", domain)
@@ -55,7 +55,7 @@ func TestGetDomainWWW(t *testing.T) {
 		},
 	}
 
-	c := gin.Context{Request: &req,}
+	c := gin.Context{Request: &req}
 
 	domain, err := api.GetDomain(&c)
 	assert.Equal(t, "demoticker.org", domain)
