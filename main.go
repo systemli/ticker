@@ -18,6 +18,12 @@ import (
 	. "github.com/systemli/ticker/internal/storage"
 )
 
+var (
+	GitCommit  string
+	GitVersion string
+	BuildDate  string
+)
+
 func main() {
 	router := API()
 	server := &http.Server{
@@ -59,7 +65,10 @@ func init() {
 
 	firstRun()
 
-	log.Print("starting ticker at ", Config.Listen)
+	log.Println("Starting Ticker API")
+	log.Printf("Listen on %s", Config.Listen)
+
+	buildInfo()
 
 	lvl, err := log.ParseLevel(Config.LogLevel)
 	if err != nil {
@@ -67,6 +76,13 @@ func init() {
 	}
 
 	log.SetLevel(lvl)
+}
+
+func buildInfo() {
+	log.Println("Build Information")
+	log.Printf("Version: %s", GitVersion)
+	log.Printf("Commit: %s", GitCommit)
+	log.Printf("Build Date: %s", BuildDate)
 }
 
 func firstRun() {
