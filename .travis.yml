@@ -1,7 +1,9 @@
 language: go
 go: 1.11
 
-before_deploy: make clean release
+before_deploy:
+  - make clean release
+  - shasum -a 512 build/* > build/sha512sums.txt
 
 deploy:
   provider: releases
