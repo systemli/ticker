@@ -1,4 +1,4 @@
-# ticker [![Build Status](https://travis-ci.com/systemli/ticker.svg?branch=master)](https://travis-ci.com/systemli/ticker) ![Docker Automated build](https://img.shields.io/docker/automated/systemli/ticker.svg) ![MicroBadger Size](https://img.shields.io/microbadger/image-size/systemli/ticker.svg)
+# ticker [![Build Status](https://travis-ci.com/systemli/ticker.svg?branch=master)](https://travis-ci.com/systemli/ticker) [![Docker Automated build](https://img.shields.io/docker/automated/systemli/ticker.svg)](https://hub.docker.com/r/systemli/ticker/) [![MicroBadger Size](https://img.shields.io/microbadger/image-size/systemli/ticker.svg)](https://hub.docker.com/r/systemli/ticker/)
 
 This repository contains the API and storage for the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 
