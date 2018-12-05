@@ -1,17 +1,12 @@
-FROM alpine:latest
+FROM golang:alpine AS build-env
+WORKDIR /go/src/git.codecoop.org/systemli/ticker
+ADD . /go/src/git.codecoop.org/systemli/ticker
+RUN go build -o /ticker
+
+FROM alpine
+RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+WORKDIR /app
+COPY --from=build-env /ticker /ticker
 
 EXPOSE 8080
-
-ENV GOPATH=/go
-ENV APPPATH=/$GOPATH/src/git.codecoop.org/systemli/ticker
-
-COPY . $APPPATH
-
-RUN apk add --update -t go \
-    && apk add -t musl-dev \
-    && cd $APPPATH \
-    && go build -o /ticker \
-    && apk del --purge go \
-    && rm -rf $GOPATH
-
 ENTRYPOINT ["/ticker"]
