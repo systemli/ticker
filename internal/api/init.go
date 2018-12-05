@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/storage"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/storage"
 )
 
 //GetInitHandler returns the basic settings for the ticker.

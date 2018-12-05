@@ -3,8 +3,8 @@ package storage
 import (
 	"github.com/asdine/storm/q"
 
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/util"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/util"
 )
 
 //

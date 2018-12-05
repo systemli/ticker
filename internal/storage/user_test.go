@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/storage"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/storage"
 )
 
 func TestUserExists(t *testing.T) {

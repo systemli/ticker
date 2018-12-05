@@ -2,9 +2,9 @@ package api_test
 
 import (
 	"encoding/json"
-	"git.codecoop.org/systemli/ticker/internal/api"
-	"git.codecoop.org/systemli/ticker/internal/model"
-	"git.codecoop.org/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/api"
+	"github.com/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/storage"
 	"github.com/appleboy/gofight"
 	"github.com/stretchr/testify/assert"
 	"strings"

@@ -1,7 +1,7 @@
 package api_test
 
 import (
-	"git.codecoop.org/systemli/ticker/internal/api"
+	"github.com/systemli/ticker/internal/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"net/http"

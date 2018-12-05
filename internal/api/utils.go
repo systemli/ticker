@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"git.codecoop.org/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/model"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"

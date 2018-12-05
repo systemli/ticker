@@ -9,9 +9,9 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
 
-	"git.codecoop.org/systemli/ticker/internal/bridge"
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/bridge"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/storage"
 )
 
 //GetTickersHandler returns all Ticker with paging

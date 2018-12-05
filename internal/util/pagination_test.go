@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	. "git.codecoop.org/systemli/ticker/internal/util"
+	. "github.com/systemli/ticker/internal/util"
 )
 
 func TestDefaultPagination(t *testing.T) {

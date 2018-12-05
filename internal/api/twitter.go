@@ -6,7 +6,7 @@ import (
 	"github.com/dghubble/oauth1"
 	"github.com/gin-gonic/gin"
 
-	. "git.codecoop.org/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/model"
 )
 
 //PostAuthTwitterHandler returns access token and secret for twitter access.

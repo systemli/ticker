@@ -7,8 +7,8 @@ import (
 	"github.com/appleboy/gin-jwt"
 	"github.com/gin-gonic/gin"
 
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/storage"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/storage"
 )
 
 const UserKey = "user"

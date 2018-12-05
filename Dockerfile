@@ -1,6 +1,6 @@
 FROM golang:alpine AS build-env
-WORKDIR /go/src/git.codecoop.org/systemli/ticker
-ADD . /go/src/git.codecoop.org/systemli/ticker
+WORKDIR /go/src/github.com/systemli/ticker
+ADD . /go/src/github.com/systemli/ticker
 RUN go build -o /ticker
 
 FROM alpine

@@ -1,7 +1,7 @@
 package storage
 
 import (
-	. "git.codecoop.org/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/model"
 )
 
 //FindSetting lookup for a setting in storage

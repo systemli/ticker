@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/toorop/gin-logrus"
 
-	"git.codecoop.org/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/model"
 )
 
 //Returns the Gin Engine

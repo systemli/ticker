@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
-	"git.codecoop.org/systemli/ticker/internal/bridge"
-	. "git.codecoop.org/systemli/ticker/internal/model"
-	. "git.codecoop.org/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/bridge"
+	. "github.com/systemli/ticker/internal/model"
+	. "github.com/systemli/ticker/internal/storage"
 )
 
 //GetMessagesHandler returns all Messages with paging

@@ -2,10 +2,10 @@
 
 ## Setup 
 
-  * Clone Repo to your $GOPATH (e.g. `/home/$USER/go/src/git.codecoop.org/systemli/ticker`) 
+  * Clone Repo to your $GOPATH (e.g. `/home/$USER/go/src/github.com/systemli/ticker`) 
   * install go (e.g. `sudo apt install golang-go`)
   * [optional] adjust config.yml.dist
-  * switch to ticker directory (e.g. `cd /home/$USER/go/src/git.codecoop.org/systemli/ticker`)
+  * switch to ticker directory (e.g. `cd /home/$USER/go/src/github.com/systemli/ticker`)
   * run `go run main.go -config config.yml.dist`
 
   If everything works correct, you should see the following output:
