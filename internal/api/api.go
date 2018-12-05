@@ -66,8 +66,6 @@ func API() *gin.Engine {
 
 	}
 
-	r.GET("/wap", GetWAPHandler)
-
 	return r
 }
 

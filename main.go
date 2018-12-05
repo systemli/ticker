@@ -14,8 +14,6 @@ import (
 
 func main() {
 	api := API()
-	api.LoadHTMLGlob("internal/templates/*")
-
 	api.Run(Config.Listen)
 }
 
