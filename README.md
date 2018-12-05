@@ -1,25 +1,26 @@
-# ticker
+# ticker [![Build Status](https://travis-ci.com/systemli/ticker.svg?branch=master)](https://travis-ci.com/systemli/ticker)
 
-## Setup 
+This repository contains the API and storage for the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 
-  * Clone Repo to your $GOPATH (e.g. `/home/$USER/go/src/github.com/systemli/ticker`) 
-  * install go (e.g. `sudo apt install golang-go`)
-  * [optional] adjust config.yml.dist
-  * switch to ticker directory (e.g. `cd /home/$USER/go/src/github.com/systemli/ticker`)
-  * run `go run main.go -config config.yml.dist`
+## Requirements
 
-  If everything works correct, you should see the following output:
-```
-user@laptop:ticker: $ go run main.go -config config.yml.dist                      
-INFO[0000] admin user created (change password now!)     email=admin@systemli.org password="ApasswordString"
-INFO[0000] starting ticker at localhost:8080            
-```
+The project is written in Go. You should be familiar with the structure and organisation of the code. If not, there are some [good guides](https://golang.org/doc/code.html).
 
-## Development
+## First run 
+
+  * Clone this repository to your $GOPATH and switch to the new directory
+  * we provide a `Makefile` for clean, build, test and release the software
 
 ```
-go run main.go -config config.yml.dist
+➜  ticker git:(master) ✗ make run
+go build -o build/ticker -v
+cp config.yml.dist build/config.yml
+./build/ticker -config build/config.yml
+INFO[0000] admin user created (change password now!)     email=admin@systemli.org password="5O.AVsHDd@Y23<aGWlxpwKiS"
+INFO[0000] starting ticker at localhost:8080
 ```
+
+Now you have a running ticker API!
 
 ## Configuration
 
@@ -36,10 +37,15 @@ initiator: "admin@systemli.org"
 database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
+# twitter configuration
+twitter:
+  consumer_key: ""
+  consumer_secret: ""
+
 ```
 
 ## Testing
 
 ```
-go test ./... -cover
+make test
 ```

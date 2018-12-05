@@ -30,7 +30,7 @@ clean:
 run:
 	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME)
 	cp config.yml.dist build/config.yml
-	./$(BUILD_DIR)/$(BINARY_NAME)
+	./$(BUILD_DIR)/$(BINARY_NAME) -config build/config.yml
 
 release:
 	$(GOGET) -u github.com/mitchellh/gox
