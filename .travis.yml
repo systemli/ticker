@@ -1,2 +1,14 @@
 language: go
 go: 1.11
+
+before_deploy: make clean release
+
+deploy:
+  provider: releases
+  api_key:
+    secure: OOYEnSWORBZPxhDIAbewEYtYKypALmHi+7QAYi0rjseexECnXzXPaNmjXvElIZx0iGQ9qZnjeqxwCnaznabE8EOODq4atqNrE83DGWoJyjirxdQLuvG65cXpz5c5zO4AjsrgNReHFfLTnqv77HV2HKnt6+ghZoV+K4sujjJ8gBRTJ0jgk+qy3+yyIbao+bc3EVJbAlQYZJOyiKkuMjCRbcwWeWF3kTyY5hMCDGn7hPcmzpJ7agNV6BGzM7w9FCr4yGogQXF7hKhFFB/0qeTEKiCCvXj4aqYgZk0N5QopjkL5j7qDNBghoCLsAt9VsYe6RifZx/BL5b0Ldd7Mvr5I1Kn96o40ffWIn4wrLBttTtN1U+v5H9NlvrCAzrRik/zJiLE7X7fExZN7K6PUIp8wZIuTnvaMIFyvd/LI1L6IfYVx9XMNYdSTW+8mffOK2rCp+9IeN4VEMfpEw6MotohME6SGa7dECvYnSwyKIZcNuLEN937QJQi1uHMPRonQ6d1Wol3c4jpqWLEnbmYH/lDUDHJDNHJ84by/dRS2NSdo8EalPKwJlef0rkOuHW3VZC+3ath6vlq+0c4TLODDbyG0oEeDKCBvV4ESpmsXJA0yubHozlhz7KQc+45HzoUpbug3mqK7VtIuLCK6oGnAVGEeXxo5iYxUDJM/OYozgiWtYRA=
+  file_glob: true
+  file: build/*
+  skip_cleanup: true
+  on:
+    repo: systemli/ticker
