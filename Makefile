@@ -13,7 +13,7 @@ BUILD_DATE   := $(shell date +"%m-%d-%Y_%T")
 
 LD_FLAGS     = -X main.GitCommit=$(GIT_COMMIT) -X main.GitVersion=$(GIT_VERSION) -X main.BuildDate="$(BUILD_DATE)"
 
-GOX_ARGS     = -output="$(BUILD_DIR)/{{.Dir}}-${GIT_VERSION}-{{.OS}}-{{.Arch}}-" -osarch="linux/amd64 linux/arm linux/arm64 darwin/amd64 freebsd/amd64"
+GOX_ARGS     = -output="$(BUILD_DIR)/{{.Dir}}-${GIT_VERSION}-{{.OS}}-{{.Arch}}" -osarch="linux/amd64 linux/arm linux/arm64 darwin/amd64 freebsd/amd64"
 
 BUILD_DIR    = build
 BINARY_NAME  = ticker
