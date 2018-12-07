@@ -107,7 +107,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 }
 
 //
-func NewTickersReponse(tickers []*Ticker) []*TickerResponse {
+func NewTickersResponse(tickers []*Ticker) []*TickerResponse {
 	var tr []*TickerResponse
 
 	for _, ticker := range tickers {

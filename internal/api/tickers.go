@@ -38,7 +38,7 @@ func GetTickersHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("tickers", NewTickersReponse(tickers)))
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("tickers", NewTickersResponse(tickers)))
 }
 
 //GetTickerHandler returns a Ticker for the given id
