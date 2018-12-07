@@ -240,6 +240,43 @@ func DeleteTickerHandler(c *gin.Context) {
 	})
 }
 
+func ResetTickerHandler(c *gin.Context) {
+	if !IsAdmin(c) {
+		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+		return
+	}
+
+	var ticker Ticker
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	err = DB.One("ID", tickerID, &ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
+
+	//Delete all messages for ticker
+	DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
+
+	ticker.Active = false
+	ticker.Twitter.Secret = ""
+	ticker.Twitter.Token = ""
+	ticker.Twitter.Active = false
+	ticker.Twitter.User = twitter.User{}
+
+	err = DB.Save(&ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+}
+
 func contains(s []int, e int) bool {
 	for _, a := range s {
 		if a == e {

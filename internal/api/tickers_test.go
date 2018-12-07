@@ -243,6 +243,76 @@ func TestDeleteTickerHandler(t *testing.T) {
 	})
 }
 
+func TestResetTickerHandler(t *testing.T) {
+	r := setup()
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+		Twitter: model.Twitter{
+			Token:  "token",
+			Secret: "secret",
+			Active: true,
+		},
+	}
+
+	storage.DB.Save(&ticker)
+
+	message := model.NewMessage()
+	message.Text = "Text"
+	message.Ticker = 1
+
+	storage.DB.Save(message)
+
+	r.PUT("/v1/admin/tickers/2/reset").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 404, r.Code)
+	})
+
+	r.PUT("/v1/admin/tickers/1/reset").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
+
+	r.PUT("/v1/admin/tickers/1/reset").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		assert.Equal(t, 200, r.Code)
+
+		type jsonResp struct {
+			Data   map[string]model.Ticker `json:"data"`
+			Status string                  `json:"status"`
+			Error  interface{}             `json:"error"`
+		}
+
+		var jres jsonResp
+
+		err := json.Unmarshal(r.Body.Bytes(), &jres)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, model.ResponseSuccess, jres.Status)
+		assert.Equal(t, nil, jres.Error)
+		assert.Equal(t, 1, len(jres.Data))
+
+		ticker := jres.Data["ticker"]
+
+		assert.Equal(t, 1, ticker.ID)
+		assert.Equal(t, false, ticker.Active)
+
+		cnt, err := storage.DB.Count(model.NewMessage())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, 0, cnt)
+	})
+}
+
 func setup() *gofight.RequestConfig {
 	gin.SetMode(gin.TestMode)
 
