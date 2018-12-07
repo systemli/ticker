@@ -2,18 +2,18 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/appleboy/gofight"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"fmt"
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
-	"strings"
-	"time"
 )
 
 var AdminToken string
@@ -25,16 +25,16 @@ func TestGetTickersHandler(t *testing.T) {
 	r.GET("/v1/admin/tickers").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+	})
 
 	r.GET("/v1/admin/tickers").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 200, r.Code)
+		assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestGetTickerHandler(t *testing.T) {
@@ -43,16 +43,16 @@ func TestGetTickerHandler(t *testing.T) {
 	r.GET("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 404, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
+	})
 
 	r.GET("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestPostTickerHandler(t *testing.T) {
@@ -64,6 +64,7 @@ func TestPostTickerHandler(t *testing.T) {
 		"description": "Beschreibung",
 		"active": true,
 		"prepend_time": true,
+		"hashtags": ["#test"],
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
@@ -75,43 +76,44 @@ func TestPostTickerHandler(t *testing.T) {
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+		assert.Equal(t, 200, r.Code)
 
-			type jsonResp struct {
-				Data   map[string]model.Ticker `json:"data"`
-				Status string                  `json:"status"`
-				Error  interface{}             `json:"error"`
-			}
+		type jsonResp struct {
+			Data   map[string]model.Ticker `json:"data"`
+			Status string                  `json:"status"`
+			Error  interface{}             `json:"error"`
+		}
 
-			var jres jsonResp
+		var jres jsonResp
 
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
+		err := json.Unmarshal(r.Body.Bytes(), &jres)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Equal(t, nil, jres.Error)
-			assert.Equal(t, 1, len(jres.Data))
+		assert.Equal(t, model.ResponseSuccess, jres.Status)
+		assert.Equal(t, nil, jres.Error)
+		assert.Equal(t, 1, len(jres.Data))
 
-			ticker := jres.Data["ticker"]
+		ticker := jres.Data["ticker"]
 
-			assert.Equal(t, "Ticker", ticker.Title)
-			assert.Equal(t, "prozessticker.org", ticker.Domain)
-			assert.Equal(t, true, ticker.Active)
-			assert.Equal(t, true, ticker.PrependTime)
-			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
-			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
-			assert.Equal(t, "systemli", ticker.Information.Twitter)
-		})
+		assert.Equal(t, "Ticker", ticker.Title)
+		assert.Equal(t, "prozessticker.org", ticker.Domain)
+		assert.Equal(t, true, ticker.Active)
+		assert.Equal(t, true, ticker.PrependTime)
+		assert.Equal(t, []string{"#test"}, ticker.Hashtags)
+		assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
+		assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
+		assert.Equal(t, "systemli", ticker.Information.Twitter)
+	})
 
 	r.POST("/v1/admin/tickers").
 		SetBody(body).
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestPutTickerHandler(t *testing.T) {
@@ -121,6 +123,7 @@ func TestPutTickerHandler(t *testing.T) {
 		ID:          1,
 		Active:      true,
 		PrependTime: true,
+		Hashtags:    []string{"test"},
 		Domain:      "demoticker.org",
 	}
 
@@ -132,6 +135,7 @@ func TestPutTickerHandler(t *testing.T) {
 		"description": "Beschreibung",
 		"active": false,
 		"prepend_time": false,
+		"hashtags": [],
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org"
@@ -142,55 +146,56 @@ func TestPutTickerHandler(t *testing.T) {
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-		})
+		assert.Equal(t, 404, r.Code)
+	})
 
 	r.PUT("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(`malicious data`).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
-		})
+		assert.Equal(t, 400, r.Code)
+	})
 
 	r.PUT("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+		assert.Equal(t, 200, r.Code)
 
-			type jsonResp struct {
-				Data   map[string]model.Ticker `json:"data"`
-				Status string                  `json:"status"`
-				Error  interface{}             `json:"error"`
-			}
+		type jsonResp struct {
+			Data   map[string]model.Ticker `json:"data"`
+			Status string                  `json:"status"`
+			Error  interface{}             `json:"error"`
+		}
 
-			var jres jsonResp
+		var jres jsonResp
 
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
+		err := json.Unmarshal(r.Body.Bytes(), &jres)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Equal(t, nil, jres.Error)
-			assert.Equal(t, 1, len(jres.Data))
+		assert.Equal(t, model.ResponseSuccess, jres.Status)
+		assert.Equal(t, nil, jres.Error)
+		assert.Equal(t, 1, len(jres.Data))
 
-			ticker := jres.Data["ticker"]
+		ticker := jres.Data["ticker"]
 
-			assert.Equal(t, 1, ticker.ID)
-			assert.Equal(t, "Ticker", ticker.Title)
-			assert.Equal(t, "prozessticker.org", ticker.Domain)
-			assert.Equal(t, false, ticker.Active)
-			assert.Equal(t, false, ticker.PrependTime)
-		})
+		assert.Equal(t, 1, ticker.ID)
+		assert.Equal(t, "Ticker", ticker.Title)
+		assert.Equal(t, "prozessticker.org", ticker.Domain)
+		assert.Equal(t, false, ticker.Active)
+		assert.Equal(t, false, ticker.PrependTime)
+		assert.Equal(t, []string{}, ticker.Hashtags)
+	})
 
 	r.PUT("/v1/admin/tickers/1").
 		SetBody(body).
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func TestDeleteTickerHandler(t *testing.T) {
@@ -206,36 +211,36 @@ func TestDeleteTickerHandler(t *testing.T) {
 	r.DELETE("/v1/admin/tickers/2").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-		})
+		assert.Equal(t, 404, r.Code)
+	})
 
 	r.DELETE("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+		assert.Equal(t, 200, r.Code)
 
-			var jres struct {
-				Data   map[string]model.Message `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
+		var jres struct {
+			Data   map[string]model.Message `json:"data"`
+			Status string                   `json:"status"`
+			Error  interface{}              `json:"error"`
+		}
 
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
+		err := json.Unmarshal(r.Body.Bytes(), &jres)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Nil(t, jres.Data)
-			assert.Nil(t, jres.Error)
-		})
+		assert.Equal(t, model.ResponseSuccess, jres.Status)
+		assert.Nil(t, jres.Data)
+		assert.Nil(t, jres.Error)
+	})
 
 	r.DELETE("/v1/admin/tickers/1").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+		assert.Equal(t, 403, r.Code)
+		assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+	})
 }
 
 func setup() *gofight.RequestConfig {
@@ -277,16 +282,16 @@ func token(username, password string) string {
 		SetBody(fmt.Sprintf(`{"username":"%s", "password":"%s"}`, username, password)).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 
-			var response struct {
-				Code   int       `json:"code"`
-				Expire time.Time `json:"expire"`
-				Token  string    `json:"token"`
-			}
+		var response struct {
+			Code   int       `json:"code"`
+			Expire time.Time `json:"expire"`
+			Token  string    `json:"token"`
+		}
 
-			json.Unmarshal(r.Body.Bytes(), &response)
+		json.Unmarshal(r.Body.Bytes(), &response)
 
-			token = response.Token
-		})
+		token = response.Token
+	})
 
 	return token
 }
