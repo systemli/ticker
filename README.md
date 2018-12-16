@@ -44,6 +44,20 @@ twitter:
 
 ```
 
+We use [viper](https://github.com/spf13/viper). That means you can use any of the supported
+file formats. Env variables will be overwritten if you specify them again in a config file.
+Note that every env variable MUST be prefixed by: `TICKER_`. E.g. `TICKER_DATABASE`.
+
+The following env vars can be used: 
+* TICKER_DATABASE
+* TICKER_LISTEN
+* TICKER_LOG_LEVEL
+* TICKER_INITIATOR
+* TICKER_SECRET
+* TICKER_
+* TICKER_
+
+
 ## Testing
 
 ```
