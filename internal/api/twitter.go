@@ -35,8 +35,8 @@ func PostTwitterRequestTokenHandler(c *gin.Context) {
 
 func config(c *gin.Context) *oauth1.Config {
 	return &oauth1.Config{
-		ConsumerKey:    Config.Twitter.ConsumerKey,
-		ConsumerSecret: Config.Twitter.ConsumerSecret,
+		ConsumerKey:    Config.TwitterConsumerKey,
+		ConsumerSecret: Config.TwitterConsumerSecret,
 		CallbackURL:    c.Query("callback"),
 		Endpoint: oauth1.Endpoint{
 			RequestTokenURL: "https://api.twitter.com/oauth/request_token",

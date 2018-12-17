@@ -1,9 +1,9 @@
 package api_test
 
 import (
-	"github.com/systemli/ticker/internal/api"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/systemli/ticker/internal/api"
 	"net/http"
 	"net/url"
 	"testing"

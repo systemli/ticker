@@ -13,7 +13,7 @@ type Ticker struct {
 	Title        string
 	Description  string
 	Active       bool
-	PrependTime  bool      `json:"prepend_time"`
+	PrependTime  bool `json:"prepend_time"`
 	Hashtags     []string
 	Information  Information
 	Twitter      Twitter

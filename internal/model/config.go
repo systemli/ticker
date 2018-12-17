@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/sethvargo/go-password/password"
 	"github.com/spf13/viper"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -12,15 +11,13 @@ import (
 var Config *config
 
 type config struct {
-	Listen    string `mapstructure:"listen"`
-	LogLevel  string `mapstructure:"log_level"`
-	Initiator string `mapstructure:"initiator"`
-	Secret    string `mapstructure:"secret"`
-	Database  string `mapstructure:"database"`
-	Twitter   struct {
-		ConsumerKey    string `mapstructure:"consumer_key"`
-		ConsumerSecret string `mapstructure:"consumer_secret"`
-	} `mapstructure:"twitter"`
+	Listen                string `mapstructure:"listen"`
+	LogLevel              string `mapstructure:"log_level"`
+	Initiator             string `mapstructure:"initiator"`
+	Secret                string `mapstructure:"secret"`
+	Database              string `mapstructure:"database"`
+	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
+	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
 }
 
 //NewConfig returns config with default values.
@@ -38,7 +35,7 @@ func NewConfig() *config {
 
 //TwitterEnabled returns true if required keys not empty.
 func (c *config) TwitterEnabled() bool {
-	return c.Twitter.ConsumerKey != "" && c.Twitter.ConsumerSecret != ""
+	return c.TwitterConsumerKey != "" && c.TwitterConsumerSecret != ""
 }
 
 //LoadConfig loads config from file.
@@ -52,7 +49,8 @@ func LoadConfig(path string) *config {
 	viper.SetDefault("initiator", c.Initiator)
 	viper.SetDefault("secret", c.Secret)
 	viper.SetDefault("database", c.Database)
-	viper.SetDefault("twitter", c.Twitter)
+	viper.SetDefault("twitter_consumer_key", "")
+	viper.SetDefault("twitter_consumer_secret", "")
 
 	dir, file := filepath.Split(path)
 	// use current directory as default
@@ -67,16 +65,13 @@ func LoadConfig(path string) *config {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("Could not load config file: %s \nFalling back to env vars.", err)
+		fmt.Printf("%s \nFalling back to env vars.", err)
 	}
 
 	err = viper.Unmarshal(&c)
 	if err != nil {
 		panic(fmt.Errorf("unable to decode into struct, %v", err))
 	}
-
-	conferei := os.Getenv("TICKER_DATABASE")
-	println(conferei)
 
 	return Config
 }

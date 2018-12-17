@@ -60,7 +60,7 @@ func init() {
 	DB = OpenDB(Config.Database)
 
 	if Config.TwitterEnabled() {
-		bridge.Twitter = bridge.NewTwitterBridge(Config.Twitter.ConsumerKey, Config.Twitter.ConsumerSecret)
+		bridge.Twitter = bridge.NewTwitterBridge(Config.TwitterConsumerKey, Config.TwitterConsumerSecret)
 	}
 
 	firstRun()
