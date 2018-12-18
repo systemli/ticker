@@ -73,5 +73,6 @@ func LoadConfig(path string) *config {
 		panic(fmt.Errorf("unable to decode into struct, %v", err))
 	}
 
+	Config = c
 	return Config
 }
