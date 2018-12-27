@@ -1,8 +1,8 @@
 package model_test
 
 import (
-	"github.com/systemli/ticker/internal/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/systemli/ticker/internal/model"
 	"testing"
 )
 

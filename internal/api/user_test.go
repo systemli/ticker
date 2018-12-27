@@ -2,11 +2,11 @@ package api_test
 
 import (
 	"encoding/json"
+	"github.com/appleboy/gofight"
+	"github.com/stretchr/testify/assert"
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
-	"github.com/appleboy/gofight"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )

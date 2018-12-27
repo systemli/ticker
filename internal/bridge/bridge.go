@@ -1,9 +1,9 @@
 package bridge
 
 import (
-	"github.com/systemli/ticker/internal/model"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/systemli/ticker/internal/model"
 	"strconv"
 )
 

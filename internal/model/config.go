@@ -1,25 +1,23 @@
 package model
 
 import (
-	"io/ioutil"
-
+	"fmt"
 	"github.com/sethvargo/go-password/password"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
+	"path/filepath"
+	"strings"
 )
 
 var Config *config
 
 type config struct {
-	Listen    string `yaml:"listen"`
-	LogLevel  string `yaml:"log_level"`
-	Initiator string `yaml:"initiator"`
-	Secret    string `yaml:"secret"`
-	Database  string `yaml:"database"`
-	Twitter   struct {
-		ConsumerKey    string `yaml:"consumer_key"`
-		ConsumerSecret string `yaml:"consumer_secret"`
-	} `yaml:"twitter"`
+	Listen                string `mapstructure:"listen"`
+	LogLevel              string `mapstructure:"log_level"`
+	Initiator             string `mapstructure:"initiator"`
+	Secret                string `mapstructure:"secret"`
+	Database              string `mapstructure:"database"`
+	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
+	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
 }
 
 //NewConfig returns config with default values.
@@ -37,21 +35,44 @@ func NewConfig() *config {
 
 //TwitterEnabled returns true if required keys not empty.
 func (c *config) TwitterEnabled() bool {
-	return c.Twitter.ConsumerKey != "" && c.Twitter.ConsumerSecret != ""
+	return c.TwitterConsumerKey != "" && c.TwitterConsumerSecret != ""
 }
 
 //LoadConfig loads config from file.
 func LoadConfig(path string) *config {
 	c := NewConfig()
+	viper.SetEnvPrefix("ticker")
+	viper.AutomaticEnv()
 
-	yml, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.WithField("path", path).Panic("failed to open config")
+	viper.SetDefault("listen", c.Listen)
+	viper.SetDefault("log_level", c.LogLevel)
+	viper.SetDefault("initiator", c.Initiator)
+	viper.SetDefault("secret", c.Secret)
+	viper.SetDefault("database", c.Database)
+	viper.SetDefault("twitter_consumer_key", "")
+	viper.SetDefault("twitter_consumer_secret", "")
+
+	dir, file := filepath.Split(path)
+	// use current directory as default
+	if dir == "" {
+		dir = "."
 	}
-	err = yaml.Unmarshal(yml, &c)
+	// remove file name extensions
+	file = strings.TrimSuffix(file, filepath.Ext(file))
+
+	viper.SetConfigName(file)
+	viper.AddConfigPath(dir)
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Panic("failed to parse config")
+		fmt.Printf("%s \nFalling back to env vars.", err)
 	}
 
-	return c
+	err = viper.Unmarshal(&c)
+	if err != nil {
+		panic(fmt.Errorf("unable to decode into struct, %v", err))
+	}
+
+	Config = c
+	return Config
 }

@@ -9,6 +9,5 @@ database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # twitter configuration
-twitter:
-  consumer_key: ""
-  consumer_secret: ""
+twitter_consumer_key: ""
+twitter_consumer_secret: ""
