@@ -136,6 +136,7 @@ func TestPostMessageHandler(t *testing.T) {
 	ticker := model.Ticker{
 		ID:     1,
 		Active: true,
+		Hashtags: []string{`#hashtag`},
 	}
 
 	storage.DB.Save(&ticker)
@@ -177,7 +178,7 @@ func TestPostMessageHandler(t *testing.T) {
 
 			message := jres.Data["message"]
 
-			assert.Equal(t, "message", message.Text)
+			assert.Equal(t, "message #hashtag", message.Text)
 			assert.Equal(t, 1, message.Ticker)
 		})
 }

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/asdine/storm"
 	"github.com/gin-gonic/gin"
@@ -136,6 +138,10 @@ func PostMessageHandler(c *gin.Context) {
 	message := NewMessage()
 	message.Text = body.Text
 	message.Ticker = tickerID
+
+	if len(ticker.Hashtags) > 0 {
+		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))
+	}
 
 	if ticker.Twitter.Active {
 		tweet, err := bridge.Twitter.Update(ticker, *message)

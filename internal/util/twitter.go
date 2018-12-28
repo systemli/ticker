@@ -13,7 +13,6 @@ func PrepareTweet(ticker *model.Ticker, message *model.Message) string {
 		tweet = fmt.Sprintf(`%.2d:%.2d %s`, message.CreationDate.Hour(), message.CreationDate.Minute(), tweet)
 	}
 
-	//TODO: Add default hashtags
 	//TODO: Check length, split long tweets
 
 	return tweet
