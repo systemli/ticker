@@ -8,7 +8,6 @@ The project is written in Go. You should be familiar with the structure and orga
 
 ## First run 
 
-  * Clone this repository to your $GOPATH and switch to the new directory
   * we provide a `Makefile` for clean, build, test and release the software
 
 ```
