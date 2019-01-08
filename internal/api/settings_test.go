@@ -166,6 +166,6 @@ func TestPutRefreshIntervalHandler(t *testing.T) {
 
 			value := setting.Value
 
-			assert.Equal(t, 20000, value)
+			assert.Equal(t, float64(20000), value)
 		})
 }

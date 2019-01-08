@@ -38,7 +38,7 @@ func TestGetInitHandler(t *testing.T) {
 			assert.Equal(t, 2, len(response.Data))
 
 			settings := response.Data["settings"].(map[string]interface{})
-			assert.Equal(t, 10000, settings["refresh_interval"])
+			assert.Equal(t, float64(10000), settings["refresh_interval"])
 
 			ticker := response.Data["ticker"]
 			assert.Nil(t, ticker)
