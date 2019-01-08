@@ -9,7 +9,7 @@ import (
 	. "github.com/systemli/ticker/internal/storage"
 )
 
-func TestUserExists(t *testing.T) {
+func TestFindUserByID(t *testing.T) {
 	setup()
 
 	u, err := NewUser("louis@systemli.org", "password")
@@ -19,8 +19,15 @@ func TestUserExists(t *testing.T) {
 
 	DB.Save(u)
 
-	assert.True(t, UserExists(float64(u.ID)))
-	assert.False(t, UserExists(float64(99)))
+	user, err := FindUserByID(u.ID)
+
+	assert.Equal(t, u.ID, user.ID)
+	assert.Nil(t, err)
+
+	user, err = FindUserByID(2)
+
+	assert.Equal(t, 0, user.ID)
+	assert.NotNil(t, err)
 }
 
 func TestUserAuthenticate(t *testing.T) {
@@ -33,15 +40,15 @@ func TestUserAuthenticate(t *testing.T) {
 
 	DB.Save(u)
 
-	user, auth := UserAuthenticate("louis@systemli.org", "password")
+	user, err := UserAuthenticate("louis@systemli.org", "password")
 	assert.Equal(t, u.ID, user.ID)
-	assert.True(t, auth)
+	assert.Nil(t, err)
 
-	user, auth = UserAuthenticate("louis@systemli.org", "wrong")
+	user, err = UserAuthenticate("louis@systemli.org", "wrong")
 	assert.Equal(t, u.ID, user.ID)
-	assert.False(t, auth)
+	assert.NotNil(t, err)
 
-	user, auth = UserAuthenticate("admin@systemli.org", "password")
+	user, err = UserAuthenticate("admin@systemli.org", "password")
 	assert.Equal(t, 0, user.ID)
-	assert.False(t, auth)
+	assert.NotNil(t, err)
 }

@@ -48,14 +48,31 @@ func UserMiddleware() gin.HandlerFunc {
 	}
 }
 
-//
-func Authenticator(userID string, password string, c *gin.Context) (interface{}, bool) {
-	return UserAuthenticate(userID, password)
+//Authenticator returns the user and the possible authentication error.
+func Authenticator(c *gin.Context) (interface{}, error) {
+	type login struct {
+		Username string `form:"username" json:"username" binding:"required"`
+		Password string `form:"password" json:"password" binding:"required"`
+	}
+
+	var form login
+	if err := c.ShouldBind(&form); err != nil {
+		return "", jwt.ErrMissingLoginValues
+	}
+
+	return UserAuthenticate(form.Username, form.Password)
 }
 
-//
+//Authorizator returns true when the user is authorized.
 func Authorizator(data interface{}, c *gin.Context) bool {
-	return UserExists(data)
+	id := int(data.(float64))
+
+	user, err := FindUserByID(id)
+	if err != nil {
+		return false
+	}
+
+	return user.ID != 0
 }
 
 //
