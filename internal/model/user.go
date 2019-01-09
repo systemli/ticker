@@ -95,6 +95,7 @@ func (u *User) AddTicker(ticker Ticker) {
 	u.Tickers = util.Append(u.Tickers, ticker.ID)
 }
 
+//RemoveTicker removes a Ticker from User.
 func (u *User) RemoveTicker(ticker Ticker) {
 	u.Tickers = util.Remove(u.Tickers, ticker.ID)
 }

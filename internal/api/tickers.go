@@ -172,6 +172,7 @@ func PutTickerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
 }
 
+//PutTickerUsersHandler changes the allowed users for a ticker
 func PutTickerUsersHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
@@ -322,6 +323,7 @@ func DeleteTickerHandler(c *gin.Context) {
 	})
 }
 
+//DeleteTickerUserHandler removes ticker credentials for a user
 func DeleteTickerUserHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
