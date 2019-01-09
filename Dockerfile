@@ -1,6 +1,8 @@
-FROM golang:alpine AS build-env
+FROM golang:1.11-alpine AS build-env
+ENV GO111MODULE=on
 WORKDIR /go/src/github.com/systemli/ticker
 ADD . /go/src/github.com/systemli/ticker
+RUN apk update && apk add git gcc libc-dev
 RUN go build -o /ticker
 
 FROM alpine
