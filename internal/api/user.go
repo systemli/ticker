@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/asdine/storm"
 	"github.com/gin-gonic/gin"
 
 	. "github.com/systemli/ticker/internal/model"
@@ -18,10 +17,8 @@ func GetUsersHandler(c *gin.Context) {
 		return
 	}
 
-	var users []User
-
 	//TODO: Discuss need of Pagination
-	err := DB.All(&users, storm.Reverse())
+	users, err := FindUsers()
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return

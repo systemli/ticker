@@ -72,6 +72,40 @@ func GetTickerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
 }
 
+//GetTickerUsersHandler returns Users for the given ticker
+func GetTickerUsersHandler(c *gin.Context) {
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		return
+	}
+
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	var ticker Ticker
+	err = DB.One("ID", tickerID, &ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
+
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			return
+		}
+	}
+
+	//TODO: Discuss need of Pagination
+	users, _ := FindUsersByTicker(ticker)
+
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
+}
+
 //PostTickerHandler creates and returns a new Ticker
 func PostTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
@@ -136,6 +170,55 @@ func PutTickerHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+}
+
+//PutTickerUsersHandler changes the allowed users for a ticker
+func PutTickerUsersHandler(c *gin.Context) {
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		return
+	}
+
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	var ticker Ticker
+	err = DB.One("ID", tickerID, &ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
+
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			return
+		}
+	}
+
+	var body struct {
+		Users []int `json:"users" binding:"required"`
+	}
+
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	err = AddUsersToTicker(ticker, body.Users)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	users, _ := FindUsersByTicker(ticker)
+
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
 }
 
 //
@@ -238,6 +321,58 @@ func DeleteTickerHandler(c *gin.Context) {
 		"status": ResponseSuccess,
 		"error":  nil,
 	})
+}
+
+//DeleteTickerUserHandler removes ticker credentials for a user
+func DeleteTickerUserHandler(c *gin.Context) {
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		return
+	}
+
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	var ticker Ticker
+	err = DB.One("ID", tickerID, &ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
+
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			return
+		}
+	}
+
+	userID, err := strconv.Atoi(c.Param("userID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	var user User
+	err = DB.One("ID", userID, &user)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
+
+	err = RemoveTickerFromUser(ticker, user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	users, _ := FindUsersByTicker(ticker)
+
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
 }
 
 func ResetTickerHandler(c *gin.Context) {

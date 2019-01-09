@@ -134,8 +134,8 @@ func TestPostMessageHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
+		ID:       1,
+		Active:   true,
 		Hashtags: []string{`#hashtag`},
 	}
 

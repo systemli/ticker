@@ -4,8 +4,6 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/systemli/ticker/internal/model"
-	"github.com/systemli/ticker/internal/util"
-
 	"strconv"
 )
 
@@ -34,7 +32,7 @@ func (tb *TwitterBridge) Initialized() bool {
 func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (*twitter.Tweet, error) {
 	client := tb.client(ticker.Twitter.Token, ticker.Twitter.Secret)
 
-	tweet, _, err := client.Statuses.Update(util.PrepareTweet(&ticker, &message), nil)
+	tweet, _, err := client.Statuses.Update(message.PrepareTweet(&ticker), nil)
 	if err != nil {
 		return tweet, err
 	}
