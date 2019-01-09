@@ -19,7 +19,7 @@ require (
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/labstack/echo v3.3.5+incompatible // indirect
-	github.com/labstack/gommon v0.2.8 // indirect
+	github.com/labstack/gommon v0.2.8
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mitchellh/gox v0.4.0 // indirect
 	github.com/mitchellh/iochan v1.0.0 // indirect

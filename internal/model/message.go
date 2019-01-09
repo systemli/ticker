@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -57,4 +58,16 @@ func NewMessagesResponse(messages []Message) []*MessageResponse {
 	}
 
 	return mr
+}
+
+//PrepareTweet prepares the message for Twitter.
+func (m *Message) PrepareTweet(ticker *Ticker) string {
+	tweet := m.Text
+	if ticker.PrependTime {
+		tweet = fmt.Sprintf(`%.2d:%.2d %s`, m.CreationDate.Hour(), m.CreationDate.Minute(), tweet)
+	}
+
+	//TODO: Check length, split long tweets
+
+	return tweet
 }

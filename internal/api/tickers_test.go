@@ -313,6 +313,174 @@ func TestResetTickerHandler(t *testing.T) {
 		})
 }
 
+func TestGetTickerUsersHandler(t *testing.T) {
+	r := setup()
+
+	r.GET("/v1/admin/tickers/2/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
+
+	storage.DB.Save(&ticker)
+
+	r.GET("/v1/admin/tickers/1/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+		})
+
+	r.GET("/v1/admin/tickers/1/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 403, r.Code)
+		})
+
+	user, _ := model.NewUser("user@systemli.org", "password")
+	user.Tickers = []int{ticker.ID}
+
+	storage.DB.Save(user)
+
+	r.GET("/v1/admin/tickers/1/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			type jsonResp struct {
+				Data   map[string][]model.UserResponse `json:"data"`
+				Status string                          `json:"status"`
+				Error  interface{}                     `json:"error"`
+			}
+
+			var response jsonResp
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, response.Status)
+			assert.Equal(t, nil, response.Error)
+			assert.Equal(t, 1, len(response.Data))
+
+			assert.Equal(t, 1, len(response.Data["users"]))
+			assert.Equal(t, "user@systemli.org", response.Data["users"][0].Email)
+		})
+}
+
+func TestPutTickerUsersHandler(t *testing.T) {
+	r := setup()
+
+	r.PUT("/v1/admin/tickers/2/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
+
+	storage.DB.Save(&ticker)
+
+	r.PUT("/v1/admin/tickers/1/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 403, r.Code)
+		})
+
+	body := `{"users": [2]}`
+
+	r.PUT("/v1/admin/tickers/1/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			type jsonResp struct {
+				Data   map[string][]model.UserResponse `json:"data"`
+				Status string                          `json:"status"`
+				Error  interface{}                     `json:"error"`
+			}
+
+			var response jsonResp
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, response.Status)
+			assert.Equal(t, nil, response.Error)
+			assert.Equal(t, 1, len(response.Data))
+
+			assert.Equal(t, 1, len(response.Data["users"]))
+			assert.Equal(t, "louis@systemli.org", response.Data["users"][0].Email)
+		})
+}
+
+func TestDeleteTickerUserHandler(t *testing.T) {
+	r := setup()
+
+	r.DELETE("/v1/admin/tickers/1/users/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+	}
+
+	storage.DB.Save(&ticker)
+
+	r.DELETE("/v1/admin/tickers/1/users/10").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	user := model.User{
+		ID:      10,
+		Email:   "user_10@systemli.org",
+		Tickers: []int{1},
+	}
+
+	storage.DB.Save(&user)
+
+	r.DELETE("/v1/admin/tickers/1/users/10").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			type jsonResp struct {
+				Data   map[string][]model.UserResponse `json:"data"`
+				Status string                          `json:"status"`
+				Error  interface{}                     `json:"error"`
+			}
+
+			var response jsonResp
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, response.Status)
+			assert.Equal(t, nil, response.Error)
+			assert.Equal(t, 1, len(response.Data))
+			assert.Equal(t, 0, len(response.Data["users"]))
+		})
+
+}
+
 func setup() *gofight.RequestConfig {
 	gin.SetMode(gin.TestMode)
 

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/systemli/ticker/internal/util"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -38,6 +39,7 @@ func NewUser(email, password string) (*User, error) {
 		CreationDate:      time.Now(),
 		Email:             email,
 		EncryptedPassword: pw,
+		Tickers:           []int{},
 	}
 	return user, nil
 }
@@ -86,6 +88,15 @@ func (u *User) UpdatePassword(password string) {
 func (u *User) Authenticate(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(password))
 	return err == nil
+}
+
+//AddTicker appends Ticker to User.
+func (u *User) AddTicker(ticker Ticker) {
+	u.Tickers = util.Append(u.Tickers, ticker.ID)
+}
+
+func (u *User) RemoveTicker(ticker Ticker) {
+	u.Tickers = util.Remove(u.Tickers, ticker.ID)
 }
 
 // hashPassword generates a hashed password from a plaintext string
