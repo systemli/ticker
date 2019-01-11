@@ -16,6 +16,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gin-contrib/cors v0.0.0-20190101123304-5e7acb10687f
 	github.com/gin-gonic/gin v1.3.0
+	github.com/go-logfmt/logfmt v0.4.0 // indirect
+	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/labstack/echo v3.3.5+incompatible // indirect
@@ -26,6 +28,10 @@ require (
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/pkg/errors v0.8.1
+	github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_model v0.0.0-20190109181635-f287a105a20e // indirect
+	github.com/prometheus/common v0.0.0-20190107103113-2998b132700a // indirect
+	github.com/prometheus/procfs v0.0.0-20190104112138-b1a0a9a36d74 // indirect
 	github.com/sethvargo/go-password v0.1.2
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/afero v1.2.0 // indirect
@@ -39,8 +45,8 @@ require (
 	github.com/vmihailenco/msgpack v4.0.1+incompatible // indirect
 	go.etcd.io/bbolt v1.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
-	golang.org/x/net v0.0.0-20190107210223-45ffb0cd1ba0 // indirect
-	golang.org/x/sys v0.0.0-20190108104531-7fbe1cd0fcc2 // indirect
+	golang.org/x/net v0.0.0-20190110044637-be1c187aa6c6 // indirect
+	golang.org/x/sys v0.0.0-20190109145017-48ac38b7c8cb // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/appleboy/gofight.v2 v2.0.0 // indirect

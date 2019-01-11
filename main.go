@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/sethvargo/go-password/password"
 
 	log "github.com/sirupsen/logrus"
@@ -76,6 +78,20 @@ func init() {
 	}
 
 	log.SetLevel(lvl)
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`<html>
+			<head><title>Ticker Metrics Exporter</title></head>
+			<body>
+			<h1>Ticker Metrics Exporter</h1>
+			<p><a href="/metrics">Metrics</a></p>
+			</body>
+			</html>`))
+		})
+		log.Fatal(http.ListenAndServe(Config.MetricsListen, nil))
+	}()
 }
 
 func buildInfo() {

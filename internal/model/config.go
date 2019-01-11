@@ -2,10 +2,11 @@ package model
 
 import (
 	"fmt"
-	"github.com/sethvargo/go-password/password"
-	"github.com/spf13/viper"
 	"path/filepath"
 	"strings"
+
+	"github.com/sethvargo/go-password/password"
+	"github.com/spf13/viper"
 )
 
 var Config *config
@@ -18,6 +19,7 @@ type config struct {
 	Database              string `mapstructure:"database"`
 	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
 	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
+	MetricsListen         string `mapstructure:"metrics_listen"`
 }
 
 //NewConfig returns config with default values.
@@ -25,11 +27,12 @@ func NewConfig() *config {
 	secret, _ := password.Generate(64, 12, 12, false, false)
 
 	return &config{
-		Listen:    ":8080",
-		LogLevel:  "debug",
-		Initiator: "admin@systemli.org",
-		Secret:    secret,
-		Database:  "ticker.db",
+		Listen:        ":8080",
+		LogLevel:      "debug",
+		Initiator:     "admin@systemli.org",
+		Secret:        secret,
+		Database:      "ticker.db",
+		MetricsListen: ":8181",
 	}
 }
 
@@ -49,6 +52,7 @@ func LoadConfig(path string) *config {
 	viper.SetDefault("initiator", c.Initiator)
 	viper.SetDefault("secret", c.Secret)
 	viper.SetDefault("database", c.Database)
+	viper.SetDefault("metrics_listen", c.MetricsListen)
 	viper.SetDefault("twitter_consumer_key", "")
 	viper.SetDefault("twitter_consumer_secret", "")
 

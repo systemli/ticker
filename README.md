@@ -39,7 +39,8 @@ secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # twitter configuration
 twitter_consumer_key: ""
 twitter_consumer_secret: ""
-
+# listen port for prometheus metrics exporter
+metrics_listen: ":8181"
 ```
 
 We use [viper](https://github.com/spf13/viper). That means you can use any of the supported
@@ -54,6 +55,7 @@ The following env vars can be used:
 * TICKER_SECRET
 * TICKER_TWITTER_CONSUMER_KEY
 * TICKER_TWITTER_CONSUMER_SECRET
+* TICKER_METRICS_LISTEN
 
 ## Testing
 
