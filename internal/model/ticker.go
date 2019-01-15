@@ -73,6 +73,19 @@ func NewTicker() *Ticker {
 	}
 }
 
+//Reset set most variables to there defaults
+func (t *Ticker) Reset() {
+	t.Active = false
+	t.Description = ""
+	t.PrependTime = false
+	t.Hashtags = []string{}
+	t.Information = Information{}
+	t.Twitter.Secret = ""
+	t.Twitter.Token = ""
+	t.Twitter.Active = false
+	t.Twitter.User = twitter.User{}
+}
+
 //
 func NewTickerResponse(ticker *Ticker) *TickerResponse {
 	info := InformationResponse{

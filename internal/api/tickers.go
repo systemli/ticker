@@ -397,11 +397,7 @@ func ResetTickerHandler(c *gin.Context) {
 	//Delete all messages for ticker
 	DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
 
-	ticker.Active = false
-	ticker.Twitter.Secret = ""
-	ticker.Twitter.Token = ""
-	ticker.Twitter.Active = false
-	ticker.Twitter.User = twitter.User{}
+	ticker.Reset()
 
 	err = DB.Save(&ticker)
 	if err != nil {
