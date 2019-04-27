@@ -9,9 +9,11 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
 
+	"github.com/pkg/errors"
 	"github.com/systemli/ticker/internal/bridge"
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/util"
 )
 
 //GetTickersHandler returns all Ticker with paging
@@ -438,7 +440,51 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	if err != nil {
 		return err
 	}
+	domain := util.Validator(body.Domain)
+	domainResult := domain.Required().MinLength(5).Check()
+	title := util.Validator(body.Title)
+	titleResult := title.Required().MinLength(5).Check()
+	description := util.Validator(body.Description)
+	descriptionResult := description.Required().MinLength(5).Check()
 
+	author := util.Validator(body.Information.Author)
+	authorResult := author.MinLength(3).Check()
+	uRL := util.Validator(body.Information.URL)
+	uRLResult := uRL.MinLength(5).Check()
+	email := util.Validator(body.Information.Email)
+	emailResult := email.IsEmail().Check()
+	twitter := util.Validator(body.Information.Twitter)
+	twitterResult := twitter.MinLength(5).Check()
+	facebook := util.Validator(body.Information.Facebook)
+	facebookResult := facebook.MinLength(5).Check()
+
+	if !domainResult {
+		return errors.New("Domain: " + domain.E)
+	}
+	if !titleResult {
+		return errors.New("Title: " + title.E)
+	}
+	if !descriptionResult {
+		return errors.New("Description: " + description.E)
+	}
+	if !authorResult {
+		return errors.New("Author: " + author.E)
+	}
+	if !uRLResult {
+		return errors.New("Url: " + uRL.E)
+	}
+	if !emailResult {
+		return errors.New("Email: " + email.E)
+	}
+	if !twitterResult {
+		return errors.New("Twitter: " + twitter.E)
+	}
+	if !facebookResult {
+		return errors.New("Facebook: " + facebook.E)
+	}
+	if err != nil == true {
+		return err
+	}
 	t.Domain = body.Domain
 	t.Title = body.Title
 	t.Description = body.Description
