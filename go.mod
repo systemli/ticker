@@ -7,26 +7,21 @@ require (
 	github.com/appleboy/gin-jwt v2.5.0+incompatible
 	github.com/appleboy/gofight v0.0.0-20170928140920-75baa5975d3c
 	github.com/asdine/storm v2.1.2+incompatible
+	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23 // indirect
 	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
-	github.com/coreos/bbolt v0.0.0-20180318001526-af9db2027c98 // indirect
 	github.com/dghubble/go-twitter v0.0.0-20190108053744-7fd79e2bcc65
 	github.com/dghubble/oauth1 v0.5.0
 	github.com/dghubble/sling v1.2.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gin-contrib/cors v0.0.0-20190101123304-5e7acb10687f
 	github.com/gin-gonic/gin v1.3.0
-	github.com/go-logfmt/logfmt v0.4.0 // indirect
-	github.com/gogo/protobuf v1.2.0 // indirect
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.5+incompatible // indirect
-	github.com/labstack/gommon v0.2.8
+	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mitchellh/gox v0.4.0 // indirect
-	github.com/mitchellh/iochan v1.0.0 // indirect
-	github.com/onsi/ginkgo v1.7.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/paulmach/go.geojson v1.4.0
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
@@ -49,10 +44,8 @@ require (
 	golang.org/x/net v0.0.0-20190110044637-be1c187aa6c6 // indirect
 	golang.org/x/sys v0.0.0-20190109145017-48ac38b7c8cb // indirect
 	google.golang.org/appengine v1.4.0 // indirect
-	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/appleboy/gofight.v2 v2.0.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/dgrijalva/jwt-go.v3 v3.2.0 // indirect
-	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
 	gopkg.in/gin-gonic/gin.v1 v1.3.0 // indirect
 )
