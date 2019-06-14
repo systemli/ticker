@@ -3,16 +3,19 @@ package model
 import (
 	"fmt"
 	"time"
+
+	"github.com/paulmach/go.geojson"
 )
 
 //Message represents a single message
 type Message struct {
-	ID           int       `storm:"id,increment"`
-	CreationDate time.Time `storm:"index"`
-	Ticker       int       `storm:"index"`
-	Text         string
-	Tweet        Tweet
-	//TODO: Geolocation, Facebook-ID
+	ID             int       `storm:"id,increment"`
+	CreationDate   time.Time `storm:"index"`
+	Ticker         int       `storm:"index"`
+	Text           string
+	GeoInformation geojson.FeatureCollection
+	Tweet          Tweet
+	//TODO: Facebook-ID
 }
 
 //
@@ -22,12 +25,13 @@ type Tweet struct {
 }
 
 type MessageResponse struct {
-	ID           int       `json:"id"`
-	CreationDate time.Time `json:"creation_date"`
-	Text         string    `json:"text"`
-	Ticker       int       `json:"ticker"`
-	TweetID      string    `json:"tweet_id"`
-	TweetUser    string    `json:"tweet_user"`
+	ID             int       `json:"id"`
+	CreationDate   time.Time `json:"creation_date"`
+	Text           string    `json:"text"`
+	Ticker         int       `json:"ticker"`
+	TweetID        string    `json:"tweet_id"`
+	TweetUser      string    `json:"tweet_user"`
+	GeoInformation string    `json:"geo_information"`
 }
 
 //NewMessage creates new Message
@@ -39,13 +43,16 @@ func NewMessage() *Message {
 
 //
 func NewMessageResponse(message Message) *MessageResponse {
+	m, _ := message.GeoInformation.MarshalJSON()
+
 	return &MessageResponse{
-		ID:           message.ID,
-		CreationDate: message.CreationDate,
-		Text:         message.Text,
-		Ticker:       message.Ticker,
-		TweetID:      message.Tweet.ID,
-		TweetUser:    message.Tweet.UserName,
+		ID:             message.ID,
+		CreationDate:   message.CreationDate,
+		Text:           message.Text,
+		Ticker:         message.Ticker,
+		TweetID:        message.Tweet.ID,
+		TweetUser:      message.Tweet.UserName,
+		GeoInformation: string(m),
 	}
 }
 

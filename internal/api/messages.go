@@ -8,6 +8,7 @@ import (
 
 	"github.com/asdine/storm"
 	"github.com/gin-gonic/gin"
+	"github.com/paulmach/go.geojson"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/systemli/ticker/internal/bridge"
@@ -101,7 +102,8 @@ func GetMessageHandler(c *gin.Context) {
 //PostMessageHandler creates and returns a new Message
 func PostMessageHandler(c *gin.Context) {
 	var body struct {
-		Text string `json:"text" binding:"required"`
+		Text           string                    `json:"text" binding:"required"`
+		GeoInformation geojson.FeatureCollection `json:"geo_information"`
 	}
 	err := c.Bind(&body)
 	if err != nil {
@@ -138,6 +140,7 @@ func PostMessageHandler(c *gin.Context) {
 	message := NewMessage()
 	message.Text = body.Text
 	message.Ticker = tickerID
+	message.GeoInformation = body.GeoInformation
 
 	if len(ticker.Hashtags) > 0 {
 		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))

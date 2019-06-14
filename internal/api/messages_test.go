@@ -2,15 +2,16 @@ package api_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/appleboy/gofight"
+	"github.com/paulmach/go.geojson"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
-	"strings"
 )
 
 func TestGetMessagesHandler(t *testing.T) {
@@ -142,7 +143,22 @@ func TestPostMessageHandler(t *testing.T) {
 	storage.DB.Save(&ticker)
 
 	body := `{
-		"text": "message"
+		"text": "message",
+		"geo_information": {
+			"type" : "FeatureCollection",
+			"features" : [{ 
+				"type" : "Feature", 
+				"properties" : {  
+					"capacity" : "10", 
+					"type" : "U-Rack",
+					"mount" : "Surface"
+				}, 
+				"geometry" : { 
+					"type" : "Point", 
+					"coordinates" : [ -71.073283, 42.417500 ] 
+				}
+			}]
+		}
 	}`
 
 	r.POST("/v1/admin/tickers/1/messages").
@@ -180,6 +196,7 @@ func TestPostMessageHandler(t *testing.T) {
 
 			assert.Equal(t, "message #hashtag", message.Text)
 			assert.Equal(t, 1, message.Ticker)
+			assert.IsType(t, geojson.FeatureCollection{}, message.GeoInformation)
 		})
 }
 
