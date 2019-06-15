@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/appleboy/gin-jwt"
+	"github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 
 	. "github.com/systemli/ticker/internal/model"
@@ -12,10 +12,11 @@ import (
 )
 
 const UserKey = "user"
+const IdentityKey = "userID"
 
-//
+//AuthMiddleware returns the Middleware for authenticating and authorising users with JWT
 func AuthMiddleware() *jwt.GinJWTMiddleware {
-	return &jwt.GinJWTMiddleware{
+	m := &jwt.GinJWTMiddleware{
 		Realm:         "ticker admin",
 		Key:           []byte(Config.Secret),
 		Timeout:       time.Hour * 24,
@@ -25,7 +26,16 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 		Unauthorized:  Unauthorized,
 		PayloadFunc:   FillClaim,
 		TimeFunc:      time.Now,
+		TokenLookup:   "header: Authorization",
+		IdentityKey:   IdentityKey,
 	}
+
+	mw, err := jwt.New(m)
+	if err != nil {
+		panic(err)
+	}
+
+	return mw
 }
 
 //
@@ -82,10 +92,11 @@ func Unauthorized(c *gin.Context, code int, message string) {
 
 //
 func FillClaim(data interface{}) jwt.MapClaims {
-	c := jwt.MapClaims{}
+	if u, ok := data.(*User); ok {
+		return jwt.MapClaims{
+			IdentityKey: u.ID,
+		}
+	}
 
-	u := data.(*User)
-	c["id"] = u.ID
-
-	return c
+	return jwt.MapClaims{}
 }
