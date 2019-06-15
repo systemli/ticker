@@ -23,7 +23,7 @@ func TestUserMiddleware(t *testing.T) {
 				t.Fail()
 			}
 
-			c.Set("userID", float64(uID))
+			c.Set("id", float64(uID))
 		}
 	})
 	router.Use(api.UserMiddleware())
