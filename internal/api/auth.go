@@ -11,8 +11,10 @@ import (
 	. "github.com/systemli/ticker/internal/storage"
 )
 
+//UserKey represents the key for gin context holding the user
 const UserKey = "user"
-const IdentityKey = "userID"
+
+const identityKey = "userID"
 
 //AuthMiddleware returns the Middleware for authenticating and authorising users with JWT
 func AuthMiddleware() *jwt.GinJWTMiddleware {
@@ -27,7 +29,7 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 		PayloadFunc:   FillClaim,
 		TimeFunc:      time.Now,
 		TokenLookup:   "header: Authorization",
-		IdentityKey:   IdentityKey,
+		IdentityKey:   identityKey,
 	}
 
 	mw, err := jwt.New(m)
@@ -94,7 +96,7 @@ func Unauthorized(c *gin.Context, code int, message string) {
 func FillClaim(data interface{}) jwt.MapClaims {
 	if u, ok := data.(*User); ok {
 		return jwt.MapClaims{
-			IdentityKey: u.ID,
+			identityKey: u.ID,
 		}
 	}
 
