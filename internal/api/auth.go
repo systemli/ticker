@@ -14,7 +14,7 @@ import (
 //UserKey represents the key for gin context holding the user
 const UserKey = "user"
 
-const identityKey = "userID"
+const identityKey = "id"
 
 //AuthMiddleware returns the Middleware for authenticating and authorising users with JWT
 func AuthMiddleware() *jwt.GinJWTMiddleware {
@@ -43,7 +43,7 @@ func AuthMiddleware() *jwt.GinJWTMiddleware {
 //
 func UserMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
+		userID, exists := c.Get(identityKey)
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserIdentifierMissing))
 			return
