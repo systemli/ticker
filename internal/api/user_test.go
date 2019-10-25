@@ -110,6 +110,48 @@ func TestPostUserHandler(t *testing.T) {
 			assert.Equal(t, 403, r.Code)
 			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
 		})
+
+	ticker := model.Ticker{
+		ID:          1,
+		Active:      true,
+		PrependTime: true,
+		Hashtags:    []string{"test"},
+		Domain:      "demoticker.org",
+	}
+
+	storage.DB.Save(&ticker)
+
+	body = `{
+		"email": "user2@systemli.org",
+		"password": "password12",
+		"is_super_admin": false,
+		"tickers": [1]
+	}`
+
+	r.POST("/v1/admin/users").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			var response struct {
+				Data   map[string]model.UserResponse `json:"data"`
+				Status string                        `json:"status"`
+				Error  interface{}                   `json:"error"`
+			}
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, response.Status)
+			assert.Equal(t, nil, response.Error)
+			assert.Equal(t, 1, len(response.Data))
+			assert.Equal(t, "user2@systemli.org", response.Data["user"].Email)
+			assert.Equal(t, []int{ticker.ID}, response.Data["user"].Tickers)
+			assert.False(t, response.Data["user"].IsSuperAdmin)
+		})
 }
 
 func TestPutUserHandler(t *testing.T) {

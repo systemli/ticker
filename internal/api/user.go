@@ -67,6 +67,7 @@ func PostUserHandler(c *gin.Context) {
 		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
 		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
 		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
+		Tickers      []int  `json:"tickers,omitempty"`
 	}
 
 	err := c.Bind(&body)
@@ -84,6 +85,7 @@ func PostUserHandler(c *gin.Context) {
 	}
 
 	user.IsSuperAdmin = body.IsSuperAdmin
+	user.Tickers = body.Tickers
 
 	err = DB.Save(user)
 	if err != nil {
