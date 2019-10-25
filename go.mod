@@ -14,7 +14,6 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.4.0
-	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
@@ -38,3 +37,5 @@ require (
 	golang.org/x/sys v0.0.0-20190614160838-b47fdc937951 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 )
+
+go 1.13
