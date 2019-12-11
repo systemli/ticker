@@ -44,6 +44,7 @@ type Location struct {
 	Lon float64
 }
 
+//TickerResponse represents the Ticker for API responses.
 type TickerResponse struct {
 	ID           int                 `json:"id"`
 	CreationDate time.Time           `json:"creation_date"`
@@ -58,6 +59,7 @@ type TickerResponse struct {
 	Location     LocationResponse    `json:"location"`
 }
 
+//InformationResponse represents the Information for API responses.
 type InformationResponse struct {
 	Author   string `json:"author"`
 	URL      string `json:"url"`
@@ -66,6 +68,7 @@ type InformationResponse struct {
 	Facebook string `json:"facebook"`
 }
 
+//TwitterResponse represents the Twitter settings for API responses.
 type TwitterResponse struct {
 	Active      bool   `json:"active"`
 	Connected   bool   `json:"connected"`
@@ -75,6 +78,7 @@ type TwitterResponse struct {
 	ImageURL    string `json:"image_url"`
 }
 
+//LocationResponse represents the Location for API responses.
 type LocationResponse struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
@@ -101,7 +105,7 @@ func (t *Ticker) Reset() {
 	t.Location = Location{}
 }
 
-//
+//NewTickerResponse returns a API friendly representation for a Ticker.
 func NewTickerResponse(ticker *Ticker) *TickerResponse {
 	info := InformationResponse{
 		Author:   ticker.Information.Author,
@@ -140,7 +144,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 	}
 }
 
-//
+//NewTickersResponse prepares a map of []TickerResponse.
 func NewTickersResponse(tickers []*Ticker) []*TickerResponse {
 	var tr []*TickerResponse
 
