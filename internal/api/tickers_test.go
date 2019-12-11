@@ -69,6 +69,10 @@ func TestPostTickerHandler(t *testing.T) {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
 			"twitter": "systemli"
+		},
+		"location": {
+			"lat": 1.1,
+			"lon": 2.2
 		}
 	}`
 
@@ -105,6 +109,8 @@ func TestPostTickerHandler(t *testing.T) {
 			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
 			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 			assert.Equal(t, "systemli", ticker.Information.Twitter)
+			assert.Equal(t, 1.1, ticker.Location.Lat)
+			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
 
 	r.POST("/v1/admin/tickers").
@@ -139,6 +145,10 @@ func TestPutTickerHandler(t *testing.T) {
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org"
+		},
+		"location": {
+			"lat": 1.1,
+			"lon": 2.2
 		}
 	}`
 
@@ -187,6 +197,8 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, false, ticker.Active)
 			assert.Equal(t, false, ticker.PrependTime)
 			assert.Equal(t, []string{}, ticker.Hashtags)
+			assert.Equal(t, 1.1, ticker.Location.Lat)
+			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
 
 	r.PUT("/v1/admin/tickers/1").
@@ -254,6 +266,10 @@ func TestResetTickerHandler(t *testing.T) {
 			Secret: "secret",
 			Active: true,
 		},
+		Location: model.Location{
+			Lat: 1.1,
+			Lon: 2.2,
+		},
 	}
 
 	storage.DB.Save(&ticker)
@@ -303,6 +319,7 @@ func TestResetTickerHandler(t *testing.T) {
 
 			assert.Equal(t, 1, ticker.ID)
 			assert.Equal(t, false, ticker.Active)
+			assert.Equal(t, model.Location{}, ticker.Location)
 
 			cnt, err := storage.DB.Count(model.NewMessage())
 			if err != nil {

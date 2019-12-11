@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/dghubble/go-twitter/twitter"
 	"time"
+
+	"github.com/dghubble/go-twitter/twitter"
 )
 
 //Ticker represents the structure of an Ticker configuration
@@ -17,6 +18,7 @@ type Ticker struct {
 	Hashtags     []string
 	Information  Information
 	Twitter      Twitter
+	Location     Location
 }
 
 //Information holds some meta information for Ticker
@@ -36,6 +38,12 @@ type Twitter struct {
 	User   twitter.User
 }
 
+//Location represents the default location for the Ticker.
+type Location struct {
+	Lat float64
+	Lon float64
+}
+
 type TickerResponse struct {
 	ID           int                 `json:"id"`
 	CreationDate time.Time           `json:"creation_date"`
@@ -47,6 +55,7 @@ type TickerResponse struct {
 	Hashtags     []string            `json:"hashtags"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
+	Location     LocationResponse    `json:"location"`
 }
 
 type InformationResponse struct {
@@ -64,6 +73,11 @@ type TwitterResponse struct {
 	ScreenName  string `json:"screen_name"`
 	Description string `json:"description"`
 	ImageURL    string `json:"image_url"`
+}
+
+type LocationResponse struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 //NewTicker creates new Ticker
@@ -84,6 +98,7 @@ func (t *Ticker) Reset() {
 	t.Twitter.Token = ""
 	t.Twitter.Active = false
 	t.Twitter.User = twitter.User{}
+	t.Location = Location{}
 }
 
 //
@@ -105,6 +120,11 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		ImageURL:    ticker.Twitter.User.ProfileImageURLHttps,
 	}
 
+	l := LocationResponse{
+		Lat: ticker.Location.Lat,
+		Lon: ticker.Location.Lon,
+	}
+
 	return &TickerResponse{
 		ID:           ticker.ID,
 		CreationDate: ticker.CreationDate,
@@ -116,6 +136,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Hashtags:     ticker.Hashtags,
 		Information:  info,
 		Twitter:      tw,
+		Location:     l,
 	}
 }
 
