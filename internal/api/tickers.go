@@ -454,13 +454,8 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Information.Email = body.Information.Email
 	t.Information.Twitter = body.Information.Twitter
 	t.Information.Facebook = body.Information.Facebook
-
-	if body.Location.Lat != 0 {
-		t.Location.Lat = body.Location.Lat
-	}
-	if body.Location.Lon != 0 {
-		t.Location.Lon = body.Location.Lon
-	}
+	t.Location.Lat = body.Location.Lat
+	t.Location.Lon = body.Location.Lon
 
 	return nil
 }
