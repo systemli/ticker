@@ -69,6 +69,10 @@ func TestPostTickerHandler(t *testing.T) {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
 			"twitter": "systemli"
+		},
+		"location": {
+			"lat": 1.1,
+			"lon": 2.2
 		}
 	}`
 
@@ -105,6 +109,8 @@ func TestPostTickerHandler(t *testing.T) {
 			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
 			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 			assert.Equal(t, "systemli", ticker.Information.Twitter)
+			assert.Equal(t, 1.1, ticker.Location.Lat)
+			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
 
 	r.POST("/v1/admin/tickers").
@@ -139,6 +145,10 @@ func TestPutTickerHandler(t *testing.T) {
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org"
+		},
+		"location": {
+			"lat": 1.1,
+			"lon": 2.2
 		}
 	}`
 
@@ -187,6 +197,8 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, false, ticker.Active)
 			assert.Equal(t, false, ticker.PrependTime)
 			assert.Equal(t, []string{}, ticker.Hashtags)
+			assert.Equal(t, 1.1, ticker.Location.Lat)
+			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
 
 	r.PUT("/v1/admin/tickers/1").
@@ -195,6 +207,58 @@ func TestPutTickerHandler(t *testing.T) {
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 403, r.Code)
 			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+		})
+
+	body = `{
+		"title": "Ticker",
+		"domain": "prozessticker.org",
+		"description": "Beschreibung",
+		"active": false,
+		"prepend_time": false,
+		"hashtags": [],
+		"information": {
+			"url": "https://www.systemli.org",
+			"email": "admin@systemli.org"
+		},
+		"location": {
+			"lat": 0,
+			"lon": 0
+		}
+	}`
+
+	r.PUT("/v1/admin/tickers/1").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			type jsonResp struct {
+				Data   map[string]model.Ticker `json:"data"`
+				Status string                  `json:"status"`
+				Error  interface{}             `json:"error"`
+			}
+
+			var jres jsonResp
+
+			err := json.Unmarshal(r.Body.Bytes(), &jres)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, jres.Status)
+			assert.Equal(t, nil, jres.Error)
+			assert.Equal(t, 1, len(jres.Data))
+
+			ticker := jres.Data["ticker"]
+
+			assert.Equal(t, 1, ticker.ID)
+			assert.Equal(t, "Ticker", ticker.Title)
+			assert.Equal(t, "prozessticker.org", ticker.Domain)
+			assert.Equal(t, false, ticker.Active)
+			assert.Equal(t, false, ticker.PrependTime)
+			assert.Equal(t, []string{}, ticker.Hashtags)
+			assert.Equal(t, 0.0, ticker.Location.Lat)
+			assert.Equal(t, 0.0, ticker.Location.Lon)
 		})
 }
 
@@ -254,6 +318,10 @@ func TestResetTickerHandler(t *testing.T) {
 			Secret: "secret",
 			Active: true,
 		},
+		Location: model.Location{
+			Lat: 1.1,
+			Lon: 2.2,
+		},
 	}
 
 	storage.DB.Save(&ticker)
@@ -303,6 +371,7 @@ func TestResetTickerHandler(t *testing.T) {
 
 			assert.Equal(t, 1, ticker.ID)
 			assert.Equal(t, false, ticker.Active)
+			assert.Equal(t, model.Location{}, ticker.Location)
 
 			cnt, err := storage.DB.Count(model.NewMessage())
 			if err != nil {

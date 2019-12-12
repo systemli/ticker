@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/dghubble/go-twitter/twitter"
 	"time"
+
+	"github.com/dghubble/go-twitter/twitter"
 )
 
 //Ticker represents the structure of an Ticker configuration
@@ -17,6 +18,7 @@ type Ticker struct {
 	Hashtags     []string
 	Information  Information
 	Twitter      Twitter
+	Location     Location
 }
 
 //Information holds some meta information for Ticker
@@ -36,6 +38,13 @@ type Twitter struct {
 	User   twitter.User
 }
 
+//Location represents the default location for the Ticker.
+type Location struct {
+	Lat float64
+	Lon float64
+}
+
+//TickerResponse represents the Ticker for API responses.
 type TickerResponse struct {
 	ID           int                 `json:"id"`
 	CreationDate time.Time           `json:"creation_date"`
@@ -47,8 +56,10 @@ type TickerResponse struct {
 	Hashtags     []string            `json:"hashtags"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
+	Location     LocationResponse    `json:"location"`
 }
 
+//InformationResponse represents the Information for API responses.
 type InformationResponse struct {
 	Author   string `json:"author"`
 	URL      string `json:"url"`
@@ -57,6 +68,7 @@ type InformationResponse struct {
 	Facebook string `json:"facebook"`
 }
 
+//TwitterResponse represents the Twitter settings for API responses.
 type TwitterResponse struct {
 	Active      bool   `json:"active"`
 	Connected   bool   `json:"connected"`
@@ -64,6 +76,12 @@ type TwitterResponse struct {
 	ScreenName  string `json:"screen_name"`
 	Description string `json:"description"`
 	ImageURL    string `json:"image_url"`
+}
+
+//LocationResponse represents the Location for API responses.
+type LocationResponse struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 //NewTicker creates new Ticker
@@ -84,9 +102,10 @@ func (t *Ticker) Reset() {
 	t.Twitter.Token = ""
 	t.Twitter.Active = false
 	t.Twitter.User = twitter.User{}
+	t.Location = Location{}
 }
 
-//
+//NewTickerResponse returns a API friendly representation for a Ticker.
 func NewTickerResponse(ticker *Ticker) *TickerResponse {
 	info := InformationResponse{
 		Author:   ticker.Information.Author,
@@ -105,6 +124,11 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		ImageURL:    ticker.Twitter.User.ProfileImageURLHttps,
 	}
 
+	l := LocationResponse{
+		Lat: ticker.Location.Lat,
+		Lon: ticker.Location.Lon,
+	}
+
 	return &TickerResponse{
 		ID:           ticker.ID,
 		CreationDate: ticker.CreationDate,
@@ -116,10 +140,11 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Hashtags:     ticker.Hashtags,
 		Information:  info,
 		Twitter:      tw,
+		Location:     l,
 	}
 }
 
-//
+//NewTickersResponse prepares a map of []TickerResponse.
 func NewTickersResponse(tickers []*Ticker) []*TickerResponse {
 	var tr []*TickerResponse
 

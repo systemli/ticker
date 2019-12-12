@@ -432,6 +432,10 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 			Twitter  string `json:"twitter"`
 			Facebook string `json:"facebook"`
 		} `json:"information"`
+		Location struct {
+			Lat float64 `json:"lat"`
+			Lon float64 `json:"lon"`
+		}
 	}
 
 	err := c.Bind(&body)
@@ -450,6 +454,8 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Information.Email = body.Information.Email
 	t.Information.Twitter = body.Information.Twitter
 	t.Information.Facebook = body.Information.Facebook
+	t.Location.Lat = body.Location.Lat
+	t.Location.Lon = body.Location.Lon
 
 	return nil
 }
