@@ -50,6 +50,8 @@ func API() *gin.Engine {
 		admin.POST(`/tickers/:tickerID/messages`, PostMessageHandler)
 		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessageHandler)
 
+		admin.POST(`/upload`, PostUpload)
+
 		admin.GET(`/users`, GetUsersHandler)
 		admin.GET(`/users/:userID`, GetUserHandler)
 		admin.POST(`/users`, PostUserHandler)

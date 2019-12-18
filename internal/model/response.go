@@ -8,6 +8,8 @@ const (
 
 	ErrorInsufficientPermissions = "insufficient permissions"
 	ErrorUserIdentifierMissing   = "user identifier not found"
+	ErrorTickerIdentifierMissing = "ticker identifier not found"
+	ErrorFilesIdentifierMissing  = "files identifier not found"
 	ErrorUserNotFound            = "user not found"
 	ErrorTickerNotFound          = "ticker not found"
 	ErrorSettingNotFound         = "setting not found"
