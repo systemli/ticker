@@ -48,15 +48,18 @@ func (u *Upload) FileName() string {
 	return fmt.Sprintf("%s.%s", u.UUID, u.Extension)
 }
 
+//URL returns the public url for the upload.
+func (u *Upload) URL() string {
+	return MediaURL(u.FileName())
+}
+
 //NewUploadResponse returns a API friendly representation for a Upload.
 func NewUploadResponse(upload *Upload) *UploadResponse {
-	url := fmt.Sprintf("%s/media/%s", Config.UploadURL, upload.FileName())
-
 	return &UploadResponse{
 		ID:           upload.ID,
 		UUID:         upload.UUID,
 		CreationDate: upload.CreationDate,
-		URL:          url,
+		URL:          upload.URL(),
 	}
 }
 
@@ -69,4 +72,8 @@ func NewUploadsResponse(uploads []*Upload) []*UploadResponse {
 	}
 
 	return ur
+}
+
+func MediaURL(name string) string {
+	return fmt.Sprintf("%s/media/%s", Config.UploadURL, name)
 }

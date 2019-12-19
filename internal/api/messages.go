@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 	"github.com/paulmach/go.geojson"
 	log "github.com/sirupsen/logrus"
@@ -108,6 +109,7 @@ func PostMessageHandler(c *gin.Context) {
 	var body struct {
 		Text           string                    `json:"text" binding:"required"`
 		GeoInformation geojson.FeatureCollection `json:"geo_information"`
+		Attachments    []int                     `json:"attachments"`
 	}
 	err := c.Bind(&body)
 	if err != nil {
@@ -141,10 +143,28 @@ func PostMessageHandler(c *gin.Context) {
 		return
 	}
 
+	var uploads []*Upload
+	if len(body.Attachments) > 0 {
+		err := DB.Select(q.In("ID", body.Attachments)).Find(&uploads)
+		if err != nil {
+			c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+			return
+		}
+	}
+
 	message := NewMessage()
 	message.Text = body.Text
 	message.Ticker = tickerID
 	message.GeoInformation = body.GeoInformation
+
+	if len(uploads) > 0 {
+		var attachments []Attachment
+		for _, upload := range uploads {
+			attachments = append(attachments, Attachment{Extension: upload.Extension, UUID: upload.UUID})
+		}
+
+		message.Attachments = attachments
+	}
 
 	if len(ticker.Hashtags) > 0 {
 		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))
