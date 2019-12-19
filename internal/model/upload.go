@@ -48,6 +48,11 @@ func (u *Upload) FileName() string {
 	return fmt.Sprintf("%s.%s", u.UUID, u.Extension)
 }
 
+//FullPath returns the full path for the upload.
+func (u *Upload) FullPath() string {
+	return fmt.Sprintf("%s/%s/%s", Config.UploadPath, u.Path, u.FileName())
+}
+
 //URL returns the public url for the upload.
 func (u *Upload) URL() string {
 	return MediaURL(u.FileName())

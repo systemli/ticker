@@ -71,8 +71,9 @@ func API() *gin.Engine {
 
 		public.GET(`/init`, GetInitHandler)
 		public.GET(`/timeline`, GetTimelineHandler)
-
 	}
+
+	r.GET(`/media/:fileName`, GetMedia)
 
 	return r
 }

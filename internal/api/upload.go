@@ -1,8 +1,8 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -61,17 +61,13 @@ func PostUpload(c *gin.Context) {
 			return
 		}
 
-		path := fmt.Sprintf("%s/%s", Config.UploadPath, u.Path)
-
-		err := preparePath(path)
+		err := preparePath(u.FullPath())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
 
-		dst := fmt.Sprintf("%s/%s", path, u.FileName())
-
-		if err := c.SaveUploadedFile(file, dst); err != nil {
+		if err := c.SaveUploadedFile(file, u.FullPath()); err != nil {
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
@@ -80,10 +76,9 @@ func PostUpload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("uploads", NewUploadsResponse(uploads)))
-	return
 }
 
 func preparePath(path string) error {
 	fs := Config.FileBackend
-	return fs.MkdirAll(path, 0750)
+	return fs.MkdirAll(filepath.Dir(path), 0750)
 }
