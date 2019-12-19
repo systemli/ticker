@@ -18,7 +18,6 @@ func PostAuthTwitterHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{"access_token": token, "access_secret": secret})
-	return
 }
 
 //PostTwitterRequestTokenHandler returns request tokens for twitter login process.
@@ -30,7 +29,6 @@ func PostTwitterRequestTokenHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{"oauth_token": token, "oauth_token_secret": secret})
-	return
 }
 
 func config(c *gin.Context) *oauth1.Config {

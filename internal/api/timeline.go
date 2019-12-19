@@ -14,37 +14,37 @@ import (
 func GetTimelineHandler(c *gin.Context) {
 	domain, err := GetDomain(c)
 	if err != nil {
-		c.JSON(http.StatusOK, JSONResponse{
-			Data:   map[string]interface{}{"messages": nil},
-			Status: ResponseError,
-			Error: map[string]interface{}{
-				"code":    ErrorCodeDefault,
-				"message": `Could not find a ticker.`,
-			},
-		})
+		timelineErrorResponse(c, "Could not find a ticker.")
 		return
 	}
 
 	ticker, err := FindTicker(domain)
 	if err != nil {
-		c.JSON(http.StatusOK, JSONResponse{
-			Data:   map[string]interface{}{"messages": nil},
-			Status: ResponseError,
-			Error: map[string]interface{}{
-				"code":    ErrorCodeDefault,
-				"message": `Could not find a ticker.`,
-			},
-		})
+		timelineErrorResponse(c, "Could not find a ticker.")
 		return
 	}
 
 	pagination := NewPagination(c)
 	messages, err := FindByTicker(ticker, pagination)
+	if err != nil {
+		timelineErrorResponse(c, "Could not load messages.")
+		return
+	}
 
 	c.JSON(http.StatusOK, JSONResponse{
 		Data:   map[string]interface{}{"messages": NewMessagesResponse(messages)},
 		Status: ResponseSuccess,
 		Error:  nil,
 	})
-	return
+}
+
+func timelineErrorResponse(c *gin.Context, m string) {
+	c.JSON(http.StatusOK, JSONResponse{
+		Data:   map[string]interface{}{"messages": nil},
+		Status: ResponseError,
+		Error: map[string]interface{}{
+			"code":    ErrorCodeDefault,
+			"message": m,
+		},
+	})
 }

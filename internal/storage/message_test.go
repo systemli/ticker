@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -144,7 +146,7 @@ func createContext(query string) gin.Context {
 
 func setup() {
 	if storage.DB == nil {
-		storage.DB = storage.OpenDB("ticker_test.db")
+		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Unix()))
 	}
 	storage.DB.Drop("Ticker")
 	storage.DB.Drop("Message")

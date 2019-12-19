@@ -28,10 +28,7 @@ func GetDomain(c *gin.Context) (string, error) {
 		return "", err
 	}
 
-	domain := u.Host
-	if strings.HasPrefix(domain, "www.") {
-		domain = domain[4:]
-	}
+	domain := strings.TrimPrefix(u.Host, "www.")
 	if strings.Contains(domain, ":") {
 		parts := strings.Split(domain, ":")
 		domain = parts[0]
