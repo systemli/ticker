@@ -313,8 +313,8 @@ func DeleteTickerHandler(c *gin.Context) {
 		return
 	}
 
-	DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
-	DB.Select(q.Eq("ID", tickerID)).Delete(new(Ticker))
+	_ = DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
+	_ = DB.Select(q.Eq("ID", tickerID)).Delete(new(Ticker))
 
 	c.JSON(http.StatusOK, gin.H{
 		"data":   nil,
@@ -395,7 +395,7 @@ func ResetTickerHandler(c *gin.Context) {
 	}
 
 	//Delete all messages for ticker
-	DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
+	_ = DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
 
 	ticker.Reset()
 

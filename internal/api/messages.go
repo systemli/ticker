@@ -90,6 +90,10 @@ func GetMessageHandler(c *gin.Context) {
 
 	var message Message
 	messageID, err := strconv.Atoi(c.Param("messageID"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		return
+	}
 	err = DB.One("ID", messageID, &message)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
