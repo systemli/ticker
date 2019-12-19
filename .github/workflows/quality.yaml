@@ -1,0 +1,15 @@
+name: Quality
+
+on: [push]
+
+jobs:
+  golangci:
+    name: GolangCI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Mushus/golangci-lint-action@master
+        with:
+          config: .golangci.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,6 +3,7 @@ package api_test
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -556,7 +557,7 @@ func setup() *gofight.RequestConfig {
 	model.Config = model.NewConfig()
 
 	if storage.DB == nil {
-		storage.DB = storage.OpenDB("ticker_test.db")
+		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Unix()))
 	}
 	storage.DB.Drop("Ticker")
 	storage.DB.Drop("Message")
