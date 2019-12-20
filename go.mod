@@ -27,7 +27,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/viper v1.4.0
+	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.3.0
 	github.com/toorop/gin-logrus v0.0.0-20190324082946-8887861896bb
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
