@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/appleboy/gofight/v2"
@@ -12,29 +13,24 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestPostUpload(t *testing.T) {
+type uploadResponse struct {
+	Data   map[string][]model.UploadResponse `json:"data"`
+	Status string                            `json:"status"`
+	Error  interface{}                       `json:"error"`
+}
+
+func TestPostUploadSuccessful(t *testing.T) {
 	r := setup()
 
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
-		Domain: "demoticker.org",
-	}
-
-	storage.DB.Save(&ticker)
+	ticker := initUploadTestData()
 
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": "1"}).
+		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
-			var response struct {
-				Data   map[string][]model.UploadResponse `json:"data"`
-				Status string                            `json:"status"`
-				Error  interface{}                       `json:"error"`
-			}
-
+			var response uploadResponse
 			err := json.Unmarshal(r.Body.Bytes(), &response)
 			if err != nil {
 				t.Fatal(err)
@@ -49,6 +45,10 @@ func TestPostUpload(t *testing.T) {
 			assert.NotNil(t, response.Data["uploads"][0].URL)
 			assert.NotNil(t, response.Data["uploads"][0].CreationDate)
 		})
+}
+
+func TestPostUploadTickerNonExisting(t *testing.T) {
+	r := setup()
 
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
@@ -56,11 +56,7 @@ func TestPostUpload(t *testing.T) {
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 
-			var response struct {
-				Data   map[string][]model.UploadResponse `json:"data"`
-				Status string                            `json:"status"`
-				Error  interface{}                       `json:"error"`
-			}
+			var response uploadResponse
 
 			err := json.Unmarshal(r.Body.Bytes(), &response)
 			if err != nil {
@@ -69,18 +65,20 @@ func TestPostUpload(t *testing.T) {
 
 			assert.Equal(t, model.ResponseError, response.Status)
 		})
+}
+
+func TestPostUploadUnauthorized(t *testing.T) {
+	r := setup()
+
+	ticker := initUploadTestData()
 
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": "1"}).
+		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 403, r.Code)
 
-			var response struct {
-				Data   map[string][]model.UploadResponse `json:"data"`
-				Status string                            `json:"status"`
-				Error  interface{}                       `json:"error"`
-			}
+			var response uploadResponse
 
 			err := json.Unmarshal(r.Body.Bytes(), &response)
 			if err != nil {
@@ -89,4 +87,72 @@ func TestPostUpload(t *testing.T) {
 
 			assert.Equal(t, model.ResponseError, response.Status)
 		})
+}
+
+func TestPostUploadWrongContentType(t *testing.T) {
+	r := setup()
+
+	ticker := initUploadTestData()
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+
+			var response uploadResponse
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseError, response.Status)
+		})
+}
+
+func TestPostUploadMissingTicker(t *testing.T) {
+	r := setup()
+
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+		})
+}
+
+func TestPostUploadWrongTickerParam(t *testing.T) {
+	r := setup()
+
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": "string"}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+		})
+}
+
+func TestPostUploadMissingFiles(t *testing.T) {
+	r := setup()
+
+	ticker := initUploadTestData()
+
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath([]gofight.UploadFile{}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+		})
+}
+
+func initUploadTestData() *model.Ticker {
+	ticker := &model.Ticker{
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
+	}
+
+	_ = storage.DB.Save(ticker)
+
+	return ticker
 }
