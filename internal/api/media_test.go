@@ -74,6 +74,6 @@ func TestGetMedia(t *testing.T) {
 
 	r.GET(fmt.Sprintf("/media/%s", upload.FileName())).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 500, r.Code)
+			assert.Equal(t, 404, r.Code)
 		})
 }
