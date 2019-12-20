@@ -394,8 +394,7 @@ func ResetTickerHandler(c *gin.Context) {
 		return
 	}
 
-	//Delete all messages for ticker
-	_ = DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
+	_ = DeleteMessages(&ticker)
 
 	ticker.Reset()
 

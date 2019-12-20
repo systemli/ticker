@@ -230,14 +230,7 @@ func DeleteMessageHandler(c *gin.Context) {
 		return
 	}
 
-	if message.Tweet.ID != "" {
-		err = bridge.Twitter.Delete(ticker, message.Tweet.ID)
-		if err != nil {
-			log.Error(err)
-		}
-	}
-
-	err = DB.DeleteStruct(&message)
+	err = DeleteMessage(&ticker, &message)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return

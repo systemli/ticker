@@ -134,6 +134,95 @@ func TestFindByTickerInactive(t *testing.T) {
 	assert.Equal(t, len(messages), 0)
 }
 
+func TestDeleteMessage(t *testing.T) {
+	setup()
+
+	ticker, message, _ := initialMessageTestData(t)
+
+	err := storage.DeleteMessage(ticker, message)
+	if err != nil {
+		t.Fail()
+	}
+
+	var m *model.Message
+	err = storage.DB.Find("ID", message.ID, &m)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestDeleteMessageNonExisting(t *testing.T) {
+	setup()
+
+	ticker, message, upload := initialMessageTestData(t)
+
+	err := storage.DeleteMessage(ticker, model.NewMessage())
+	if err == nil {
+		t.Fail()
+	}
+
+	_ = storage.DB.DeleteStruct(upload)
+
+	err = storage.DeleteMessage(ticker, message)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestDeleteMessages(t *testing.T) {
+	setup()
+
+	ticker, message, _ := initialMessageTestData(t)
+
+	err := storage.DeleteMessages(ticker)
+	if err != nil {
+		t.Fail()
+	}
+
+	var m *model.Message
+	err = storage.DB.Find("ID", message.ID, &m)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestDeleteMessagesNonExisting(t *testing.T) {
+	setup()
+
+	ticker, message, _ := initialMessageTestData(t)
+
+	_ = storage.DB.DeleteStruct(message)
+
+	err := storage.DeleteMessages(ticker)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func initialMessageTestData(t *testing.T) (*model.Ticker, *model.Message, *model.Upload) {
+	ticker := model.NewTicker()
+	err := storage.DB.Save(ticker)
+	if err != nil {
+		t.Fail()
+	}
+
+	upload := model.NewUpload("name.jpg", "image/jpeg", ticker.ID)
+	err = storage.DB.Save(upload)
+	if err != nil {
+		t.Fail()
+	}
+
+	message := model.NewMessage()
+	attachment := model.Attachment{UUID: upload.UUID, Extension: upload.Extension, ContentType: upload.Extension}
+	message.Attachments = []model.Attachment{attachment}
+	err = storage.DB.Save(message)
+	if err != nil {
+		t.Fail()
+	}
+
+	return ticker, message, upload
+}
+
 func createContext(query string) gin.Context {
 	req := http.Request{
 		URL: &url.URL{
@@ -145,11 +234,17 @@ func createContext(query string) gin.Context {
 }
 
 func setup() {
+	gin.SetMode(gin.TestMode)
+
+	model.Config = model.NewConfig()
+	model.Config.UploadPath = os.TempDir()
+
 	if storage.DB == nil {
 		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Nanosecond()))
 	}
 	_ = storage.DB.Drop("Ticker")
 	_ = storage.DB.Drop("Message")
+	_ = storage.DB.Drop("Upload")
 	_ = storage.DB.Drop("User")
 	_ = storage.DB.Drop("Setting")
 }
