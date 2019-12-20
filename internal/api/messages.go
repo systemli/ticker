@@ -160,7 +160,7 @@ func PostMessageHandler(c *gin.Context) {
 	if len(uploads) > 0 {
 		var attachments []Attachment
 		for _, upload := range uploads {
-			attachments = append(attachments, Attachment{Extension: upload.Extension, UUID: upload.UUID})
+			attachments = append(attachments, Attachment{Extension: upload.Extension, UUID: upload.UUID, ContentType: upload.ContentType})
 		}
 
 		message.Attachments = attachments

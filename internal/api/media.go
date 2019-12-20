@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/afero"
 
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/util"
 )
 
 func GetMedia(c *gin.Context) {
@@ -36,7 +36,7 @@ func GetMedia(c *gin.Context) {
 		return
 	}
 
-	contentType := contentType(file)
+	contentType := util.DetectContentType(file)
 	expireTime := time.Now().AddDate(0, 1, 0)
 	cacheControl := fmt.Sprintf("public, max-age=%d", expireTime.Unix())
 	expires := expireTime.Format(http.TimeFormat)
@@ -45,16 +45,4 @@ func GetMedia(c *gin.Context) {
 	c.Header("Cache-Control", cacheControl)
 	c.Header("Expires", expires)
 	c.DataFromReader(http.StatusOK, stat.Size(), contentType, reader, map[string]string{})
-}
-
-func contentType(file afero.File) string {
-	// Only the first 512 bytes are used to sniff the content type.
-	buffer := make([]byte, 512)
-
-	_, err := file.Read(buffer)
-	if err != nil {
-		return "application/octet-stream"
-	}
-
-	return http.DetectContentType(buffer)
 }

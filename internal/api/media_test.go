@@ -43,7 +43,11 @@ func TestGetMedia(t *testing.T) {
 			}
 
 			assert.Equal(t, model.ResponseSuccess, response.Status)
+			assert.Equal(t, "image/jpeg", response.Data["uploads"][0].ContentType)
 			assert.NotNil(t, response.Data["uploads"][0].URL)
+			assert.NotNil(t, response.Data["uploads"][0].UUID)
+			assert.NotNil(t, response.Data["uploads"][0].CreationDate)
+			assert.NotNil(t, response.Data["uploads"][0].ID)
 
 			url = response.Data["uploads"][0].URL
 		})
@@ -65,7 +69,7 @@ func TestGetMedia(t *testing.T) {
 			assert.Equal(t, 404, r.Code)
 		})
 
-	upload := model.NewUpload("image.jpg", 1)
+	upload := model.NewUpload("image.jpg", "image/jpeg", 1)
 	storage.DB.Save(upload)
 
 	r.GET(fmt.Sprintf("/media/%s", upload.FileName())).

@@ -29,3 +29,13 @@ func Remove(slice []int, s int) []int {
 
 	return slice
 }
+
+//ContainsString returns true when s in slice.
+func ContainsString(list []string, s string) bool {
+	for _, b := range list {
+		if b == s {
+			return true
+		}
+	}
+	return false
+}

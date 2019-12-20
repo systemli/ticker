@@ -218,6 +218,7 @@ func TestPostMessageWithAttachmentHandler(t *testing.T) {
 		TickerID:     1,
 		Path:         "1/1",
 		Extension:    "jpg",
+		ContentType:  "image/jpeg",
 	}
 
 	storage.DB.Save(&ticker)
@@ -273,6 +274,7 @@ func TestPostMessageWithAttachmentHandler(t *testing.T) {
 
 			assert.Equal(t, 1, len(message.Attachments))
 			assert.NotNil(t, message.Attachments[0].URL)
+			assert.Equal(t, "image/jpeg", message.Attachments[0].ContentType)
 		})
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -9,7 +10,10 @@ import (
 
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/util"
 )
+
+var allowedContentTypes = []string{"image/jpeg", "image/gif", "image/png"}
 
 func PostUpload(c *gin.Context) {
 	me, err := Me(c)
@@ -53,21 +57,33 @@ func PostUpload(c *gin.Context) {
 		return
 	}
 	var uploads []*Upload
-	for _, file := range files {
-		u := NewUpload(file.Filename, ticker.ID)
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+			return
+		}
+
+		contentType := util.DetectContentType(file)
+		if !util.ContainsString(allowedContentTypes, contentType) {
+			c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, fmt.Sprintf("%s is not allowed to uploaded", contentType)))
+			return
+		}
+
+		u := NewUpload(fileHeader.Filename, contentType, ticker.ID)
 		err = DB.Save(u)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
 
-		err := preparePath(u.FullPath())
+		err = preparePath(u.FullPath())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
 
-		if err := c.SaveUploadedFile(file, u.FullPath()); err != nil {
+		if err := c.SaveUploadedFile(fileHeader, u.FullPath()); err != nil {
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}

@@ -16,6 +16,7 @@ type Upload struct {
 	TickerID     int       `storm:"index"`
 	Path         string
 	Extension    string
+	ContentType  string
 }
 
 //UploadResponse represents the Upload for API responses.
@@ -24,10 +25,11 @@ type UploadResponse struct {
 	UUID         string    `json:"uuid"`
 	CreationDate time.Time `json:"creation_date"`
 	URL          string    `json:"url"`
+	ContentType  string    `json:"content_type"`
 }
 
 //NewUpload creates new Upload.
-func NewUpload(filename string, tickerID int) *Upload {
+func NewUpload(filename, contentType string, tickerID int) *Upload {
 	now := time.Now()
 	uuid := uuid2.New()
 	ext := filepath.Ext(filename)[1:]
@@ -40,6 +42,7 @@ func NewUpload(filename string, tickerID int) *Upload {
 		UUID:         uuid.String(),
 		TickerID:     tickerID,
 		Extension:    ext,
+		ContentType:  contentType,
 	}
 }
 
@@ -65,6 +68,7 @@ func NewUploadResponse(upload *Upload) *UploadResponse {
 		UUID:         upload.UUID,
 		CreationDate: upload.CreationDate,
 		URL:          upload.URL(),
+		ContentType:  upload.ContentType,
 	}
 }
 

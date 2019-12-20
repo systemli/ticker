@@ -26,8 +26,9 @@ type Tweet struct {
 }
 
 type Attachment struct {
-	UUID      string
-	Extension string
+	UUID        string
+	Extension   string
+	ContentType string
 }
 
 type MessageResponse struct {
@@ -42,7 +43,8 @@ type MessageResponse struct {
 }
 
 type MessageAttachmentResponse struct {
-	URL string `json:"url"`
+	URL         string `json:"url"`
+	ContentType string `json:"content_type"`
 }
 
 //NewMessage creates new Message
@@ -59,7 +61,7 @@ func NewMessageResponse(message Message) *MessageResponse {
 
 	for _, attachment := range message.Attachments {
 		name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-		attachments = append(attachments, &MessageAttachmentResponse{URL: MediaURL(name)})
+		attachments = append(attachments, &MessageAttachmentResponse{URL: MediaURL(name), ContentType: attachment.ContentType})
 	}
 
 	return &MessageResponse{
