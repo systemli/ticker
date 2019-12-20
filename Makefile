@@ -29,6 +29,9 @@ vet:
 test:
 	${GOTEST} ./...
 
+coverage:
+	${GOTEST} -coverprofile=coverage.txt -covermode=atomic ./...
+
 clean:
 	$(GOCLEAN)
 	rm -f $(BUILD_DIR)/*
@@ -44,4 +47,4 @@ release:
 docker:
 	docker build --rm --force-rm --no-cache -t systemli/ticker .
 
-.PHONY: all vet test clean build run release docker
+.PHONY: all vet test coverage clean build run release docker
