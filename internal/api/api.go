@@ -25,7 +25,7 @@ func API() *gin.Engine {
 
 	r.Use(cors.New(config))
 
-	//r.Use(NewPrometheus())
+	r.Use(NewPrometheus())
 
 	// the jwt middleware
 	authMiddleware := AuthMiddleware()
