@@ -17,7 +17,12 @@ jobs:
       - name: Vet
         run: make vet
       - name: Test
-        run: make test
+        run: make coverage
+      - name: Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
 
   build:
     name: Build
