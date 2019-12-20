@@ -51,6 +51,8 @@ github.com/dghubble/go-twitter v0.0.0-20190512073027-53f972dc4b06 h1:eg2cM+xR5Bg
 github.com/dghubble/go-twitter v0.0.0-20190512073027-53f972dc4b06/go.mod h1:6beqTZaXeBPti9pDBcBEqxfJc7uCbSafqZPRDPQOKoM=
 github.com/dghubble/oauth1 v0.5.0 h1:uJqX7Rzr3QRmp2slUWqI9Sm8NoP65AMiyXiijOWWLvQ=
 github.com/dghubble/oauth1 v0.5.0/go.mod h1:8V8BMV9DJRREZx/lUaHtrs7GUMXpzbMqJxINCasxYug=
+github.com/dghubble/oauth1 v0.6.0 h1:m1yC01Ohc/eF38jwZ8JUjL1a+XHHXtGQgK+MxQbmSx0=
+github.com/dghubble/oauth1 v0.6.0/go.mod h1:8pFdfPkv/jr8mkChVbNVuJ0suiHe278BtWI4Tk1ujxk=
 github.com/dghubble/sling v1.2.0 h1:PYGS9ofwbV9nfhB1kYjB1vtXshMxlp2oQxTMMXVJ5pE=
 github.com/dghubble/sling v1.2.0/go.mod h1:ZcPRuLm0qrcULW2gOrjXrAWgf76sahqSyxXyVOvkunE=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
