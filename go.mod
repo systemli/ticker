@@ -12,8 +12,8 @@ require (
 	github.com/dghubble/sling v1.2.0 // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.3.0
-	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.4.0
+	github.com/gin-contrib/size v0.0.0-20191128031627-745aacce0004
+	github.com/gin-gonic/gin v1.5.0
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/uuid v1.1.1
@@ -35,7 +35,6 @@ require (
 	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
 	golang.org/x/image v0.0.0-20191214001246-9130b4cfad52 // indirect
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980 // indirect
-	golang.org/x/sys v0.0.0-20190614160838-b47fdc937951 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )

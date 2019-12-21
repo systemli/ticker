@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-contrib/cors"
+	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/toorop/gin-logrus"
@@ -26,6 +27,8 @@ func API() *gin.Engine {
 	r.Use(cors.New(config))
 
 	r.Use(NewPrometheus())
+
+	r.Use(limits.RequestSizeLimiter(1024 * 1024 * 10))
 
 	// the jwt middleware
 	authMiddleware := AuthMiddleware()
