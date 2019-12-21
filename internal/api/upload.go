@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/storage"
@@ -82,12 +83,20 @@ func PostUpload(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
-
-		if err := c.SaveUploadedFile(fileHeader, u.FullPath()); err != nil {
+		nFile, _ := fileHeader.Open()
+		image, err := util.ResizeImage(nFile, 1280)
+		if err != nil {
+			log.WithError(err).Error("can't resize file")
 			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 			return
 		}
 
+		err = util.SaveImage(image, u.FullPath())
+		if err != nil {
+			log.WithError(err).Error("can't save uploaded file")
+			c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+			return
+		}
 		uploads = append(uploads, u)
 	}
 

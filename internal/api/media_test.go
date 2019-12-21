@@ -22,7 +22,7 @@ func TestGetMedia(t *testing.T) {
 		Domain: "demoticker.org",
 	}
 
-	storage.DB.Save(&ticker)
+	_ = storage.DB.Save(&ticker)
 
 	var url string
 	r.POST("/v1/admin/upload").
@@ -56,7 +56,7 @@ func TestGetMedia(t *testing.T) {
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 			assert.Equal(t, "image/jpeg", r.HeaderMap.Get("Content-Type"))
-			assert.Equal(t, "162023", r.HeaderMap.Get("Content-Length"))
+			assert.Equal(t, "62497", r.HeaderMap.Get("Content-Length"))
 		})
 
 	r.GET("/media/nonexisting").
@@ -70,7 +70,7 @@ func TestGetMedia(t *testing.T) {
 		})
 
 	upload := model.NewUpload("image.jpg", "image/jpeg", 1)
-	storage.DB.Save(upload)
+	_ = storage.DB.Save(upload)
 
 	r.GET(fmt.Sprintf("/media/%s", upload.FileName())).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
