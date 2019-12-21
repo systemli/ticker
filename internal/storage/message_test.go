@@ -27,7 +27,7 @@ func TestFindByTicker(t *testing.T) {
 		Domain:      "demoticker.org",
 	}
 
-	storage.DB.Save(&ticker)
+	_ = storage.DB.Save(&ticker)
 
 	c := createContext("")
 	pagination := util.NewPagination(&c)
@@ -122,7 +122,7 @@ func TestFindByTickerInactive(t *testing.T) {
 		Active: false,
 	}
 
-	storage.DB.Save(&ticker)
+	_ = storage.DB.Save(&ticker)
 
 	c := createContext("")
 	pagination := util.NewPagination(&c)
@@ -146,9 +146,10 @@ func createContext(query string) gin.Context {
 
 func setup() {
 	if storage.DB == nil {
-		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Unix()))
+		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Nanosecond()))
 	}
-	storage.DB.Drop("Ticker")
-	storage.DB.Drop("Message")
-	storage.DB.Drop("User")
+	_ = storage.DB.Drop("Ticker")
+	_ = storage.DB.Drop("Message")
+	_ = storage.DB.Drop("User")
+	_ = storage.DB.Drop("Setting")
 }

@@ -2,7 +2,9 @@ package storage
 
 import (
 	"errors"
+
 	"github.com/asdine/storm/q"
+
 	. "github.com/systemli/ticker/internal/model"
 )
 
