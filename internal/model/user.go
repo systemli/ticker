@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/systemli/ticker/internal/util"
 	"time"
+
+	"github.com/systemli/ticker/internal/util"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,23 +31,32 @@ type UserResponse struct {
 
 //NewUser returns a new User.
 func NewUser(email, password string) (*User, error) {
-	pw, err := hashPassword(password)
-	if err != nil {
-		return nil, err
-	}
-
 	user := &User{
 		CreationDate:      time.Now(),
+		IsSuperAdmin:      false,
 		Email:             email,
-		EncryptedPassword: pw,
 		Tickers:           []int{},
+		EncryptedPassword: "",
+		Role:              "",
 	}
+
+	pw, err := hashPassword(password)
+	if err != nil {
+		return user, err
+	}
+
+	user.EncryptedPassword = pw
+
 	return user, nil
 }
 
 //NewAdminUser returns a Admin User.
 func NewAdminUser(email, password string) (*User, error) {
 	user, err := NewUser(email, password)
+	if err != nil {
+		return user, err
+	}
+
 	user.IsSuperAdmin = true
 
 	return user, err

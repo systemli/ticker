@@ -31,6 +31,12 @@ type InactiveSettings struct {
 	Twitter     string `json:"twitter,omitempty"`
 }
 
+type SettingResponse struct {
+	ID    int         `json:"id"`
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
+}
+
 //NewSetting return a new setting instance
 func NewSetting(name string, value interface{}) *Setting {
 	return &Setting{Name: name, Value: value}
@@ -55,14 +61,8 @@ func DefaultInactiveSettings() *InactiveSettings {
 }
 
 //NewSettingResponse returns a setting response
-func NewSettingResponse(setting *Setting) interface{} {
-	type res struct {
-		ID    int         `json:"id"`
-		Name  string      `json:"name"`
-		Value interface{} `json:"value"`
-	}
-
-	return &res{
+func NewSettingResponse(setting *Setting) *SettingResponse {
+	return &SettingResponse{
 		ID:    setting.ID,
 		Name:  setting.Name,
 		Value: setting.Value,
