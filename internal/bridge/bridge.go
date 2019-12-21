@@ -24,11 +24,6 @@ func NewTwitterBridge(key, secret string) *TwitterBridge {
 }
 
 //
-func (tb *TwitterBridge) Initialized() bool {
-	return tb.ConsumerKey != "" && tb.ConsumerSecret != ""
-}
-
-//
 func (tb *TwitterBridge) Update(ticker model.Ticker, message model.Message) (*twitter.Tweet, error) {
 	client := tb.client(ticker.Twitter.Token, ticker.Twitter.Secret)
 
