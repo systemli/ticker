@@ -1,6 +1,7 @@
 package util_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"testing"
@@ -27,6 +28,12 @@ func TestResizeImage(t *testing.T) {
 
 	assert.Equal(t, 63, img.Bounds().Dy())
 	assert.Equal(t, 100, img.Bounds().Dx())
+
+	r := bytes.NewReader([]byte{})
+	img, err = util.ResizeImage(r, 100)
+	if err == nil {
+		t.Fail()
+	}
 }
 
 func TestSaveImage(t *testing.T) {

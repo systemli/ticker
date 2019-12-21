@@ -6,13 +6,11 @@ import (
 	"io"
 
 	"github.com/disintegration/imaging"
-	log "github.com/sirupsen/logrus"
 )
 
 func ResizeImage(file io.Reader, maxDimension int) (image.Image, error) {
 	img, err := imaging.Decode(file)
 	if err != nil {
-		log.WithError(err).Error("can't decode uploaded file")
 		return img, err
 	}
 	if img.Bounds().Dx() > maxDimension {
