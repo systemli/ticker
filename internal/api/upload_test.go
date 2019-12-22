@@ -16,7 +16,7 @@ import (
 type uploadResponse struct {
 	Data   map[string][]model.UploadResponse `json:"data"`
 	Status string                            `json:"status"`
-	Error  interface{}                       `json:"error"`
+	Error  map[string]interface{}            `json:"error"`
 }
 
 func TestPostUploadSuccessful(t *testing.T) {
@@ -37,7 +37,6 @@ func TestPostUploadSuccessful(t *testing.T) {
 			}
 
 			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
 			assert.Equal(t, 1, len(response.Data))
 			assert.Equal(t, 1, len(response.Data["uploads"]))
 			assert.NotNil(t, response.Data["uploads"][0].UUID)
@@ -142,6 +141,36 @@ func TestPostUploadMissingFiles(t *testing.T) {
 		SetFileFromPath([]gofight.UploadFile{}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
 		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
+		})
+}
+
+func TestPostUploadTooMuchFiles(t *testing.T) {
+	r := setup()
+
+	ticker := initUploadTestData()
+
+	files := []gofight.UploadFile{
+		{Name: "files", Path: "../../testdata/gopher.jpg"},
+		{Name: "files", Path: "../../testdata/gopher.jpg"},
+		{Name: "files", Path: "../../testdata/gopher.jpg"},
+		{Name: "files", Path: "../../testdata/gopher.jpg"},
+	}
+
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+
+			var response uploadResponse
+
+			err := json.Unmarshal(r.Body.Bytes(), &response)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseError, response.Status)
+			assert.Equal(t, model.ErrorTooMuchFiles, response.Error["message"])
 		})
 }
 

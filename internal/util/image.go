@@ -24,5 +24,10 @@ func ResizeImage(file io.Reader, maxDimension int) (image.Image, error) {
 }
 
 func SaveImage(img image.Image, path string) error {
-	return imaging.Save(img, path, imaging.JPEGQuality(60), imaging.PNGCompressionLevel(png.BestCompression))
+	opts := []imaging.EncodeOption{
+		imaging.JPEGQuality(60),
+		imaging.PNGCompressionLevel(png.BestCompression),
+	}
+
+	return imaging.Save(img, path, opts...)
 }

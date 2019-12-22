@@ -57,6 +57,10 @@ func PostUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorFilesIdentifierMissing))
 		return
 	}
+	if len(files) > 3 {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorTooMuchFiles))
+		return
+	}
 	var uploads []*Upload
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
