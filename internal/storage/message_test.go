@@ -164,7 +164,7 @@ func TestDeleteMessageNonExisting(t *testing.T) {
 	_ = storage.DB.DeleteStruct(upload)
 
 	err = storage.DeleteMessage(ticker, message)
-	if err == nil {
+	if err != nil {
 		t.Fail()
 	}
 }

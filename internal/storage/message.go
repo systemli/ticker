@@ -37,11 +37,7 @@ func FindByTicker(ticker *Ticker, pagination *Pagination) ([]Message, error) {
 
 //DeleteMessage removes a Message for a Ticker
 func DeleteMessage(ticker *Ticker, message *Message) error {
-	uploads, err := FindUploadsByMessage(message)
-	if err != nil {
-		log.WithField("error", err).WithField("message", message).Error("failed to find uploads")
-		return err
-	}
+	uploads := FindUploadsByMessage(message)
 
 	DeleteUploads(uploads)
 
@@ -52,7 +48,7 @@ func DeleteMessage(ticker *Ticker, message *Message) error {
 		}
 	}
 
-	err = DB.DeleteStruct(message)
+	err := DB.DeleteStruct(message)
 	if err != nil {
 		log.WithField("error", err).WithField("message", message).Error("failed to delete message")
 		return err

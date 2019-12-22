@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
@@ -66,10 +67,8 @@ func TestFindUploadsByMessageNonExistingUpload(t *testing.T) {
 		t.Fail()
 	}
 
-	_, err = storage.FindUploadsByMessage(message)
-	if err == nil {
-		t.Fail()
-	}
+	u := storage.FindUploadsByMessage(message)
+	assert.Equal(t, 0, len(u))
 }
 
 func initialUploadTestData(t *testing.T) *model.Upload {

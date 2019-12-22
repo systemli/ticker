@@ -10,7 +10,7 @@ import (
 )
 
 //FindUploadsByMessage returns all uploads for a Message.
-func FindUploadsByMessage(message *model.Message) ([]*model.Upload, error) {
+func FindUploadsByMessage(message *model.Message) []*model.Upload {
 	var uploads []*model.Upload
 
 	if len(message.Attachments) > 0 {
@@ -20,12 +20,11 @@ func FindUploadsByMessage(message *model.Message) ([]*model.Upload, error) {
 		}
 		err := DB.Select(q.In("UUID", uuids)).Find(&uploads)
 		if err != nil {
-			log.WithField("error", err).Error("failed to select uploads")
-			return uploads, err
+			log.WithField("error", err).Error("failed to find uploads for message")
 		}
 	}
 
-	return uploads, nil
+	return uploads
 }
 
 //DeleteUpload remove the given Upload.
