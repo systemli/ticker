@@ -46,6 +46,20 @@ func TestPostUploadSuccessful(t *testing.T) {
 		})
 }
 
+func TestPostUploadGIF(t *testing.T) {
+	r := setup()
+
+	ticker := initUploadTestData()
+	files := []gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher-dance.gif"}}
+
+	r.POST("/v1/admin/upload").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+		})
+}
+
 func TestPostUploadTickerNonExisting(t *testing.T) {
 	r := setup()
 
