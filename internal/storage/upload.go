@@ -27,6 +27,16 @@ func FindUploadsByMessage(message *model.Message) []*model.Upload {
 	return uploads
 }
 
+//DeleteUploadsByTicker removes all connected uploads with the given Ticker.
+func DeleteUploadsByTicker(ticker *model.Ticker) error {
+	err := DB.Select(q.Eq("TickerID", ticker.ID)).Delete(&model.Upload{})
+	if err != nil && err.Error() == "not found" {
+		return nil
+	}
+
+	return err
+}
+
 //DeleteUpload remove the given Upload.
 func DeleteUpload(upload *model.Upload) error {
 	//TODO: Rework with afero.FS from Config

@@ -71,6 +71,24 @@ func TestFindUploadsByMessageNonExistingUpload(t *testing.T) {
 	assert.Equal(t, 0, len(u))
 }
 
+func TestDeleteUploadsByTicker(t *testing.T) {
+	setup()
+
+	ticker := model.NewTicker()
+	_ = storage.DB.Save(ticker)
+
+	err := storage.DeleteUploadsByTicker(ticker)
+
+	assert.Nil(t, err)
+
+	upload := model.NewUpload("name.jpg", "image/jpeg", ticker.ID)
+	_ = storage.DB.Save(upload)
+
+	err = storage.DeleteUploadsByTicker(ticker)
+
+	assert.Nil(t, err)
+}
+
 func initialUploadTestData(t *testing.T) *model.Upload {
 	upload := model.NewUpload("name.jpg", "image/jpeg", 1)
 	err := storage.DB.Save(upload)

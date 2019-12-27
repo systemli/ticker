@@ -8,6 +8,7 @@ import (
 	"github.com/asdine/storm/q"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/systemli/ticker/internal/bridge"
 	. "github.com/systemli/ticker/internal/model"
@@ -394,7 +395,14 @@ func ResetTickerHandler(c *gin.Context) {
 		return
 	}
 
-	_ = DeleteMessages(&ticker)
+	err = DeleteMessages(&ticker)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting messages")
+	}
+	err = DeleteUploadsByTicker(&ticker)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting remaining uploads")
+	}
 
 	ticker.Reset()
 
