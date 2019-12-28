@@ -136,10 +136,11 @@ func PostMessageHandler(c *gin.Context) {
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker := NewTicker()
+	err = DB.One("ID", tickerID, ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		log.WithError(err).Error("failed to find the ticker")
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, "ticker not found"))
 		return
 	}
 
@@ -170,13 +171,9 @@ func PostMessageHandler(c *gin.Context) {
 		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))
 	}
 
-	if ticker.Twitter.Active {
-		tweet, err := bridge.Twitter.Update(ticker, *message)
-		if err == nil {
-			message.Tweet = Tweet{ID: tweet.IDStr, UserName: tweet.User.ScreenName}
-		} else {
-			log.Error(err)
-		}
+	err = bridge.SendTweet(ticker, message)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to twitter failed")
 	}
 
 	err = DB.Save(message)
@@ -234,6 +231,10 @@ func DeleteMessageHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
+	}
+	err = bridge.DeleteTweet(&ticker, &message)
+	if err != nil {
+		log.WithField("error", err).WithField("message", message).Error("failed to delete tweet")
 	}
 
 	c.JSON(http.StatusOK, gin.H{

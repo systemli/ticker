@@ -15,7 +15,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	. "github.com/systemli/ticker/internal/api"
-	"github.com/systemli/ticker/internal/bridge"
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/storage"
 )
@@ -60,10 +59,6 @@ func init() {
 
 	Config = LoadConfig(*cp)
 	DB = OpenDB(Config.Database)
-
-	if Config.TwitterEnabled() {
-		bridge.Twitter = bridge.NewTwitterBridge(Config.TwitterConsumerKey, Config.TwitterConsumerSecret)
-	}
 
 	firstRun()
 

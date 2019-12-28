@@ -278,11 +278,11 @@ func PutTickerTwitterHandler(c *gin.Context) {
 		ticker.Twitter.Active = body.Active
 	}
 
-	if ticker.Twitter.Connected() {
-		user, err := bridge.Twitter.User(ticker)
-		if err == nil {
-			ticker.Twitter.User = *user
-		}
+	tu, err := bridge.TwitterUser(&ticker)
+	if err != nil {
+		log.WithError(err).Error("cant fetch user information from twitter")
+	} else {
+		ticker.Twitter.User = *tu
 	}
 
 	err = DB.Save(&ticker)

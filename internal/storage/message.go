@@ -4,7 +4,6 @@ import (
 	"github.com/asdine/storm/q"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/systemli/ticker/internal/bridge"
 	. "github.com/systemli/ticker/internal/model"
 	. "github.com/systemli/ticker/internal/util"
 )
@@ -40,13 +39,6 @@ func DeleteMessage(ticker *Ticker, message *Message) error {
 	uploads := FindUploadsByMessage(message)
 
 	DeleteUploads(uploads)
-
-	if message.Tweet.ID != "" {
-		err := bridge.Twitter.Delete(*ticker, message.Tweet.ID)
-		if err != nil {
-			log.WithField("error", err).WithField("message", message).Error("failed to delete tweet")
-		}
-	}
 
 	err := DB.DeleteStruct(message)
 	if err != nil {
