@@ -213,6 +213,7 @@ func initialMessageTestData(t *testing.T) (*model.Ticker, *model.Message, *model
 	}
 
 	message := model.NewMessage()
+	message.Ticker = ticker.ID
 	attachment := model.Attachment{UUID: upload.UUID, Extension: upload.Extension, ContentType: upload.Extension}
 	message.Attachments = []model.Attachment{attachment}
 	err = storage.DB.Save(message)

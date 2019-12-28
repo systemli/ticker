@@ -52,9 +52,8 @@ func DeleteMessage(ticker *Ticker, message *Message) error {
 //DeleteMessages removes all messages for a Ticker.
 func DeleteMessages(ticker *Ticker) error {
 	var messages []*Message
-	err := DB.Find("ID", ticker.ID, &messages)
-	if err != nil {
-		log.WithField("error", err).WithField("ticker", ticker).Error("failed find messages for ticker")
+	if err := DB.Find("Ticker", ticker.ID, &messages); err != nil {
+		log.WithField("error", err).WithField("ticker", ticker.ID).Error("failed find messages for ticker")
 		return err
 	}
 

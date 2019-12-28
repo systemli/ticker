@@ -40,13 +40,11 @@ func DeleteUploadsByTicker(ticker *model.Ticker) error {
 //DeleteUpload remove the given Upload.
 func DeleteUpload(upload *model.Upload) error {
 	//TODO: Rework with afero.FS from Config
-	err := os.Remove(upload.FullPath())
-	if err != nil {
+	if err := os.Remove(upload.FullPath()); err != nil {
 		log.WithField("error", err).WithField("upload", upload).Error("failed to delete upload file")
 	}
 
-	err = DB.DeleteStruct(upload)
-	if err != nil {
+	if err := DB.DeleteStruct(upload); err != nil {
 		log.WithField("error", err).WithField("upload", upload).Error("failed to delete upload")
 		return err
 	}
