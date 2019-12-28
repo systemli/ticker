@@ -6,6 +6,7 @@ import (
 
 	"github.com/sethvargo/go-password/password"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
@@ -20,6 +21,9 @@ type config struct {
 	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
 	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
 	MetricsListen         string `mapstructure:"metrics_listen"`
+	UploadPath            string `mapstructure:"upload_path"`
+	UploadURL             string `mapstructure:"upload_url"`
+	FileBackend           afero.Fs
 }
 
 //NewConfig returns config with default values.
@@ -33,6 +37,9 @@ func NewConfig() *config {
 		Secret:        secret,
 		Database:      "ticker.db",
 		MetricsListen: ":8181",
+		UploadPath:    "uploads",
+		UploadURL:     "http://localhost:8080",
+		FileBackend:   afero.NewOsFs(),
 	}
 }
 
@@ -55,6 +62,14 @@ func LoadConfig(path string) *config {
 	viper.SetDefault("metrics_listen", c.MetricsListen)
 	viper.SetDefault("twitter_consumer_key", "")
 	viper.SetDefault("twitter_consumer_secret", "")
+	viper.SetDefault("upload_path", c.UploadPath)
+	viper.SetDefault("upload_url", c.UploadURL)
+
+	//TODO: Make configurable
+	fs := afero.NewOsFs()
+	c.FileBackend = fs
+
+	viper.SetFs(fs)
 
 	if path != "" {
 		dir, file := filepath.Split(path)

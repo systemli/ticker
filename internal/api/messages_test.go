@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/appleboy/gofight"
+	"github.com/appleboy/gofight/v2"
+	"github.com/google/uuid"
 	"github.com/paulmach/go.geojson"
 	"github.com/stretchr/testify/assert"
 
@@ -197,6 +199,82 @@ func TestPostMessageHandler(t *testing.T) {
 			assert.Equal(t, "message #hashtag", message.Text)
 			assert.Equal(t, 1, message.Ticker)
 			assert.IsType(t, geojson.FeatureCollection{}, message.GeoInformation)
+		})
+}
+
+func TestPostMessageWithAttachmentHandler(t *testing.T) {
+	r := setup()
+
+	ticker := model.Ticker{
+		ID:       1,
+		Active:   true,
+		Hashtags: []string{`#hashtag`},
+	}
+
+	upload := model.Upload{
+		ID:           1,
+		UUID:         uuid.New().String(),
+		CreationDate: time.Now(),
+		TickerID:     1,
+		Path:         "1/1",
+		Extension:    "jpg",
+		ContentType:  "image/jpeg",
+	}
+
+	storage.DB.Save(&ticker)
+	storage.DB.Save(&upload)
+
+	body := `{
+		"text": "message",
+		"geo_information": {
+			"type" : "FeatureCollection",
+			"features" : [{ 
+				"type" : "Feature", 
+				"properties" : {  
+					"capacity" : "10", 
+					"type" : "U-Rack",
+					"mount" : "Surface"
+				}, 
+				"geometry" : { 
+					"type" : "Point", 
+					"coordinates" : [ -71.073283, 42.417500 ] 
+				}
+			}]
+		},
+		"attachments": [1]
+	}`
+
+	r.POST("/v1/admin/tickers/1/messages").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+
+			type jsonResp struct {
+				Data   map[string]model.MessageResponse `json:"data"`
+				Status string                           `json:"status"`
+				Error  interface{}                      `json:"error"`
+			}
+
+			var jres jsonResp
+
+			err := json.Unmarshal(r.Body.Bytes(), &jres)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, model.ResponseSuccess, jres.Status)
+			assert.Equal(t, nil, jres.Error)
+			assert.Equal(t, 1, len(jres.Data))
+
+			message := jres.Data["message"]
+
+			assert.Equal(t, "message #hashtag", message.Text)
+			assert.Equal(t, 1, message.Ticker)
+
+			assert.Equal(t, 1, len(message.Attachments))
+			assert.NotNil(t, message.Attachments[0].URL)
+			assert.Equal(t, "image/jpeg", message.Attachments[0].ContentType)
 		})
 }
 

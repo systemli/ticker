@@ -12,9 +12,7 @@ import (
 func TestFindTicker(t *testing.T) {
 	setup()
 
-	ticker := model.NewTicker()
-	ticker.Domain = "localhost"
-	_ = storage.DB.Save(ticker)
+	ticker := initTickerTestData()
 
 	ticker, err := storage.FindTicker("localhost")
 	if err != nil {
@@ -29,4 +27,31 @@ func TestFindTicker(t *testing.T) {
 		t.Fail()
 		return
 	}
+}
+
+func TestGetTicker(t *testing.T) {
+	setup()
+
+	ticker := initTickerTestData()
+
+	found, err := storage.GetTicker(ticker.ID)
+	if err != nil {
+		t.Fail()
+		return
+	}
+
+	assert.Equal(t, ticker.ID, found.ID)
+
+	_, err = storage.GetTicker(2)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func initTickerTestData() *model.Ticker {
+	ticker := model.NewTicker()
+	ticker.Domain = "localhost"
+	_ = storage.DB.Save(ticker)
+
+	return ticker
 }

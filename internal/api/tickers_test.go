@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/appleboy/gofight"
+	"github.com/appleboy/gofight/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
@@ -555,6 +555,7 @@ func setup() *gofight.RequestConfig {
 	gin.SetMode(gin.TestMode)
 
 	model.Config = model.NewConfig()
+	model.Config.UploadPath = os.TempDir()
 
 	if storage.DB == nil {
 		storage.DB = storage.OpenDB(fmt.Sprintf("%s/ticker_%d.db", os.TempDir(), time.Now().Unix()))

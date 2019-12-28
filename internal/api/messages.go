@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 	"github.com/paulmach/go.geojson"
 	log "github.com/sirupsen/logrus"
@@ -108,6 +109,7 @@ func PostMessageHandler(c *gin.Context) {
 	var body struct {
 		Text           string                    `json:"text" binding:"required"`
 		GeoInformation geojson.FeatureCollection `json:"geo_information"`
+		Attachments    []int                     `json:"attachments"`
 	}
 	err := c.Bind(&body)
 	if err != nil {
@@ -134,11 +136,21 @@ func PostMessageHandler(c *gin.Context) {
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker := NewTicker()
+	err = DB.One("ID", tickerID, ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		log.WithError(err).Error("failed to find the ticker")
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, "ticker not found"))
 		return
+	}
+
+	var uploads []*Upload
+	if len(body.Attachments) > 0 {
+		err := DB.Select(q.In("ID", body.Attachments)).Find(&uploads)
+		if err != nil {
+			c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+			return
+		}
 	}
 
 	message := NewMessage()
@@ -146,17 +158,22 @@ func PostMessageHandler(c *gin.Context) {
 	message.Ticker = tickerID
 	message.GeoInformation = body.GeoInformation
 
+	if len(uploads) > 0 {
+		var attachments []Attachment
+		for _, upload := range uploads {
+			attachments = append(attachments, Attachment{Extension: upload.Extension, UUID: upload.UUID, ContentType: upload.ContentType})
+		}
+
+		message.Attachments = attachments
+	}
+
 	if len(ticker.Hashtags) > 0 {
 		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))
 	}
 
-	if ticker.Twitter.Active {
-		tweet, err := bridge.Twitter.Update(ticker, *message)
-		if err == nil {
-			message.Tweet = Tweet{ID: tweet.IDStr, UserName: tweet.User.ScreenName}
-		} else {
-			log.Error(err)
-		}
+	err = bridge.SendTweet(ticker, message)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to twitter failed")
 	}
 
 	err = DB.Save(message)
@@ -210,17 +227,14 @@ func DeleteMessageHandler(c *gin.Context) {
 		return
 	}
 
-	if message.Tweet.ID != "" {
-		err = bridge.Twitter.Delete(ticker, message.Tweet.ID)
-		if err != nil {
-			log.Error(err)
-		}
-	}
-
-	err = DB.DeleteStruct(&message)
+	err = DeleteMessage(&ticker, &message)
 	if err != nil {
 		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
 		return
+	}
+	err = bridge.DeleteTweet(&ticker, &message)
+	if err != nil {
+		log.WithField("error", err).WithField("message", message).Error("failed to delete tweet")
 	}
 
 	c.JSON(http.StatusOK, gin.H{

@@ -8,6 +8,7 @@ import (
 	"github.com/asdine/storm/q"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/systemli/ticker/internal/bridge"
 	. "github.com/systemli/ticker/internal/model"
@@ -277,11 +278,11 @@ func PutTickerTwitterHandler(c *gin.Context) {
 		ticker.Twitter.Active = body.Active
 	}
 
-	if ticker.Twitter.Connected() {
-		user, err := bridge.Twitter.User(ticker)
-		if err == nil {
-			ticker.Twitter.User = *user
-		}
+	tu, err := bridge.TwitterUser(&ticker)
+	if err != nil {
+		log.WithError(err).Error("cant fetch user information from twitter")
+	} else {
+		ticker.Twitter.User = *tu
 	}
 
 	err = DB.Save(&ticker)
@@ -394,8 +395,14 @@ func ResetTickerHandler(c *gin.Context) {
 		return
 	}
 
-	//Delete all messages for ticker
-	_ = DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
+	err = DeleteMessages(&ticker)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting messages")
+	}
+	err = DeleteUploadsByTicker(&ticker)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting remaining uploads")
+	}
 
 	ticker.Reset()
 

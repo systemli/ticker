@@ -2,13 +2,15 @@ package api_test
 
 import (
 	"encoding/json"
-	"github.com/appleboy/gofight"
+	"strings"
+	"testing"
+
+	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
-	"strings"
-	"testing"
 )
 
 func TestGetUsersHandler(t *testing.T) {

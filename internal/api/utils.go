@@ -4,10 +4,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/systemli/ticker/internal/model"
-
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+
+	. "github.com/systemli/ticker/internal/model"
 )
 
 //
@@ -37,14 +37,14 @@ func GetDomain(c *gin.Context) (string, error) {
 	return domain, nil
 }
 
-func Me(c *gin.Context) (model.User, error) {
-	var user model.User
+func Me(c *gin.Context) (User, error) {
+	var user User
 	u, exists := c.Get(UserKey)
 	if !exists {
-		return user, errors.New(model.ErrorUserNotFound)
+		return user, errors.New(ErrorUserNotFound)
 	}
 
-	return u.(model.User), nil
+	return u.(User), nil
 }
 
 func IsAdmin(c *gin.Context) bool {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-contrib/cors"
+	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/toorop/gin-logrus"
@@ -27,6 +28,8 @@ func API() *gin.Engine {
 
 	r.Use(NewPrometheus())
 
+	r.Use(limits.RequestSizeLimiter(1024 * 1024 * 10))
+
 	// the jwt middleware
 	authMiddleware := AuthMiddleware()
 
@@ -50,6 +53,8 @@ func API() *gin.Engine {
 		admin.POST(`/tickers/:tickerID/messages`, PostMessageHandler)
 		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, DeleteMessageHandler)
 
+		admin.POST(`/upload`, PostUpload)
+
 		admin.GET(`/users`, GetUsersHandler)
 		admin.GET(`/users/:userID`, GetUserHandler)
 		admin.POST(`/users`, PostUserHandler)
@@ -69,8 +74,9 @@ func API() *gin.Engine {
 
 		public.GET(`/init`, GetInitHandler)
 		public.GET(`/timeline`, GetTimelineHandler)
-
 	}
+
+	r.GET(`/media/:fileName`, GetMedia)
 
 	return r
 }

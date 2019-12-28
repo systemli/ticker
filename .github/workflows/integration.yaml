@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --force --recursive --depth=1
       - name: Setup go
         uses: actions/setup-go@v1
         with:
@@ -29,6 +33,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --force --recursive --depth=1
       - name: Setup go
         uses: actions/setup-go@v1
         with:
@@ -43,5 +51,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - shell: bash
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --force --recursive --depth=1
       - name: Docker
         run: make docker
