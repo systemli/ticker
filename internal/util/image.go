@@ -9,7 +9,7 @@ import (
 )
 
 func ResizeImage(file io.Reader, maxDimension int) (image.Image, error) {
-	img, err := imaging.Decode(file)
+	img, err := imaging.Decode(file, imaging.AutoOrientation(true))
 	if err != nil {
 		return img, err
 	}
