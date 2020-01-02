@@ -41,6 +41,10 @@ twitter_consumer_key: ""
 twitter_consumer_secret: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
+# path where to store the uploaded files
+upload_path: "/path/to/uploads"
+# base url for uploaded assets
+upload_url: "http://localhost:8080"
 ```
 
 We use [viper](https://github.com/spf13/viper). That means you can use any of the supported
@@ -56,6 +60,8 @@ The following env vars can be used:
 * TICKER_TWITTER_CONSUMER_KEY
 * TICKER_TWITTER_CONSUMER_SECRET
 * TICKER_METRICS_LISTEN
+* TICKER_UPLOAD_PATH
+* TICKER_UPLOAD_URL
 
 ## Testing
 
