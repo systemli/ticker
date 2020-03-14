@@ -22,7 +22,6 @@ import (
 var (
 	GitCommit  string
 	GitVersion string
-	BuildDate  string
 )
 
 func main() {
@@ -93,7 +92,6 @@ func buildInfo() {
 	log.Println("Build Information")
 	log.Printf("Version: %s", GitVersion)
 	log.Printf("Commit: %s", GitCommit)
-	log.Printf("Build Date: %s", BuildDate)
 }
 
 func firstRun() {
