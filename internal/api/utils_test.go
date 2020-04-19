@@ -63,3 +63,18 @@ func TestGetDomainWWW(t *testing.T) {
 	assert.Equal(t, "demoticker.org", domain)
 	assert.Equal(t, nil, err)
 }
+
+func TestGetDomainOriginQueryOverwrite(t *testing.T) {
+	req := http.Request{
+		Header: http.Header{
+			"Origin": []string{"http://www.demoticker.org/"},
+		},
+		URL: &url.URL{RawQuery: "origin=another.demoticker.org"},
+	}
+
+	c := gin.Context{Request: &req}
+
+	domain, err := api.GetDomain(&c)
+	assert.Equal(t, "another.demoticker.org", domain)
+	assert.Equal(t, nil, err)
+}

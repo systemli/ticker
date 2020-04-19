@@ -12,15 +12,14 @@ import (
 
 //
 func GetDomain(c *gin.Context) (string, error) {
-	origin := c.Request.Header.Get("Origin")
+	origin := c.Request.URL.Query().Get("origin")
+	if origin != "" {
+		return origin, nil
+	}
 
+	origin = c.Request.Header.Get("Origin")
 	if origin == "" {
-		origin = c.Request.URL.Query().Get("origin")
-		if origin == "" {
-			return "", errors.New("Origin header not found")
-		} else {
-			return origin, nil
-		}
+		return "", errors.New("Origin header not found")
 	}
 
 	u, err := url.Parse(origin)
