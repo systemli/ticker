@@ -12,8 +12,9 @@ import (
 )
 
 func TestGetDomainEmptyOrigin(t *testing.T) {
-	req := http.Request{}
-	req.URL = &url.URL{}
+	req := http.Request{
+		URL: &url.URL{},
+	}
 
 	c := gin.Context{Request: &req}
 
@@ -27,6 +28,7 @@ func TestGetDomainLocalhost(t *testing.T) {
 		Header: http.Header{
 			"Origin": []string{"http://localhost/"},
 		},
+		URL: &url.URL{},
 	}
 
 	c := gin.Context{Request: &req}
@@ -41,6 +43,7 @@ func TestGetDomainLocalhostPort(t *testing.T) {
 		Header: http.Header{
 			"Origin": []string{"http://localhost:3000/"},
 		},
+		URL: &url.URL{},
 	}
 
 	c := gin.Context{Request: &req}
@@ -55,6 +58,7 @@ func TestGetDomainWWW(t *testing.T) {
 		Header: http.Header{
 			"Origin": []string{"http://www.demoticker.org/"},
 		},
+		URL: &url.URL{},
 	}
 
 	c := gin.Context{Request: &req}
