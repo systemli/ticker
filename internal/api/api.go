@@ -77,6 +77,10 @@ func API() *gin.Engine {
 	}
 
 	r.GET(`/media/:fileName`, GetMedia)
+	
+	r.GET("/healthz", func(c *gin.Context) {
+          c.String(http.StatusOK, "OK")
+        })
 
 	return r
 }
