@@ -7,7 +7,15 @@ This repository contains the API and storage for the [Systemli Ticker Project](h
 The project is written in Go. You should be familiar with the structure and organisation of the code. If not, there are some [good guides](https://golang.org/doc/code.html).
 
 ## First run 
-
+  * make sure you have pulled git submodules
+```
+git clone --recurse-submodules git@github.com:systemli/ticker.git
+```
+  or if you already cloned the repo
+```
+cd <path-to-ticker>
+git submodule update --init --recursive
+```
   * we provide a `Makefile` for clean, build, test and release the software
 
 ```
