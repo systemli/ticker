@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gin-contrib/cors"
 	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
@@ -77,6 +79,10 @@ func API() *gin.Engine {
 	}
 
 	r.GET(`/media/:fileName`, GetMedia)
+	
+	r.GET("/healthz", func(c *gin.Context) {
+          c.String(http.StatusOK, "OK")
+        })
 
 	return r
 }
