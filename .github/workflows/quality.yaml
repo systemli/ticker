@@ -13,8 +13,6 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --force --recursive --depth=1
       - name: GolangCI
-        uses: Mushus/golangci-lint-action@master
+        uses: golangci/golangci-lint-action@v2
         with:
-          config: .golangci.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version: v1.30
