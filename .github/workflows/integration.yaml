@@ -15,7 +15,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2.1.3
         with:
-          go-version: '1.15.x'
+          go-version: '1.16.x'
       - name: Download dependencies
         run: go get -t -v ./...
       - name: Vet
@@ -40,7 +40,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2.1.3
         with:
-          go-version: '1.15.x'
+          go-version: '1.16.x'
       - name: Download dependencies
         run: go get -t -v ./...
       - name: Build
