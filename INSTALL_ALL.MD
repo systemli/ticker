@@ -1,6 +1,8 @@
 Installation of ticker, ticker-admin & ticker-frontend
 ==
+This was tested with an Ubuntu 20.04 LTS server.
 
+Results may differ on other releases or distributions!
 
 # Requirements
 
