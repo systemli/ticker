@@ -100,6 +100,8 @@ then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx -d api.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
 
+__If you don't want to use certbot for your installation, please keep in mind, that nontheless you'll need an TLS cert for running this in production and need to configure the nginx accordingly by yourself!__
+
 It should generate a certificate after answering a few questions like a email address, etc.
 
 __done. This domain is now serving a ticker API. :)__
@@ -157,6 +159,8 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx -d admin.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
+
+__If you don't want to use certbot for your installation, please keep in mind, that nontheless you'll need an TLS cert for running this in production and need to configure the nginx accordingly by yourself!__
 
 It should generate a certificate after answering a few questions like a email address, etc.
 
@@ -221,6 +225,8 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx -d sub.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
+
+__If you don't want to use certbot for your installation, please keep in mind, that nontheless you'll need an TLS cert for running this in production and need to configure the nginx accordingly by yourself!__
 
 It should generate a certificate after answering a few questions like a email address, etc.
 
