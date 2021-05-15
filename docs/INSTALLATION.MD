@@ -86,7 +86,7 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
-Run `certbot --nginx -d api.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
+Run `certbot --nginx --redirect -d api.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
 
 It should generate a certificate after answering a few questions like a email address, etc.
 
