@@ -1,0 +1,13 @@
+[Unit]
+Description=ticker-api
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ticker
+ExecStart=/var/www/ticker/build/ticker -config /var/www/ticker/config.yml
+WorkingDirectory=/var/www/ticker
+[Install]
+WantedBy=multi-user.target
