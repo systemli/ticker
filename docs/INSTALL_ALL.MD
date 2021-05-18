@@ -20,9 +20,14 @@ Results may differ on other releases or distributions!
 ## Getting Go:
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
+
+
 Instead use:
  [golang.org install guide](https://golang.org/doc/install)
 
+
+Please be also aware, that it's best practice to build your version of "ticker" not on the production machine. In order to keep the hurdle as low as possible, we will build the app on the system we're going to run it.
+To enhance security maybe you want to remove `go` & `make` afterwards.
 ## Getting NodeJS:
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
@@ -30,7 +35,9 @@ Instead use:
  [nodesource/distributions](https://github.com/nodesource/distributions/blob/master/README.md#debinstall)
 
 # Install ticker
-
+### Build from source:
+_As mentioned above, this isn't best practice._
+__You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
 1. `cd /var/www/`
 The directory where we gonna install all the things
 1. `git clone --recurse-submodules https://github.com/systemli/ticker`
@@ -39,7 +46,22 @@ Clone the repository onto your disk
 Go into the just cloned repository
 3. `git submodule update --init --recursive`
 Initialise all the submodules
-1. `vim config.yml.dist`
+6. `make build`
+Build the application
+7. Go to "Configuration, Service and Stuff"
+
+### Downloading a release from GitHub:
+
+1. Go to https://github.com/systemli/ticker/releases
+4. Pick the latest release and download it via `wget https://github.com/systemli/ticker/releases/download/<version>/ticker-<version>-<architecture>`
+5. `mv ticker-<version>-<architecture> /var/www/ticker/ticker`
+6. `chmod +x /var/www/ticker/ticker`
+7. Go to "Configuration, Service and Stuff"
+
+
+### Configuration, Service and Stuff
+
+1. `vim config.yml`
 Fill your config file with the following content:
 ```yaml
 # listen binds ticker to specific address and port
@@ -62,10 +84,11 @@ upload_path: "uploads"
 # base url for uploaded assets
 upload_url: "https://api.domain.tld"
 ```
-6. `make run`
-Run the application
-
-__You'll receive credentials in the console output. Use them for your first login to ticker-admin and change them immediately!__
+2. Create a systemd Task (see [docs/ticker-api.service](docs/ticker-api.service) for reference)
+2. `systemctl enable ticker-api.service`
+3. `systemctl start ticker-api.service`
+4. If you enter `systemctl status ticker-api.service` you'll see the generated admin password. __Please change it immediately!__
+5. __Done. \o/__ You now have a fully functional ticker API.
 
 
 ## Exposing
@@ -76,7 +99,7 @@ __You'll receive credentials in the console output. Use them for your first logi
 server {
     listen 80;
     listen [::]:80;
-    server_name api.domain.tld
+    server_name api.domain.tld;
     location / {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -136,7 +159,7 @@ Sets the owner for the freshly created dist repository to your nginx user
 server {
     listen 80;
     listen [::]:80;
-    server_name admin.domain.tld
+    server_name admin.domain.tld;
     root /var/www/ticker-admin/dist;
     index index.html;
     location / {
@@ -202,7 +225,7 @@ _The following config is for a single domain only! For wildcard configs, just re
 server {
     listen 80;
     listen [::]:80;
-    server_name sub.domain.tld
+    server_name sub.domain.tld;
     root /var/www/ticker-frontend/dist;
     index index.html;
     location / {
