@@ -6,6 +6,12 @@ This repository contains the API and storage for the [Systemli Ticker Project](h
 
 The project is written in Go. You should be familiar with the structure and organisation of the code. If not, there are some [good guides](https://golang.org/doc/code.html).
 
+## Installation
+
+A quick install guide to launch just the ticker API / storage [INSTALLATION.MD](docs/INSTALLATION.MD).
+
+A quick install guide to install the whole deal (frontend, admin & API/storage) [INSTALL_ALL.MD](docs/INSTALL_ALL.MD)
+
 ## First run 
   * make sure you have pulled git submodules
 ```
