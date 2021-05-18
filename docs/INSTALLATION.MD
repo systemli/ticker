@@ -94,7 +94,7 @@ __This config is only for use with `cerbot`! Please create a secure SSL config i
 server {
     listen 80;
     listen [::]:80;
-    server_name api.domain.tld
+    server_name api.domain.tld;
     location / {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
