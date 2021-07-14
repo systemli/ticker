@@ -1,4 +1,4 @@
-FROM golang:1.16.4-alpine AS build-env
+FROM golang:1.17rc1-alpine AS build-env
 ENV GO111MODULE=on
 WORKDIR /go/src/github.com/systemli/ticker
 ADD . /go/src/github.com/systemli/ticker
