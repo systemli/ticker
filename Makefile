@@ -2,7 +2,6 @@ GOCMD        = go
 GOBUILD      = $(GOCMD) build
 GOCLEAN      = $(GOCMD) clean
 GOTEST       = $(GOCMD) test
-GOVET        = $(GOCMD) vet
 GOGET        = $(GOCMD) get
 GOX          = $(GOPATH)/bin/gox
 GOGET        = $(GOCMD) get
@@ -21,9 +20,6 @@ all: clean vet test build
 
 build:
 	$(GOBUILD) -ldflags "${LD_FLAGS}" -o $(BUILD_DIR)/$(BINARY_NAME) -v
-
-vet:
-	${GOVET} ./...
 
 test:
 	${GOTEST} ./...

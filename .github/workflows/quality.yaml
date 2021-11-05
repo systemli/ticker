@@ -7,12 +7,12 @@ jobs:
     name: GolangCI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
-      - shell: bash
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --force --recursive --depth=1
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: 'recursive'
+
       - name: GolangCI
         uses: golangci/golangci-lint-action@v2.5.2
         with:
-          version: v1.30
+          version: v1.43.0
