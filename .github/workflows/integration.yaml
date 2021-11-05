@@ -5,23 +5,31 @@ on: [push]
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2.4.0
-      - shell: bash
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --force --recursive --depth=1
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: 'recursive'
+
       - name: Setup go
         uses: actions/setup-go@v2.1.4
         with:
-          go-version: '1.16.x'
-      - name: Download dependencies
-        run: go get -t -v ./...
-      - name: Vet
-        run: make vet
+          go-version: '1.17.x'
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Test
         run: make coverage
+
       - name: Codecov
         uses: codecov/codecov-action@v2.1.0
         with:
@@ -30,30 +38,41 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    needs: [test]
     steps:
-      - uses: actions/checkout@v2.4.0
-      - shell: bash
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --force --recursive --depth=1
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: 'recursive'
+
       - name: Setup go
         uses: actions/setup-go@v2.1.4
         with:
-          go-version: '1.16.x'
-      - name: Download dependencies
-        run: go get -t -v ./...
+          go-version: '1.17.x'
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Build
         run: make build
 
   docker:
     name: Docker
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    needs: [test, build]
     steps:
-      - uses: actions/checkout@v2.4.0
-      - shell: bash
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --force --recursive --depth=1
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          submodules: 'recursive'
+
       - name: Docker
         run: make docker
