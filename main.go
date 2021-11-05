@@ -89,9 +89,11 @@ func init() {
 }
 
 func buildInfo() {
-	log.Println("Build Information")
-	log.Printf("Version: %s", GitVersion)
-	log.Printf("Commit: %s", GitCommit)
+	if GitCommit != "" && GitVersion != "" {
+		log.Println("Build Information")
+		log.Printf("Version: %s", GitVersion)
+		log.Printf("Commit: %s", GitCommit)
+	}
 }
 
 func firstRun() {

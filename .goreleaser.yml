@@ -1,0 +1,35 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goos:
+      - linux
+      - darwin
+    goarm:
+      - 6
+      - 7
+    ldflags:
+      - "-s -w"
+      - "-X main.GitCommit={{ .Commit }}"
+      - "-X main.GitVersion={{ .Version }}"
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "systemli/ticker:{{ .Tag }}"
+      - "systemli/ticker:{{ .Major }}"
+      - "systemli/ticker:{{ .Major }}.{{ .Minor }}"
+      - "systemli/ticker:latest"
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  skip: true
