@@ -31,6 +31,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.5.1
+	github.com/tidwall/gjson v1.11.0 // indirect
 	github.com/toorop/gin-logrus v0.0.0-20190701131413-6c374ad36b67
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
