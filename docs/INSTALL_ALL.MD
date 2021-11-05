@@ -1,10 +1,9 @@
-Installation of ticker, ticker-admin & ticker-frontend
-==
+# Installation of ticker, ticker-admin & ticker-frontend
 This was tested with an Ubuntu 20.04 LTS server.
 
 Results may differ on other releases or distributions!
 
-# Requirements
+## Requirements
 
 - `git`
 - `go`
@@ -17,7 +16,7 @@ Results may differ on other releases or distributions!
 - Public IPv4
 - Public IPv6 (Please!)
 
-## Getting Go:
+### Getting Go:
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
 
@@ -28,13 +27,13 @@ Instead use:
 
 Please be also aware, that it's best practice to build your version of "ticker" not on the production machine. In order to keep the hurdle as low as possible, we will build the app on the system we're going to run it.
 To enhance security maybe you want to remove `go` & `make` afterwards.
-## Getting NodeJS:
+### Getting NodeJS:
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
 Instead use:
  [nodesource/distributions](https://github.com/nodesource/distributions/blob/master/README.md#debinstall)
 
-# Install ticker
+## Install ticker
 ### Build from source:
 _As mentioned above, this isn't best practice._
 __You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
@@ -129,7 +128,7 @@ It should generate a certificate after answering a few questions like a email ad
 
 __done. This domain is now serving a ticker API. :)__
 
-# Install ticker-admin
+## Install ticker-admin
 
 1. `cd /var/www/`
 The directory where we gonna install all the things
@@ -151,7 +150,7 @@ Build the application
 6. `chown www-data:www-data dist/ -R`
 Sets the owner for the freshly created dist repository to your nginx user
 
-## Exposing
+### Exposing
 `vim /etc/nginx/sites-available/ticker-admin`
 
 
@@ -192,7 +191,7 @@ done. This domain is now serving a ticker frontend. :)
 **You need to create the ticker in ticker-admin in order to see something!**
 
 
-# Install ticker-frontend
+## Install ticker-frontend
 
 1. `cd /var/www/`
 The directory where we gonna install all the things
@@ -216,7 +215,7 @@ Build the application
 6. `chown www-data:www-data dist/ -R`
 Sets the owner for the freshly created dist repository to your nginx user
 
-## Exposing
+### Exposing
 `vim /etc/nginx/sites-available/ticker-frontend`
 
 _The following config is for a single domain only! For wildcard configs, just replace the `sub.domain.tld` with a `*.domain.tld`. You need to validate your domain via DNS challenge or use another provider then Let's Encrypt!_
@@ -257,7 +256,7 @@ done. This domain is now serving a ticker frontend. :)
 
 **You need to create the ticker in ticker-admin in order to see something!**
 
-# First touch
+## First touch
 
 - Go to `https://admin.domain.tld` and log in with the credentials provided at your first start of the ticker api.
 - Change the provided credentials (and use a password manager)

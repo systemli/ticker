@@ -1,4 +1,5 @@
 # Installation
+
 This is tested under Ubuntu 20.04 LTS
 
 We're assuming, that the ticker api will be available under the `api.domain.tld` domain. Please change accordingly.
@@ -6,6 +7,7 @@ We're assuming, that the ticker api will be available under the `api.domain.tld`
 __This should be considered a QUICK INSTALL GUIDE! Some best practices may differ.__
 
 ## Requirements:
+
 - `nginx`
 - certificate (`certbot` & `python3-certbot-nginx` to use free Let's Encrypt Certs)
 - `git`
@@ -13,9 +15,8 @@ __This should be considered a QUICK INSTALL GUIDE! Some best practices may diffe
 - Public IPv4
 - Public IPv6 (Please!)
 - `make`
-
-
 ### Getting Go:
+
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
 Instead use:
@@ -27,8 +28,10 @@ To enhance security maybe you want to remove `go` & `make` afterwards.
 ## Installation
 
 ### Build from source:
+
 _As mentioned above, this isn't best practice._
 __You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
+
 1. `cd /var/www/`
 The directory where we gonna install all the things
 1. `git clone --recurse-submodules https://github.com/systemli/ticker`
@@ -48,7 +51,6 @@ Build the application
 5. `mv ticker-<version>-<architecture> /var/www/ticker/ticker`
 6. `chmod +x /var/www/ticker/ticker`
 7. Go to "Configuration, Service and Stuff"
-
 
 ### Configuration, Service and Stuff
 
@@ -82,9 +84,9 @@ upload_url: "https://api.domain.tld"
 5. __Done. \o/__ You now have a fully functional ticker API.
 
 ## Exposing
+
 In order to expose your ticker API to the users and not only yourself on the server, you'll need some sort of reverse proxy.
 The following config expects you to use nginx, but apache2, caddy, etc. works just fine too.
-
 
 `vim /etc/nginx/sites-available/ticker-api`
 
