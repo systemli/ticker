@@ -13,25 +13,23 @@ A quick install guide to launch just the ticker API / storage [INSTALLATION.MD](
 A quick install guide to install the whole deal (frontend, admin & API/storage) [INSTALL_ALL.MD](docs/INSTALL_ALL.MD)
 
 ## First run 
-  * make sure you have pulled git submodules
-```
-git clone --recurse-submodules git@github.com:systemli/ticker.git
-```
-  or if you already cloned the repo
-```
-cd <path-to-ticker>
-git submodule update --init --recursive
-```
-  * we provide a `Makefile` for clean, build, test and release the software
 
-```
-➜  ticker git:(master) ✗ make run
-go build -o build/ticker -v
-cp config.yml.dist build/config.yml
-./build/ticker -config build/config.yml
-INFO[0000] admin user created (change password now!)     email=admin@systemli.org password="5O.AVsHDd@Y23<aGWlxpwKiS"
-INFO[0000] starting ticker at localhost:8080
-```
+- make sure you have pulled git submodules
+    ```shell
+    git clone --recurse-submodules git@github.com:systemli/ticker.git
+    ```
+
+- or if you already cloned the repo
+    ```shell
+    cd <path-to-ticker>
+    git submodule update --init --recursive
+    ```
+
+- start the ticker
+    ```shell
+    cp config.yml.dist config.yml
+    go run .
+    ```
 
 Now you have a running ticker API!
 
@@ -79,6 +77,6 @@ The following env vars can be used:
 
 ## Testing
 
-```
-make test
+```shell
+go test ./...
 ```

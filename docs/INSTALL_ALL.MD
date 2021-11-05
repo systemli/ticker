@@ -7,7 +7,6 @@ Results may differ on other releases or distributions!
 
 - `git`
 - `go`
-- `make`
 - `nodejs`
 - `yarn`
 - `nginx`
@@ -26,7 +25,7 @@ Instead use:
 
 
 Please be also aware, that it's best practice to build your version of "ticker" not on the production machine. In order to keep the hurdle as low as possible, we will build the app on the system we're going to run it.
-To enhance security maybe you want to remove `go` & `make` afterwards.
+To enhance security maybe you want to remove `go` afterwards.
 ### Getting NodeJS:
 _Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
 
@@ -45,7 +44,7 @@ Clone the repository onto your disk
 Go into the just cloned repository
 3. `git submodule update --init --recursive`
 Initialise all the submodules
-6. `make build`
+6. `go build -o build/ticker`
 Build the application
 7. Go to "Configuration, Service and Stuff"
 

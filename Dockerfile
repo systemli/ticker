@@ -1,14 +1,26 @@
-FROM golang:1.17.2-alpine AS build-env
-ENV GO111MODULE=on
-WORKDIR /go/src/github.com/systemli/ticker
-ADD . /go/src/github.com/systemli/ticker
-RUN apk update && apk add git gcc libc-dev
-RUN go build -o /ticker
+FROM alpine:3.14.2 as build
 
-FROM alpine
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
-WORKDIR /app
-COPY --from=build-env /ticker /ticker
+ENV USER=ticker
+ENV UID=10001
 
-EXPOSE 8080
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/nonexistent" \
+    --shell "/sbin/nologin" \
+    --no-create-home \
+    --uid "${UID}" \
+    "${USER}"
+
+
+FROM scratch as runtime
+
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /etc/group /etc/group
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+COPY ticker /ticker
+
+USER ticker:ticker
+
 ENTRYPOINT ["/ticker"]
