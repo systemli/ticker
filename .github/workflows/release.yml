@@ -21,18 +21,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Retrieve Git Tag
-        id: tag
-        uses: dawidd6/action-get-tag@v1
-        with:
-          strip_v: true
-
       - name: Publish Changelog
         uses: release-drafter/release-drafter@v5.15.0
         with:
           publish: true
-          name: ${{ steps.tag.outputs.tag }}
-          tag: ${{ steps.tag.outputs.tag }}
+          name: ${{ github.ref_name }}
+          tag: ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
