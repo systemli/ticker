@@ -1,0 +1,29 @@
+site_name: Systemli Ticker
+site_author: Systemli Admin Team
+repo_url: https://github.com/systemli/ticker
+
+theme:
+  name: material
+
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.tabs.sticky
+
+plugins:
+  - search
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://www.systemli.org
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/systemli
+    - icon: fontawesome/brands/github
+      link: https://github.com/systemli
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

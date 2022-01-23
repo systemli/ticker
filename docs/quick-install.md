@@ -77,7 +77,7 @@ upload_path: "uploads"
 # base url for uploaded assets
 upload_url: "https://api.domain.tld"
 ```
-2. Create a systemd Task (see [docs/ticker-api.service](docs/ticker-api.service) for reference)
+2. Create a systemd Task (see [docs/ticker-api.service](assets/ticker-api.service) for reference)
 2. `systemctl enable ticker-api.service`
 3. `systemctl start ticker-api.service`
 4. If you enter `systemctl status ticker-api.service` you'll see the generated admin password. __Please change it immediately!__
