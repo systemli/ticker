@@ -29,9 +29,9 @@ type timelineData struct {
 // @Produce      json
 // @Param        origin  query     string  false  "Origin from the ticker, e.g. demoticker.org"
 // @Param        origin  header    string  false  "Origin from the ticker, e.g. http://demoticker.org"
-// @Param        limit   query     int  false  "Limit for fetched messages, default: 10"
-// @Param        before  query     int  false  "ID of the message we look for older entries"
-// @Param        after   query     int  false  "ID of the message we look for newer entries"
+// @Param        limit   query     int     false  "Limit for fetched messages, default: 10"
+// @Param        before  query     int     false  "ID of the message we look for older entries"
+// @Param        after   query     int     false  "ID of the message we look for newer entries"
 // @Success      200     {object}  timelineResponse
 // @Success      400     {object}  errorResponse
 // @Failure      500     {object}  interface{}
