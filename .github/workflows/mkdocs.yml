@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate swagger files
         run:
-          go install github.com/swaggo/swag/cmd/swag@latest
+          go get github.com/swaggo/swag/cmd/swag
           swag init -g internal/api/api.go
 
       - name: Deploy Documentation
