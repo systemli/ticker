@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"encoding/json"
@@ -7,16 +7,9 @@ import (
 	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
 )
-
-type timelineResponse struct {
-	Data   map[string][]model.MessageResponse `json:"data"`
-	Status string                             `json:"status"`
-	Error  interface{}                        `json:"error"`
-}
 
 func TestGetTimelineHandler(t *testing.T) {
 	r := setup()
@@ -27,7 +20,7 @@ func TestGetTimelineHandler(t *testing.T) {
 	_ = storage.DB.Save(ticker)
 
 	r.GET("/v1/timeline?origin="+ticker.Domain).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			var response timelineResponse
@@ -37,8 +30,7 @@ func TestGetTimelineHandler(t *testing.T) {
 			}
 
 			assert.Equal(t, "success", response.Status)
-			assert.Equal(t, map[string][]model.MessageResponse{"messages": []model.MessageResponse(nil)}, response.Data)
-			assert.Nil(t, response.Error)
+			assert.Equal(t, []*model.MessageResponse(nil), response.Data.Messages)
 		})
 }
 
@@ -46,17 +38,17 @@ func TestGetTimelineHandler2(t *testing.T) {
 	r := setup()
 
 	r.GET("/v1/timeline?origin=non").
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
 
-			var response timelineResponse
+			var response errorResponse
 			err := json.Unmarshal(r.Body.Bytes(), &response)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			assert.Equal(t, "error", response.Status)
-			assert.Equal(t, map[string][]model.MessageResponse{"messages": []model.MessageResponse(nil)}, response.Data)
-			assert.NotNil(t, response.Error)
+			assert.Equal(t, "Could not find a ticker.", response.Error.Message)
+			assert.Equal(t, 1000, response.Error.Code)
 		})
 }

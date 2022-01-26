@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -27,7 +26,7 @@ func TestPostUploadSuccessful(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			var response uploadResponse
@@ -55,7 +54,7 @@ func TestPostUploadGIF(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 		})
 }
@@ -66,7 +65,7 @@ func TestPostUploadTickerNonExisting(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": "2"}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 
 			var response uploadResponse
@@ -88,7 +87,7 @@ func TestPostUploadUnauthorized(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 403, r.Code)
 
 			var response uploadResponse
@@ -109,7 +108,7 @@ func TestPostUploadWrongContentType(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 
 			var response uploadResponse
@@ -129,7 +128,7 @@ func TestPostUploadMissingTicker(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 		})
 }
@@ -140,7 +139,7 @@ func TestPostUploadWrongTickerParam(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": "string"}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 		})
 }
@@ -153,7 +152,7 @@ func TestPostUploadMissingFiles(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 		})
 }
@@ -173,7 +172,7 @@ func TestPostUploadTooMuchFiles(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 400, r.Code)
 
 			var response uploadResponse

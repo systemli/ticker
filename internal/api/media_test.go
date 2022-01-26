@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -28,7 +27,7 @@ func TestGetMedia(t *testing.T) {
 	r.POST("/v1/admin/upload").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": "1"}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			var response struct {
@@ -53,19 +52,19 @@ func TestGetMedia(t *testing.T) {
 		})
 
 	r.GET(url).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 			assert.Equal(t, "image/jpeg", r.HeaderMap.Get("Content-Type"))
 			assert.Equal(t, "62497", r.HeaderMap.Get("Content-Length"))
 		})
 
 	r.GET("/media/nonexisting").
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 404, r.Code)
 		})
 
 	r.GET("/media/ed79e414-c399-49f8-9d49-9387df6e2768.jpg").
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 404, r.Code)
 		})
 
@@ -73,7 +72,7 @@ func TestGetMedia(t *testing.T) {
 	_ = storage.DB.Save(upload)
 
 	r.GET(fmt.Sprintf("/media/%s", upload.FileName())).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 404, r.Code)
 		})
 }

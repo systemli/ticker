@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"github.com/appleboy/gofight/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/model"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -18,7 +17,7 @@ func TestGetSettingHandler(t *testing.T) {
 
 	r.GET("/v1/admin/settings/refresh_interval").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 			assert.Equal(t, `{"data":{"setting":{"id":0,"name":"refresh_interval","value":10000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 		})
@@ -28,7 +27,7 @@ func TestGetSettingHandler(t *testing.T) {
 
 	r.GET("/v1/admin/settings/refresh_interval").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 			assert.Equal(t, `{"data":{"setting":{"id":1,"name":"refresh_interval","value":20000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 		})
@@ -39,7 +38,7 @@ func TestGetInactiveSettingsHandler(t *testing.T) {
 
 	r.GET("/v1/admin/settings/inactive_settings").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			type res struct {
@@ -92,7 +91,7 @@ func TestPutInactiveSettingsHandler(t *testing.T) {
 	r.PUT("/v1/admin/settings/inactive_settings").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			type res struct {
@@ -139,7 +138,7 @@ func TestPutRefreshIntervalHandler(t *testing.T) {
 	r.PUT("/v1/admin/settings/refresh_interval").
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		SetBody(body).
-		Run(api.API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
 
 			type res struct {

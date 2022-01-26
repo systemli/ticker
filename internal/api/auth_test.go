@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"net/http"
@@ -9,8 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/api"
 )
 
 func TestUserMiddleware(t *testing.T) {
@@ -28,7 +26,7 @@ func TestUserMiddleware(t *testing.T) {
 			c.Set("id", float64(uID))
 		}
 	})
-	router.Use(api.UserMiddleware())
+	router.Use(UserMiddleware())
 	router.GET("/login", func(c *gin.Context) {
 		c.String(200, "")
 	})

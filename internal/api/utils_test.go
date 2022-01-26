@@ -1,4 +1,4 @@
-package api_test
+package api
 
 import (
 	"net/http"
@@ -7,8 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/api"
 )
 
 func TestGetDomainEmptyOrigin(t *testing.T) {
@@ -18,7 +16,7 @@ func TestGetDomainEmptyOrigin(t *testing.T) {
 
 	c := gin.Context{Request: &req}
 
-	domain, err := api.GetDomain(&c)
+	domain, err := GetDomain(&c)
 	assert.Equal(t, "", domain)
 	assert.Equal(t, "Origin header not found", err.Error())
 }
@@ -33,7 +31,7 @@ func TestGetDomainLocalhost(t *testing.T) {
 
 	c := gin.Context{Request: &req}
 
-	domain, err := api.GetDomain(&c)
+	domain, err := GetDomain(&c)
 	assert.Equal(t, "localhost", domain)
 	assert.Equal(t, nil, err)
 }
@@ -48,7 +46,7 @@ func TestGetDomainLocalhostPort(t *testing.T) {
 
 	c := gin.Context{Request: &req}
 
-	domain, err := api.GetDomain(&c)
+	domain, err := GetDomain(&c)
 	assert.Equal(t, "localhost", domain)
 	assert.Equal(t, nil, err)
 }
@@ -63,7 +61,7 @@ func TestGetDomainWWW(t *testing.T) {
 
 	c := gin.Context{Request: &req}
 
-	domain, err := api.GetDomain(&c)
+	domain, err := GetDomain(&c)
 	assert.Equal(t, "demoticker.org", domain)
 	assert.Equal(t, nil, err)
 }
@@ -78,7 +76,7 @@ func TestGetDomainOriginQueryOverwrite(t *testing.T) {
 
 	c := gin.Context{Request: &req}
 
-	domain, err := api.GetDomain(&c)
+	domain, err := GetDomain(&c)
 	assert.Equal(t, "another.demoticker.org", domain)
 	assert.Equal(t, nil, err)
 }
