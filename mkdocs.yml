@@ -12,6 +12,7 @@ theme:
 
 plugins:
   - search
+  - render_swagger
 
 extra:
   generator: false
