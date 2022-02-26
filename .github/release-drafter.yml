@@ -14,5 +14,11 @@ categories:
       - 'dependencies'
 template: |
   ## Changes
-
+  
   $CHANGES
+  
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+  
+  ## Docker
+  
+  - `docker pull systemli/ticker:$RESOLVED_VERSION`

@@ -6,7 +6,7 @@ This repository contains the API and storage for the [Systemli Ticker Project](h
 
 See the rendered documentation under [https://systemli.github.io/ticker/](https://systemli.github.io/ticker/)
 
-You can find and adjust the documention under [docs/](/docs)
+You can find and adjust the documentation under [docs/](/docs)
 
 ## Licence
 
