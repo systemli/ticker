@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: [published]
 
 jobs:
   release:
@@ -20,15 +19,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Publish Changelog
-        uses: release-drafter/release-drafter@v5.19.0
-        with:
-          publish: true
-          name: ${{ github.ref_name }}
-          tag: ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Releases
         uses: goreleaser/goreleaser-action@v2.9.1
