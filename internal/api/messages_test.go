@@ -8,7 +8,7 @@ import (
 
 	"github.com/appleboy/gofight/v2"
 	"github.com/google/uuid"
-	"github.com/paulmach/go.geojson"
+	geojson "github.com/paulmach/go.geojson"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/systemli/ticker/internal/model"
@@ -195,7 +195,7 @@ func TestPostMessageHandler(t *testing.T) {
 
 			message := jres.Data["message"]
 
-			assert.Equal(t, "message #hashtag", message.Text)
+			assert.Equal(t, "message", message.Text)
 			assert.Equal(t, 1, message.Ticker)
 			assert.IsType(t, geojson.FeatureCollection{}, message.GeoInformation)
 		})
@@ -268,7 +268,7 @@ func TestPostMessageWithAttachmentHandler(t *testing.T) {
 
 			message := jres.Data["message"]
 
-			assert.Equal(t, "message #hashtag", message.Text)
+			assert.Equal(t, "message", message.Text)
 			assert.Equal(t, 1, message.Ticker)
 
 			assert.Equal(t, 1, len(message.Attachments))

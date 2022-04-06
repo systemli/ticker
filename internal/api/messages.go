@@ -1,15 +1,13 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
-	"github.com/paulmach/go.geojson"
+	geojson "github.com/paulmach/go.geojson"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/systemli/ticker/internal/bridge"
@@ -165,10 +163,6 @@ func PostMessageHandler(c *gin.Context) {
 		}
 
 		message.Attachments = attachments
-	}
-
-	if len(ticker.Hashtags) > 0 {
-		message.Text = fmt.Sprintf(`%s %s`, message.Text, strings.Join(ticker.Hashtags, " "))
 	}
 
 	err = bridge.SendTweet(ticker, message)
