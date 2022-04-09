@@ -14,7 +14,6 @@ type Ticker struct {
 	Title        string
 	Description  string
 	Active       bool
-	PrependTime  bool `json:"prepend_time"`
 	Hashtags     []string
 	Information  Information
 	Twitter      Twitter
@@ -52,7 +51,6 @@ type TickerResponse struct {
 	Title        string              `json:"title"`
 	Description  string              `json:"description"`
 	Active       bool                `json:"active"`
-	PrependTime  bool                `json:"prepend_time"`
 	Hashtags     []string            `json:"hashtags"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
@@ -95,7 +93,6 @@ func NewTicker() *Ticker {
 func (t *Ticker) Reset() {
 	t.Active = false
 	t.Description = ""
-	t.PrependTime = false
 	t.Hashtags = []string{}
 	t.Information = Information{}
 	t.Twitter.Secret = ""
@@ -136,7 +133,6 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Title:        ticker.Title,
 		Description:  ticker.Description,
 		Active:       ticker.Active,
-		PrependTime:  ticker.PrependTime,
 		Hashtags:     ticker.Hashtags,
 		Information:  info,
 		Twitter:      tw,

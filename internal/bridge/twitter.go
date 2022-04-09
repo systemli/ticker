@@ -49,7 +49,7 @@ func SendTweet(ticker *model.Ticker, message *model.Message) error {
 		params.MediaIds = mediaIds
 	}
 
-	tweet, _, err := client.Statuses.Update(message.PrepareTweet(ticker), params)
+	tweet, _, err := client.Statuses.Update(message.Text, params)
 	if err != nil {
 		return err
 	}
