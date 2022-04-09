@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/paulmach/go.geojson"
+	geojson "github.com/paulmach/go.geojson"
 )
 
 //Message represents a single message
@@ -85,16 +85,4 @@ func NewMessagesResponse(messages []Message) []*MessageResponse {
 	}
 
 	return mr
-}
-
-//PrepareTweet prepares the message for Twitter.
-func (m *Message) PrepareTweet(ticker *Ticker) string {
-	tweet := m.Text
-	if ticker.PrependTime {
-		tweet = fmt.Sprintf(`%.2d:%.2d %s`, m.CreationDate.Hour(), m.CreationDate.Minute(), tweet)
-	}
-
-	//TODO: Check length, split long tweets
-
-	return tweet
 }

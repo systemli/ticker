@@ -430,7 +430,6 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 		Title       string   `json:"title" binding:"required"`
 		Description string   `json:"description" binding:"required"`
 		Active      bool     `json:"active"`
-		PrependTime bool     `json:"prepend_time"`
 		Hashtags    []string `json:"hashtags"`
 		Information struct {
 			Author   string `json:"author"`
@@ -454,7 +453,6 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Title = body.Title
 	t.Description = body.Description
 	t.Active = body.Active
-	t.PrependTime = body.PrependTime
 	t.Hashtags = body.Hashtags
 	t.Information.Author = body.Information.Author
 	t.Information.URL = body.Information.URL

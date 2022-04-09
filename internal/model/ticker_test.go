@@ -25,7 +25,6 @@ func TestTicker_Reset(t *testing.T) {
 
 	ticker.Active = true
 	ticker.Description = "description"
-	ticker.PrependTime = true
 	ticker.Hashtags = []string{"hashtag"}
 	ticker.Information = model.Information{
 		Author: "author",
@@ -42,7 +41,6 @@ func TestTicker_Reset(t *testing.T) {
 
 	assert.False(t, ticker.Active)
 	assert.Equal(t, "", ticker.Description)
-	assert.False(t, ticker.PrependTime)
 	assert.Equal(t, []string{}, ticker.Hashtags)
 	assert.Equal(t, model.Information{}, ticker.Information)
 	assert.Equal(t, "", ticker.Twitter.Secret)
