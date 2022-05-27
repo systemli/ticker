@@ -27,6 +27,7 @@ type Information struct {
 	Email    string
 	Twitter  string
 	Facebook string
+	Telegram string
 }
 
 //Twitter holds all required twitter information.
@@ -64,6 +65,7 @@ type InformationResponse struct {
 	Email    string `json:"email"`
 	Twitter  string `json:"twitter"`
 	Facebook string `json:"facebook"`
+	Telegram string `json:"telegram"`
 }
 
 //TwitterResponse represents the Twitter settings for API responses.
@@ -110,6 +112,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Email:    ticker.Information.Email,
 		Twitter:  ticker.Information.Twitter,
 		Facebook: ticker.Information.Facebook,
+		Telegram: ticker.Information.Telegram,
 	}
 
 	tw := TwitterResponse{

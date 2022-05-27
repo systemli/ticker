@@ -67,7 +67,8 @@ func TestPostTickerHandler(t *testing.T) {
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
-			"twitter": "systemli"
+			"twitter": "systemli",
+			"telegram": "https://t.me/bla"
 		},
 		"location": {
 			"lat": 1.1,
@@ -107,6 +108,7 @@ func TestPostTickerHandler(t *testing.T) {
 			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
 			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 			assert.Equal(t, "systemli", ticker.Information.Twitter)
+			assert.Equal(t, "https://t.me/bla", ticker.Information.Telegram)
 			assert.Equal(t, 1.1, ticker.Location.Lat)
 			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
@@ -140,7 +142,8 @@ func TestPutTickerHandler(t *testing.T) {
 		"hashtags": [],
 		"information": {
 			"url": "https://www.systemli.org",
-			"email": "admin@systemli.org"
+			"email": "admin@systemli.org",
+			"telegram": "https://t.me/bla"
 		},
 		"location": {
 			"lat": 1.1,
@@ -194,6 +197,7 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, []string{}, ticker.Hashtags)
 			assert.Equal(t, 1.1, ticker.Location.Lat)
 			assert.Equal(t, 2.2, ticker.Location.Lon)
+			assert.Equal(t, "https://t.me/bla", ticker.Information.Telegram)
 		})
 
 	r.PUT("/v1/admin/tickers/1").
