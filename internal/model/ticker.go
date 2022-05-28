@@ -6,7 +6,7 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 )
 
-//Ticker represents the structure of an Ticker configuration
+//Ticker represents the structure of a Ticker configuration
 type Ticker struct {
 	ID           int       `storm:"id,increment"`
 	CreationDate time.Time `storm:"index"`
@@ -17,6 +17,7 @@ type Ticker struct {
 	Hashtags     []string
 	Information  Information
 	Twitter      Twitter
+	Telegram     Telegram
 	Location     Location
 }
 
@@ -31,11 +32,20 @@ type Information struct {
 }
 
 //Twitter holds all required twitter information.
+//TODO: Add validation tags
 type Twitter struct {
 	Active bool
 	Token  string
 	Secret string
 	User   twitter.User
+}
+
+//Telegram holds all required telegram information.
+//TODO: Add validation tags
+type Telegram struct {
+	Active      bool   `json:"active"`
+	Token       string `json:"token"`
+	ChannelName string `json:"channel_name"`
 }
 
 //Location represents the default location for the Ticker.
@@ -55,6 +65,7 @@ type TickerResponse struct {
 	Hashtags     []string            `json:"hashtags"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
+	Telegram     TelegramResponse    `json:"telegram"`
 	Location     LocationResponse    `json:"location"`
 }
 
@@ -76,6 +87,12 @@ type TwitterResponse struct {
 	ScreenName  string `json:"screen_name"`
 	Description string `json:"description"`
 	ImageURL    string `json:"image_url"`
+}
+
+type TelegramResponse struct {
+	Active      bool   `json:"active"`
+	HasToken    bool   `json:"has_token"`
+	ChannelName string `json:"channel_name"`
 }
 
 //LocationResponse represents the Location for API responses.
@@ -101,6 +118,9 @@ func (t *Ticker) Reset() {
 	t.Twitter.Token = ""
 	t.Twitter.Active = false
 	t.Twitter.User = twitter.User{}
+	t.Telegram.Active = false
+	t.Telegram.Token = ""
+	t.Telegram.ChannelName = ""
 	t.Location = Location{}
 }
 
@@ -124,6 +144,12 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		ImageURL:    ticker.Twitter.User.ProfileImageURLHttps,
 	}
 
+	tg := TelegramResponse{
+		Active:      ticker.Telegram.Active,
+		HasToken:    ticker.Telegram.Token != "",
+		ChannelName: ticker.Telegram.ChannelName,
+	}
+
 	l := LocationResponse{
 		Lat: ticker.Location.Lat,
 		Lon: ticker.Location.Lon,
@@ -139,6 +165,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Hashtags:     ticker.Hashtags,
 		Information:  info,
 		Twitter:      tw,
+		Telegram:     tg,
 		Location:     l,
 	}
 }

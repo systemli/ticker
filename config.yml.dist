@@ -11,6 +11,8 @@ secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # twitter configuration
 twitter_consumer_key: ""
 twitter_consumer_secret: ""
+# telegram configuration
+telegram_bot_token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files

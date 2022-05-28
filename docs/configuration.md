@@ -14,6 +14,8 @@ secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # twitter configuration
 twitter_consumer_key: ""
 twitter_consumer_secret: ""
+# telegram configuration
+telegram_bot_token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files
@@ -36,6 +38,7 @@ The following env vars can be used:
 * TICKER_SECRET
 * TICKER_TWITTER_CONSUMER_KEY
 * TICKER_TWITTER_CONSUMER_SECRET
+* TICKER_TELEGRAM_BOT_TOKEN
 * TICKER_METRICS_LISTEN
 * TICKER_UPLOAD_PATH
 * TICKER_UPLOAD_URL

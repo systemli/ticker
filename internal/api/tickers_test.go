@@ -259,6 +259,56 @@ func TestPutTickerHandler(t *testing.T) {
 		})
 }
 
+func TestPutTickerTelegramHandler(t *testing.T) {
+	r := setup()
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
+	}
+
+	storage.DB.Save(&ticker)
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 401, r.Code)
+			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1002,"message":"auth header is empty"}}`, strings.TrimSpace(r.Body.String()))
+		})
+
+	r.PUT("/v1/admin/tickers/a/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+		})
+
+	r.PUT("/v1/admin/tickers/2/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 403, r.Code)
+			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+		})
+
+	body := `{
+		"active": true,
+		"token": "",
+		"channel_name": "@channel_name"
+	}`
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
+		})
+}
+
 func TestDeleteTickerHandler(t *testing.T) {
 	r := setup()
 
