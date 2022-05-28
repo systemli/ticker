@@ -67,7 +67,8 @@ func TestPostTickerHandler(t *testing.T) {
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
-			"twitter": "systemli"
+			"twitter": "systemli",
+			"telegram": "https://t.me/bla"
 		},
 		"location": {
 			"lat": 1.1,
@@ -107,6 +108,7 @@ func TestPostTickerHandler(t *testing.T) {
 			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
 			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 			assert.Equal(t, "systemli", ticker.Information.Twitter)
+			assert.Equal(t, "https://t.me/bla", ticker.Information.Telegram)
 			assert.Equal(t, 1.1, ticker.Location.Lat)
 			assert.Equal(t, 2.2, ticker.Location.Lon)
 		})
@@ -140,7 +142,8 @@ func TestPutTickerHandler(t *testing.T) {
 		"hashtags": [],
 		"information": {
 			"url": "https://www.systemli.org",
-			"email": "admin@systemli.org"
+			"email": "admin@systemli.org",
+			"telegram": "https://t.me/bla"
 		},
 		"location": {
 			"lat": 1.1,
@@ -194,6 +197,7 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, []string{}, ticker.Hashtags)
 			assert.Equal(t, 1.1, ticker.Location.Lat)
 			assert.Equal(t, 2.2, ticker.Location.Lon)
+			assert.Equal(t, "https://t.me/bla", ticker.Information.Telegram)
 		})
 
 	r.PUT("/v1/admin/tickers/1").
@@ -252,6 +256,56 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, []string{}, ticker.Hashtags)
 			assert.Equal(t, 0.0, ticker.Location.Lat)
 			assert.Equal(t, 0.0, ticker.Location.Lon)
+		})
+}
+
+func TestPutTickerTelegramHandler(t *testing.T) {
+	r := setup()
+
+	ticker := model.Ticker{
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
+	}
+
+	storage.DB.Save(&ticker)
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 401, r.Code)
+			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1002,"message":"auth header is empty"}}`, strings.TrimSpace(r.Body.String()))
+		})
+
+	r.PUT("/v1/admin/tickers/a/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 400, r.Code)
+		})
+
+	r.PUT("/v1/admin/tickers/2/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 404, r.Code)
+		})
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 403, r.Code)
+			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
+		})
+
+	body := `{
+		"active": true,
+		"token": "",
+		"channel_name": "@channel_name"
+	}`
+
+	r.PUT("/v1/admin/tickers/1/telegram").
+		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
+		SetBody(body).
+		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
+			assert.Equal(t, 200, r.Code)
 		})
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	geojson "github.com/paulmach/go.geojson"
 )
 
@@ -16,6 +17,7 @@ type Message struct {
 	Attachments    []Attachment
 	GeoInformation geojson.FeatureCollection
 	Tweet          Tweet
+	Telegram       TelegramMeta
 	//TODO: Facebook-ID
 }
 
@@ -25,6 +27,10 @@ type Tweet struct {
 	UserName string
 }
 
+type TelegramMeta struct {
+	Messages []tgbotapi.Message
+}
+
 type Attachment struct {
 	UUID        string
 	Extension   string
@@ -32,14 +38,15 @@ type Attachment struct {
 }
 
 type MessageResponse struct {
-	ID             int                          `json:"id"`
-	CreationDate   time.Time                    `json:"creation_date"`
-	Text           string                       `json:"text"`
-	Ticker         int                          `json:"ticker"`
-	TweetID        string                       `json:"tweet_id"`
-	TweetUser      string                       `json:"tweet_user"`
-	GeoInformation string                       `json:"geo_information"`
-	Attachments    []*MessageAttachmentResponse `json:"attachments"`
+	ID               int                          `json:"id"`
+	CreationDate     time.Time                    `json:"creation_date"`
+	Text             string                       `json:"text"`
+	Ticker           int                          `json:"ticker"`
+	TweetID          string                       `json:"tweet_id"`
+	TweetUser        string                       `json:"tweet_user"`
+	TelegramMessages []tgbotapi.Message           `json:"telegram_messages"`
+	GeoInformation   string                       `json:"geo_information"`
+	Attachments      []*MessageAttachmentResponse `json:"attachments"`
 }
 
 type MessageAttachmentResponse struct {
@@ -65,14 +72,15 @@ func NewMessageResponse(message Message) *MessageResponse {
 	}
 
 	return &MessageResponse{
-		ID:             message.ID,
-		CreationDate:   message.CreationDate,
-		Text:           message.Text,
-		Ticker:         message.Ticker,
-		TweetID:        message.Tweet.ID,
-		TweetUser:      message.Tweet.UserName,
-		GeoInformation: string(m),
-		Attachments:    attachments,
+		ID:               message.ID,
+		CreationDate:     message.CreationDate,
+		Text:             message.Text,
+		Ticker:           message.Ticker,
+		TweetID:          message.Tweet.ID,
+		TweetUser:        message.Tweet.UserName,
+		TelegramMessages: message.Telegram.Messages,
+		GeoInformation:   string(m),
+		Attachments:      attachments,
 	}
 }
 

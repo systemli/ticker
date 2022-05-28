@@ -169,6 +169,10 @@ func PostMessageHandler(c *gin.Context) {
 	if err != nil {
 		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to twitter failed")
 	}
+	err = bridge.SendTelegramMessage(ticker, message)
+	if err != nil {
+		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to telegram failed")
+	}
 
 	err = DB.Save(message)
 	if err != nil {
@@ -179,7 +183,6 @@ func PostMessageHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(*message)))
 }
 
-//DeleteTickerHandler deletes a existing Ticker
 func DeleteMessageHandler(c *gin.Context) {
 	me, err := Me(c)
 	if err != nil {
@@ -228,7 +231,11 @@ func DeleteMessageHandler(c *gin.Context) {
 	}
 	err = bridge.DeleteTweet(&ticker, &message)
 	if err != nil {
-		log.WithField("error", err).WithField("message", message).Error("failed to delete tweet")
+		log.WithError(err).WithField("message", message).Error("failed to delete tweet")
+	}
+	err = bridge.DeleteTelegramMessage(&ticker, &message)
+	if err != nil {
+		log.WithError(err).WithField("message", message).Error("failed to delete telegram message")
 	}
 
 	c.JSON(http.StatusOK, gin.H{

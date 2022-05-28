@@ -20,6 +20,7 @@ type config struct {
 	Database              string `mapstructure:"database"`
 	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
 	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
+	TelegramBotToken      string `mapstructure:"telegram_bot_token"`
 	MetricsListen         string `mapstructure:"metrics_listen"`
 	UploadPath            string `mapstructure:"upload_path"`
 	UploadURL             string `mapstructure:"upload_url"`
@@ -48,6 +49,11 @@ func (c *config) TwitterEnabled() bool {
 	return c.TwitterConsumerKey != "" && c.TwitterConsumerSecret != ""
 }
 
+//TelegramBotEnabled returns true if the required token is not empty.
+func (c *config) TelegramBotEnabled() bool {
+	return c.TelegramBotToken != ""
+}
+
 //LoadConfig loads config from file.
 func LoadConfig(path string) *config {
 	c := NewConfig()
@@ -62,6 +68,7 @@ func LoadConfig(path string) *config {
 	viper.SetDefault("metrics_listen", c.MetricsListen)
 	viper.SetDefault("twitter_consumer_key", "")
 	viper.SetDefault("twitter_consumer_secret", "")
+	viper.SetDefault("telegram_bot_token", "")
 	viper.SetDefault("upload_path", c.UploadPath)
 	viper.SetDefault("upload_url", c.UploadURL)
 

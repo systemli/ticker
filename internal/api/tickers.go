@@ -294,6 +294,51 @@ func PutTickerTwitterHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
 }
 
+func PutTickerTelegramHandler(c *gin.Context) {
+	me, err := Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		return
+	}
+
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	if !me.IsSuperAdmin {
+		if !contains(me.Tickers, tickerID) {
+			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			return
+		}
+	}
+
+	var ticker Ticker
+	err = DB.One("ID", tickerID, &ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	var tg Telegram
+	err = c.Bind(&tg)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	ticker.Telegram = tg
+
+	err = DB.Save(&ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+}
+
 //DeleteTickerHandler deletes a existing Ticker
 func DeleteTickerHandler(c *gin.Context) {
 	if !IsAdmin(c) {
@@ -437,6 +482,7 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 			Email    string `json:"email"`
 			Twitter  string `json:"twitter"`
 			Facebook string `json:"facebook"`
+			Telegram string `json:"telegram"`
 		} `json:"information"`
 		Location struct {
 			Lat float64 `json:"lat"`
@@ -459,6 +505,7 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Information.Email = body.Information.Email
 	t.Information.Twitter = body.Information.Twitter
 	t.Information.Facebook = body.Information.Facebook
+	t.Information.Telegram = body.Information.Telegram
 	t.Location.Lat = body.Location.Lat
 	t.Location.Lon = body.Location.Lon
 
