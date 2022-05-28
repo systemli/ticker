@@ -25,11 +25,11 @@ func TestSendTweet(t *testing.T) {
 
 	// Ticker Twitter is enabled but has no creds
 	ticker.Twitter.Active = true
-	assert.NotNil(t, bridge.SendTweet(ticker, message))
+	assert.Nil(t, bridge.SendTweet(ticker, message))
 
 	ticker.Twitter.Token = "token"
 	ticker.Twitter.Secret = "secret"
-	assert.NotNil(t, bridge.SendTweet(ticker, message))
+	assert.Nil(t, bridge.SendTweet(ticker, message))
 
 	setupTwitterTestData()
 	assert.NotNil(t, bridge.SendTweet(ticker, message))
@@ -63,7 +63,7 @@ func TestDeleteTweet(t *testing.T) {
 	ticker := model.NewTicker()
 	message := model.NewMessage()
 
-	assert.NotNil(t, bridge.DeleteTweet(ticker, message))
+	assert.Nil(t, bridge.DeleteTweet(ticker, message))
 
 	ticker.Twitter.Active = true
 	ticker.Twitter.Token = "token"
