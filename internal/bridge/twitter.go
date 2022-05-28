@@ -17,7 +17,7 @@ func SendTweet(ticker *model.Ticker, message *model.Message) error {
 	}
 
 	if err := TwitterConnectionEnabled(ticker); err != nil {
-		return err
+		return nil
 	}
 
 	client := TwitterClient(ticker.Twitter.Token, ticker.Twitter.Secret)
@@ -61,7 +61,7 @@ func SendTweet(ticker *model.Ticker, message *model.Message) error {
 
 func DeleteTweet(ticker *model.Ticker, message *model.Message) error {
 	if err := TwitterConnectionEnabled(ticker); err != nil {
-		return err
+		return nil
 	}
 
 	if message.Tweet.ID == "" {
