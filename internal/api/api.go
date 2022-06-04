@@ -52,6 +52,8 @@ func API() *gin.Engine {
 	{
 		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 
+		admin.GET("/features", GetFeaturesHandler)
+
 		admin.GET(`/tickers`, GetTickersHandler)
 		admin.GET(`/tickers/:tickerID`, GetTickerHandler)
 		admin.POST(`/tickers`, PostTickerHandler)

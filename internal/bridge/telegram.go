@@ -22,7 +22,7 @@ func BotUser(token string) (tgbotapi.User, error) {
 }
 
 func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramBotEnabled() {
+	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramEnabled() {
 		return nil
 	}
 
@@ -76,7 +76,7 @@ func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 }
 
 func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramBotEnabled() {
+	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramEnabled() {
 		return nil
 	}
 
