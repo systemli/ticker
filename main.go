@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/systemli/ticker/internal/bridge"
 
 	"github.com/sethvargo/go-password/password"
 
@@ -57,6 +58,15 @@ func init() {
 	flag.Parse()
 
 	Config = LoadConfig(*cp)
+	//TODO: Improve startup routine
+	if Config.TelegramBotEnabled() {
+		user, err := bridge.BotUser(Config.TelegramBotToken)
+		if err != nil {
+			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
+		} else {
+			Config.TelegramBotUser = user
+		}
+	}
 	DB = OpenDB(Config.Database)
 
 	firstRun()

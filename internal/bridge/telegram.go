@@ -7,16 +7,26 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
+func BotUser(token string) (tgbotapi.User, error) {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return tgbotapi.User{}, err
+	}
+
+	user, err := bot.GetMe()
+	if err != nil {
+		return tgbotapi.User{}, err
+	}
+
+	return user, nil
+}
+
 func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" {
+	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramBotEnabled() {
 		return nil
 	}
 
-	if ticker.Telegram.Token == "" && !model.Config.TelegramBotEnabled() {
-		return nil
-	}
-
-	bot, err := bot(ticker)
+	bot, err := tgbotapi.NewBotAPI(model.Config.TelegramBotToken)
 	if err != nil {
 		return err
 	}
@@ -66,11 +76,7 @@ func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 }
 
 func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" {
-		return nil
-	}
-
-	if ticker.Telegram.Token == "" && !model.Config.TelegramBotEnabled() {
+	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramBotEnabled() {
 		return nil
 	}
 
@@ -78,7 +84,7 @@ func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 		return nil
 	}
 
-	bot, err := bot(ticker)
+	bot, err := tgbotapi.NewBotAPI(model.Config.TelegramBotToken)
 	if err != nil {
 		return err
 	}
@@ -93,15 +99,4 @@ func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 	}
 
 	return nil
-}
-
-func bot(ticker *model.Ticker) (*tgbotapi.BotAPI, error) {
-	var token string
-	if ticker.Telegram.Token != "" {
-		token = ticker.Telegram.Token
-	} else {
-		token = model.Config.TelegramBotToken
-	}
-
-	return tgbotapi.NewBotAPI(token)
 }

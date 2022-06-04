@@ -44,7 +44,6 @@ type Twitter struct {
 //TODO: Add validation tags
 type Telegram struct {
 	Active      bool   `json:"active"`
-	Token       string `json:"token"`
 	ChannelName string `json:"channel_name"`
 }
 
@@ -91,7 +90,7 @@ type TwitterResponse struct {
 
 type TelegramResponse struct {
 	Active      bool   `json:"active"`
-	HasToken    bool   `json:"has_token"`
+	BotUsername string `json:"bot_username"`
 	ChannelName string `json:"channel_name"`
 }
 
@@ -119,7 +118,6 @@ func (t *Ticker) Reset() {
 	t.Twitter.Active = false
 	t.Twitter.User = twitter.User{}
 	t.Telegram.Active = false
-	t.Telegram.Token = ""
 	t.Telegram.ChannelName = ""
 	t.Location = Location{}
 }
@@ -146,7 +144,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 
 	tg := TelegramResponse{
 		Active:      ticker.Telegram.Active,
-		HasToken:    ticker.Telegram.Token != "",
+		BotUsername: Config.TelegramBotUser.UserName,
 		ChannelName: ticker.Telegram.ChannelName,
 	}
 

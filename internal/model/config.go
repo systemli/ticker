@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sethvargo/go-password/password"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
@@ -21,6 +22,7 @@ type config struct {
 	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
 	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
 	TelegramBotToken      string `mapstructure:"telegram_bot_token"`
+	TelegramBotUser       tgbotapi.User
 	MetricsListen         string `mapstructure:"metrics_listen"`
 	UploadPath            string `mapstructure:"upload_path"`
 	UploadURL             string `mapstructure:"upload_url"`

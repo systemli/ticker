@@ -297,7 +297,6 @@ func TestPutTickerTelegramHandler(t *testing.T) {
 
 	body := `{
 		"active": true,
-		"token": "",
 		"channel_name": "@channel_name"
 	}`
 
