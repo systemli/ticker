@@ -51,8 +51,8 @@ func (c *config) TwitterEnabled() bool {
 	return c.TwitterConsumerKey != "" && c.TwitterConsumerSecret != ""
 }
 
-//TelegramBotEnabled returns true if the required token is not empty.
-func (c *config) TelegramBotEnabled() bool {
+//TelegramEnabled returns true if the required token is not empty.
+func (c *config) TelegramEnabled() bool {
 	return c.TelegramBotToken != ""
 }
 

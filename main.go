@@ -59,7 +59,7 @@ func init() {
 
 	Config = LoadConfig(*cp)
 	//TODO: Improve startup routine
-	if Config.TelegramBotEnabled() {
+	if Config.TelegramEnabled() {
 		user, err := bridge.BotUser(Config.TelegramBotToken)
 		if err != nil {
 			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
