@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/appleboy/gin-jwt/v2"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 
 	. "github.com/systemli/ticker/internal/model"
@@ -97,8 +97,20 @@ func FillClaim(data interface{}) jwt.MapClaims {
 	if u, ok := data.(*User); ok {
 		return jwt.MapClaims{
 			identityKey: u.ID,
+			"email":     u.Email,
+			"roles":     roles(u),
 		}
 	}
 
 	return jwt.MapClaims{}
+}
+
+func roles(u *User) []string {
+	roles := []string{"user"}
+
+	if u.IsSuperAdmin {
+		roles = append(roles, "admin")
+	}
+
+	return roles
 }
