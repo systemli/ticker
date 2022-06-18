@@ -2,11 +2,11 @@ name: Code Scanning
 
 on:
   push:
-     branches: [main]
+    branches: [main]
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 9 * * 5'
+    - cron: "0 9 * * 5"
 
 jobs:
   codeql:
@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -30,7 +28,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.17.x'
+          go-version: "1.17.x"
 
       - name: Cache Go Dependencies
         uses: actions/cache@v3
