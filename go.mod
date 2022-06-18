@@ -14,13 +14,12 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/paulmach/go.geojson v1.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.12.0
+	github.com/prometheus/client_golang v1.12.2
 	github.com/sethvargo/go-password v0.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.8.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.2
-	github.com/swaggo/swag v1.7.8
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
 )
