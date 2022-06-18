@@ -1,4 +1,0 @@
-[submodule "forks/go-twitter"]
-	path = forks/go-twitter
-	url = https://github.com/drswork/go-twitter.git
-	branch = media
