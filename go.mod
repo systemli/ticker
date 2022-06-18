@@ -9,7 +9,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/size v0.0.0-20220102055520-f75bacbc2df3
-	github.com/gin-gonic/gin v1.7.7
+	github.com/gin-gonic/gin v1.8.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/uuid v1.3.0
 	github.com/paulmach/go.geojson v1.4.0
@@ -27,9 +27,7 @@ require (
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
-	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/ugorji/go v1.2.6 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
