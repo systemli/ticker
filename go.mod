@@ -20,7 +20,6 @@ require (
 	github.com/spf13/afero v1.8.0
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.2
-	github.com/swaggo/swag v1.7.8
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
 )
@@ -34,6 +33,7 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 )
 
