@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sethvargo/go-password v0.2.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/afero v1.8.0
+	github.com/spf13/afero v1.8.2
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.2
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
