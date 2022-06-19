@@ -28,6 +28,7 @@ require (
 	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/swaggo/swag v1.8.3
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
