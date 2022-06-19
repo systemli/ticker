@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -16,7 +18,50 @@ type timelineResponse struct {
 }
 
 type timelineData struct {
-	Messages []*MessageResponse `json:"messages"`
+	Messages []message `json:"messages"`
+}
+
+type message struct {
+	ID             int          `json:"id"`
+	CreationDate   time.Time    `json:"creation_date"`
+	Text           string       `json:"text"`
+	GeoInformation string       `json:"geo_information"`
+	Attachments    []attachment `json:"attachments"`
+}
+
+type attachment struct {
+	URL         string `json:"url"`
+	ContentType string `json:"content_type"`
+}
+
+func newTimelineResponse(msgs []Message) *timelineResponse {
+	var messages []message
+
+	for _, msg := range msgs {
+		var attachments []attachment
+
+		geoInformation, _ := msg.GeoInformation.MarshalJSON()
+
+		for _, a := range msg.Attachments {
+			name := fmt.Sprintf("%s.%s", a.UUID, a.Extension)
+			attachments = append(attachments, attachment{URL: MediaURL(name), ContentType: a.ContentType})
+		}
+
+		messages = append(messages, message{
+			ID:             msg.ID,
+			CreationDate:   msg.CreationDate,
+			Text:           msg.Text,
+			GeoInformation: string(geoInformation),
+			Attachments:    attachments,
+		})
+	}
+
+	return &timelineResponse{
+		Data: timelineData{
+			Messages: messages,
+		},
+		Status: ResponseSuccess,
+	}
 }
 
 // GetTimelineHandler returns the public timeline for a ticker.
@@ -56,10 +101,7 @@ func GetTimelineHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, timelineResponse{
-		Data:   timelineData{Messages: NewMessagesResponse(messages)},
-		Status: ResponseSuccess,
-	})
+	c.JSON(http.StatusOK, newTimelineResponse(messages))
 }
 
 func timelineErrorResponse(c *gin.Context, m string) {
