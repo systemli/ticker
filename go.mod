@@ -7,7 +7,7 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb
 	github.com/dghubble/oauth1 v0.7.1
 	github.com/disintegration/imaging v1.6.2
-	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/size v0.0.0-20220102055520-f75bacbc2df3
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
@@ -19,7 +19,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.8.2
 	github.com/spf13/viper v1.12.0
-	github.com/stretchr/testify v1.7.5
+	github.com/stretchr/testify v1.8.0
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 )
