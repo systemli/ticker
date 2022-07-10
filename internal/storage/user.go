@@ -19,8 +19,7 @@ func FindUserByID(id int) (*User, error) {
 
 //FindUsers returns all users.
 func FindUsers() ([]User, error) {
-	var users []User
-
+	users := make([]User, 0)
 	err := DB.Select().Reverse().Find(&users)
 	if err != nil {
 		return users, err
@@ -31,8 +30,7 @@ func FindUsers() ([]User, error) {
 
 //FindUsersByTicker returns all users associated with given ticker.
 func FindUsersByTicker(ticker Ticker) ([]User, error) {
-	var users []User
-
+	users := make([]User, 0)
 	query := DB.Select()
 	err := query.Each(new(User), func(record interface{}) error {
 		u := record.(*User)
@@ -71,8 +69,7 @@ func UserAuthenticate(email, password string) (*User, error) {
 
 //AddUsersToTicker append Ticker to the given slice of users.
 func AddUsersToTicker(ticker Ticker, ids []int) error {
-	var users []User
-
+	users := make([]User, 0)
 	err := DB.Select(q.In("ID", ids)).Find(&users)
 	if err != nil {
 		return err

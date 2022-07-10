@@ -35,7 +35,7 @@ type attachment struct {
 }
 
 func newTimelineResponse(msgs []Message) *timelineResponse {
-	var messages []message
+	messages := make([]message, 0)
 
 	for _, msg := range msgs {
 		var attachments []attachment

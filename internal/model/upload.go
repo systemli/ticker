@@ -74,8 +74,7 @@ func NewUploadResponse(upload *Upload) *UploadResponse {
 
 //NewTickersResponse prepares a map of []TickerResponse.
 func NewUploadsResponse(uploads []*Upload) []*UploadResponse {
-	var ur []*UploadResponse
-
+	ur := make([]*UploadResponse, 0)
 	for _, upload := range uploads {
 		ur = append(ur, NewUploadResponse(upload))
 	}

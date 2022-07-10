@@ -26,14 +26,14 @@ func TestGetTickersHandler(t *testing.T) {
 		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
 		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+			assert.Equal(t, `{"data":{"tickers":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 		})
 
 	r.GET("/v1/admin/tickers").
 		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
 		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
 			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"tickers":null},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
+			assert.Equal(t, `{"data":{"tickers":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
 		})
 }
 

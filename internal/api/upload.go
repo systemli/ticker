@@ -58,7 +58,7 @@ func PostUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorTooMuchFiles))
 		return
 	}
-	var uploads []*Upload
+	uploads := make([]*Upload, 0)
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
 		if checkError(c, err, http.StatusBadRequest, ErrorCodeDefault, "can't open file in upload") {

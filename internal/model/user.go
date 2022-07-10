@@ -75,8 +75,7 @@ func NewUserResponse(user User) *UserResponse {
 }
 
 func NewUsersResponse(users []User) []*UserResponse {
-	var u []*UserResponse
-
+	u := make([]*UserResponse, 0)
 	for _, user := range users {
 		u = append(u, NewUserResponse(user))
 	}

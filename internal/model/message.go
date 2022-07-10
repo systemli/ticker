@@ -86,8 +86,7 @@ func NewMessageResponse(message Message) *MessageResponse {
 
 //
 func NewMessagesResponse(messages []Message) []*MessageResponse {
-	var mr []*MessageResponse
-
+	mr := make([]*MessageResponse, 0)
 	for _, message := range messages {
 		mr = append(mr, NewMessageResponse(message))
 	}
