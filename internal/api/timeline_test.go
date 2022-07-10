@@ -30,7 +30,7 @@ func TestGetTimelineHandler(t *testing.T) {
 			}
 
 			assert.Equal(t, "success", response.Status)
-			assert.Equal(t, []message(nil), response.Data.Messages)
+			assert.Equal(t, []message{}, response.Data.Messages)
 		})
 }
 

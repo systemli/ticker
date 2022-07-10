@@ -43,7 +43,7 @@ func GetMessagesHandler(c *gin.Context) {
 		return
 	}
 
-	var messages []Message
+	messages := make([]Message, 0)
 	//TODO: Pagination
 	err = DB.Find("Ticker", tickerID, &messages, storm.Reverse())
 	if err != nil {

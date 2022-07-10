@@ -170,8 +170,7 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 
 //NewTickersResponse prepares a map of []TickerResponse.
 func NewTickersResponse(tickers []*Ticker) []*TickerResponse {
-	var tr []*TickerResponse
-
+	tr := make([]*TickerResponse, 0)
 	for _, ticker := range tickers {
 		tr = append(tr, NewTickerResponse(ticker))
 	}

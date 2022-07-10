@@ -23,7 +23,7 @@ func GetTickersHandler(c *gin.Context) {
 		return
 	}
 
-	var tickers []*Ticker
+	tickers := make([]*Ticker, 0)
 	if me.IsSuperAdmin {
 		err = DB.All(&tickers, storm.Reverse())
 	} else {
