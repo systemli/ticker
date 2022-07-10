@@ -136,9 +136,8 @@ func TestPostMessageHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
-		ID:       1,
-		Active:   true,
-		Hashtags: []string{`#hashtag`},
+		ID:     1,
+		Active: true,
 	}
 
 	storage.DB.Save(&ticker)
@@ -205,9 +204,8 @@ func TestPostMessageWithAttachmentHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
-		ID:       1,
-		Active:   true,
-		Hashtags: []string{`#hashtag`},
+		ID:     1,
+		Active: true,
 	}
 
 	upload := model.Upload{
