@@ -14,7 +14,6 @@ type Ticker struct {
 	Title        string
 	Description  string
 	Active       bool
-	Hashtags     []string
 	Information  Information
 	Twitter      Twitter
 	Telegram     Telegram
@@ -61,7 +60,6 @@ type TickerResponse struct {
 	Title        string              `json:"title"`
 	Description  string              `json:"description"`
 	Active       bool                `json:"active"`
-	Hashtags     []string            `json:"hashtags"`
 	Information  InformationResponse `json:"information"`
 	Twitter      TwitterResponse     `json:"twitter"`
 	Telegram     TelegramResponse    `json:"telegram"`
@@ -111,7 +109,6 @@ func NewTicker() *Ticker {
 func (t *Ticker) Reset() {
 	t.Active = false
 	t.Description = ""
-	t.Hashtags = []string{}
 	t.Information = Information{}
 	t.Twitter.Secret = ""
 	t.Twitter.Token = ""
@@ -160,7 +157,6 @@ func NewTickerResponse(ticker *Ticker) *TickerResponse {
 		Title:        ticker.Title,
 		Description:  ticker.Description,
 		Active:       ticker.Active,
-		Hashtags:     ticker.Hashtags,
 		Information:  info,
 		Twitter:      tw,
 		Telegram:     tg,

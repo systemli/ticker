@@ -471,11 +471,10 @@ func contains(s []int, e int) bool {
 
 func updateTicker(t *Ticker, c *gin.Context) error {
 	var body struct {
-		Domain      string   `json:"domain" binding:"required"`
-		Title       string   `json:"title" binding:"required"`
-		Description string   `json:"description" binding:"required"`
-		Active      bool     `json:"active"`
-		Hashtags    []string `json:"hashtags"`
+		Domain      string `json:"domain" binding:"required"`
+		Title       string `json:"title" binding:"required"`
+		Description string `json:"description" binding:"required"`
+		Active      bool   `json:"active"`
 		Information struct {
 			Author   string `json:"author"`
 			URL      string `json:"url"`
@@ -499,7 +498,6 @@ func updateTicker(t *Ticker, c *gin.Context) error {
 	t.Title = body.Title
 	t.Description = body.Description
 	t.Active = body.Active
-	t.Hashtags = body.Hashtags
 	t.Information.Author = body.Information.Author
 	t.Information.URL = body.Information.URL
 	t.Information.Email = body.Information.Email

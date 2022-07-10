@@ -113,10 +113,9 @@ func TestPostUserHandler(t *testing.T) {
 		})
 
 	ticker := model.Ticker{
-		ID:       1,
-		Active:   true,
-		Hashtags: []string{"test"},
-		Domain:   "demoticker.org",
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
 	}
 
 	storage.DB.Save(&ticker)

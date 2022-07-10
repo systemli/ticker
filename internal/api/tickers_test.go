@@ -63,7 +63,6 @@ func TestPostTickerHandler(t *testing.T) {
 		"domain": "prozessticker.org",
 		"description": "Beschreibung",
 		"active": true,
-		"hashtags": ["#test"],
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
@@ -104,7 +103,6 @@ func TestPostTickerHandler(t *testing.T) {
 			assert.Equal(t, "Ticker", ticker.Title)
 			assert.Equal(t, "prozessticker.org", ticker.Domain)
 			assert.Equal(t, true, ticker.Active)
-			assert.Equal(t, []string{"#test"}, ticker.Hashtags)
 			assert.Equal(t, "https://www.systemli.org", ticker.Information.URL)
 			assert.Equal(t, "admin@systemli.org", ticker.Information.Email)
 			assert.Equal(t, "systemli", ticker.Information.Twitter)
@@ -126,10 +124,9 @@ func TestPutTickerHandler(t *testing.T) {
 	r := setup()
 
 	ticker := model.Ticker{
-		ID:       1,
-		Active:   true,
-		Hashtags: []string{"test"},
-		Domain:   "demoticker.org",
+		ID:     1,
+		Active: true,
+		Domain: "demoticker.org",
 	}
 
 	storage.DB.Save(&ticker)
@@ -139,7 +136,6 @@ func TestPutTickerHandler(t *testing.T) {
 		"domain": "prozessticker.org",
 		"description": "Beschreibung",
 		"active": false,
-		"hashtags": [],
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org",
@@ -194,7 +190,6 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, "Ticker", ticker.Title)
 			assert.Equal(t, "prozessticker.org", ticker.Domain)
 			assert.Equal(t, false, ticker.Active)
-			assert.Equal(t, []string{}, ticker.Hashtags)
 			assert.Equal(t, 1.1, ticker.Location.Lat)
 			assert.Equal(t, 2.2, ticker.Location.Lon)
 			assert.Equal(t, "https://t.me/bla", ticker.Information.Telegram)
@@ -213,7 +208,6 @@ func TestPutTickerHandler(t *testing.T) {
 		"domain": "prozessticker.org",
 		"description": "Beschreibung",
 		"active": false,
-		"hashtags": [],
 		"information": {
 			"url": "https://www.systemli.org",
 			"email": "admin@systemli.org"
@@ -253,7 +247,6 @@ func TestPutTickerHandler(t *testing.T) {
 			assert.Equal(t, "Ticker", ticker.Title)
 			assert.Equal(t, "prozessticker.org", ticker.Domain)
 			assert.Equal(t, false, ticker.Active)
-			assert.Equal(t, []string{}, ticker.Hashtags)
 			assert.Equal(t, 0.0, ticker.Location.Lat)
 			assert.Equal(t, 0.0, ticker.Location.Lon)
 		})
