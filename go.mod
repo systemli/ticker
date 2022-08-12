@@ -14,7 +14,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/paulmach/go.geojson v1.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.12.2
+	github.com/prometheus/client_golang v1.13.0
 	github.com/sethvargo/go-password v0.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.9.2
