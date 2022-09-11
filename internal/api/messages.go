@@ -4,243 +4,201 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/asdine/storm"
-	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 	geojson "github.com/paulmach/go.geojson"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/systemli/ticker/internal/bridge"
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/api/util"
+	"github.com/systemli/ticker/internal/storage"
 )
 
-//GetMessagesHandler returns all Messages with paging
-func GetMessagesHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) GetMessages(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, ErrorTickerNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	messages := make([]Message, 0)
 	//TODO: Pagination
-	err = DB.Find("Ticker", tickerID, &messages, storm.Reverse())
+	messages, err := h.storage.FindMessagesByTicker(ticker, util.Pagination{})
 	if err != nil {
 		if err.Error() == "not found" {
-			c.JSON(http.StatusOK, NewJSONSuccessResponse("messages", []string{}))
+			c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"messages": []string{}}))
 			return
 		}
 
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("messages", NewMessagesResponse(messages)))
+	data := map[string]interface{}{"messages": response.MessagesResponse(messages, h.config)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//GetMessageHandler returns a Message for the given id
-func GetMessageHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) GetMessage(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, ErrorTickerNotFound))
-		return
-	}
-
-	var message Message
 	messageID, err := strconv.Atoi(c.Param("messageID"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageIdentierMissing))
 		return
 	}
-	err = DB.One("ID", messageID, &message)
+	message, err := h.storage.FindMessage(tickerID, messageID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.MessageNotFound))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(message)))
+	data := map[string]interface{}{"message": response.MessageResponse(message, h.config)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//PostMessageHandler creates and returns a new Message
-func PostMessageHandler(c *gin.Context) {
+func (h *handler) PostMessage(c *gin.Context) {
+	me, err := helper.Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
+		return
+	}
+
 	var body struct {
 		Text           string                    `json:"text" binding:"required"`
 		GeoInformation geojson.FeatureCollection `json:"geo_information"`
 		Attachments    []int                     `json:"attachments"`
 	}
-	err := c.Bind(&body)
+	err = c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
-		return
-	}
-
-	me, err := Me(c)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	ticker := NewTicker()
-	err = DB.One("ID", tickerID, ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
 		log.WithError(err).Error("failed to find the ticker")
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, "ticker not found"))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	var uploads []*Upload
+	var uploads []storage.Upload
 	if len(body.Attachments) > 0 {
-		err := DB.Select(q.In("ID", body.Attachments)).Find(&uploads)
+		uploads, err = h.storage.FindUploadsByIDs(body.Attachments)
 		if err != nil {
-			c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UploadsNotFound))
 			return
 		}
 	}
 
-	message := NewMessage()
+	message := storage.NewMessage()
 	message.Text = body.Text
 	message.Ticker = tickerID
 	message.GeoInformation = body.GeoInformation
+	message.AddAttachments(uploads)
 
-	if len(uploads) > 0 {
-		var attachments []Attachment
-		for _, upload := range uploads {
-			attachments = append(attachments, Attachment{Extension: upload.Extension, UUID: upload.UUID, ContentType: upload.ContentType})
-		}
+	_ = h.bridges.Send(ticker, message)
 
-		message.Attachments = attachments
-	}
-
-	err = bridge.SendTweet(ticker, message)
+	err = h.storage.SaveMessage(&message)
 	if err != nil {
-		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to twitter failed")
-	}
-	err = bridge.SendTelegramMessage(ticker, message)
-	if err != nil {
-		log.WithError(err).WithField("ticker", ticker.ID).WithField("message", message.ID).Error("sending message to telegram failed")
-	}
-
-	err = DB.Save(message)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("message", NewMessageResponse(*message)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"message": response.MessageResponse(message, h.config)}))
 }
 
-func DeleteMessageHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) DeleteMessage(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		log.WithError(err).Error("failed to find the ticker")
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
 	messageID, err := strconv.Atoi(c.Param("messageID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.MessageIdentierMissing))
 		return
 	}
 
-	var message Message
-
-	err = DB.One("ID", messageID, &message)
+	message, err := h.storage.FindMessage(tickerID, messageID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageNotFound))
 		return
 	}
 
-	err = DeleteMessage(&ticker, &message)
+	_ = h.bridges.Delete(ticker, message)
+
+	err = h.storage.DeleteMessage(message)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
-	err = bridge.DeleteTweet(&ticker, &message)
-	if err != nil {
-		log.WithError(err).WithField("message", message).Error("failed to delete tweet")
-	}
-	err = bridge.DeleteTelegramMessage(&ticker, &message)
-	if err != nil {
-		log.WithError(err).WithField("message", message).Error("failed to delete telegram message")
-	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":   nil,
-		"status": ResponseSuccess,
-		"error":  nil,
-	})
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
 }

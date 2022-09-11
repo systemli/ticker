@@ -1,32 +1,33 @@
 package api
 
 import (
-	"strings"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/appleboy/gofight/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetFeaturesHandler(t *testing.T) {
-	r := setup()
+func init() {
+	gin.SetMode(gin.TestMode)
+}
 
-	r.GET("/v1/admin/features").
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 401, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1002,"message":"auth header is empty"}}`, strings.TrimSpace(r.Body.String()))
-		})
+func TestGetFeatures(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
 
-	r.GET("/v1/admin/features").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-		})
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.GET("/v1/admin/features").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"features":{"telegram_enabled":false,"twitter_enabled":false}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
+	h.GetFeatures(c)
+
+	expected := `{"data":{"features":{"telegram_enabled":false,"twitter_enabled":false}},"status":"success","error":{}}`
+	assert.Equal(t, expected, w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
 }

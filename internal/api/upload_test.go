@@ -1,200 +1,293 @@
 package api
 
 import (
-	"encoding/json"
-	"strconv"
+	"bytes"
+	"errors"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/appleboy/gofight/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
+	"github.com/stretchr/testify/mock"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-type uploadResponse struct {
-	Data   map[string][]model.UploadResponse `json:"data"`
-	Status string                            `json:"status"`
-	Error  map[string]interface{}            `json:"error"`
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
-func TestPostUploadSuccessful(t *testing.T) {
-	r := setup()
+func TestPostUploadForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	ticker := initUploadTestData()
+	h.PostUpload(c)
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response uploadResponse
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, 1, len(response.Data["uploads"]))
-			assert.NotNil(t, response.Data["uploads"][0].UUID)
-			assert.NotNil(t, response.Data["uploads"][0].ID)
-			assert.NotNil(t, response.Data["uploads"][0].URL)
-			assert.NotNil(t, response.Data["uploads"][0].CreationDate)
-		})
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestPostUploadGIF(t *testing.T) {
-	r := setup()
+func TestPostUploadMultipartError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", nil)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	ticker := initUploadTestData()
-	files := []gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher-dance.gif"}}
+	h.PostUpload(c)
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostUploadTickerNonExisting(t *testing.T) {
-	r := setup()
+func TestPostUploadMissingTickerValue(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.CreateFormField("field")
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": "2"}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
+	h.PostUpload(c)
 
-			var response uploadResponse
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseError, response.Status)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostUploadUnauthorized(t *testing.T) {
-	r := setup()
+func TestPostUploadTickerValueWrong(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.CreateFormField("ticker")
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	ticker := initUploadTestData()
+	h.PostUpload(c)
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../testdata/gopher.jpg"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-
-			var response uploadResponse
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseError, response.Status)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostUploadWrongContentType(t *testing.T) {
-	r := setup()
+func TestPostUploadTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	ticker := initUploadTestData()
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
+	h.PostUpload(c)
 
-			var response uploadResponse
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseError, response.Status)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostUploadMissingTicker(t *testing.T) {
-	r := setup()
+func TestPostUploadWrongPermission(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: false})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
-		})
-}
+	h.PostUpload(c)
 
-func TestPostUploadWrongTickerParam(t *testing.T) {
-	r := setup()
-
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{{Name: "files", Path: "../../README.md"}}, gofight.H{"ticker": "string"}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
-		})
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestPostUploadMissingFiles(t *testing.T) {
-	r := setup()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	ticker := initUploadTestData()
+	h.PostUpload(c)
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath([]gofight.UploadFile{}, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostUpload(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	path := "../../testdata/gopher.jpg"
+	part, err := writer.CreateFormFile("files", filepath.Base(path))
+	if err != nil {
+		t.Error(err)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Error(err)
+	}
+	part.Write(b)
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("SaveUpload", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUpload(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPostUploadGIF(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	path := "../../testdata/gopher-dance.gif"
+	part, err := writer.CreateFormFile("files", filepath.Base(path))
+	if err != nil {
+		t.Error(err)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Error(err)
+	}
+	part.Write(b)
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("SaveUpload", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUpload(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestPostUploadTooMuchFiles(t *testing.T) {
-	r := setup()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	path := "../../testdata/gopher.jpg"
+	part1, _ := writer.CreateFormFile("files", filepath.Base(path))
+	part2, _ := writer.CreateFormFile("files", filepath.Base(path))
+	part3, _ := writer.CreateFormFile("files", filepath.Base(path))
+	part4, _ := writer.CreateFormFile("files", filepath.Base(path))
+	b, _ := os.ReadFile(path)
 
-	ticker := initUploadTestData()
-
-	files := []gofight.UploadFile{
-		{Name: "files", Path: "../../testdata/gopher.jpg"},
-		{Name: "files", Path: "../../testdata/gopher.jpg"},
-		{Name: "files", Path: "../../testdata/gopher.jpg"},
-		{Name: "files", Path: "../../testdata/gopher.jpg"},
+	part1.Write(b)
+	part2.Write(b)
+	part3.Write(b)
+	part4.Write(b)
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("SaveUpload", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	r.POST("/v1/admin/upload").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetFileFromPath(files, gofight.H{"ticker": strconv.Itoa(ticker.ID)}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
+	h.PostUpload(c)
 
-			var response uploadResponse
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseError, response.Status)
-			assert.Equal(t, model.ErrorTooMuchFiles, response.Error["message"])
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func initUploadTestData() *model.Ticker {
-	ticker := &model.Ticker{
-		ID:     1,
-		Active: true,
-		Domain: "demoticker.org",
+func TestPostUploadForbiddenFileType(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("ticker", "1")
+	path := "./api.go"
+	part, err := writer.CreateFormFile("files", filepath.Base(path))
+	if err != nil {
+		t.Error(err)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Error(err)
+	}
+	part.Write(b)
+	_ = writer.Close()
+	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("SaveUpload", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	_ = storage.DB.Save(ticker)
+	h.PostUpload(c)
 
-	return ticker
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

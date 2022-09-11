@@ -1,60 +1,73 @@
 package api
 
 import (
-	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/appleboy/gofight/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
+	"github.com/stretchr/testify/mock"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetInitHandler(t *testing.T) {
-	r := setup()
+func TestGetInit(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
 
-	r.GET("/v1/init").
-		SetHeader(map[string]string{"Origin": "http://www.demoticker.org/"}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, r.Code, 200)
-
-			var response initResponse
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Nil(t, response.Error)
-			assert.Nil(t, response.Data.Ticker)
-
-			assert.Equal(t, 10000, response.Data.Settings.RefreshInterval)
-		})
-
-	ticker := new(model.Ticker)
-	ticker.ID = 1
+	ticker := storage.NewTicker()
 	ticker.Active = true
-	ticker.Title = "Demoticker"
-	ticker.Description = "Description"
-	ticker.Domain = "demoticker.org"
+	s := &storage.MockTickerStorage{}
+	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: 10000})
+	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
 
-	storage.DB.Save(ticker)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.GET("/v1/init").
-		SetHeader(map[string]string{"Origin": "http://www.demoticker.org/"}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, r.Code, 200)
+	h.GetInit(c)
 
-			var response initResponse
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-			assert.Nil(t, response.Error)
-			assert.Equal(t, model.ResponseSuccess, response.Status)
+func TestGetInitInvalidDomain(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/init", nil)
 
-			assert.NotNil(t, response.Data.Ticker)
-		})
+	s := &storage.MockTickerStorage{}
+	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: 10000})
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetInit(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGetInitInactiveTicker(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
+
+	ticker := storage.NewTicker()
+	s := &storage.MockTickerStorage{}
+	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: 10000})
+	s.On("GetInactiveSetting").Return(storage.DefaultInactiveSetting())
+	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetInit(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

@@ -1,65 +1,56 @@
 package storage
 
 import (
-	"github.com/asdine/storm/q"
-	log "github.com/sirupsen/logrus"
+	"time"
 
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/util"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	geojson "github.com/paulmach/go.geojson"
 )
 
-//
-func FindByTicker(ticker *Ticker, pagination *Pagination) ([]Message, error) {
-	var messages []Message
-
-	if !ticker.Active {
-		return messages, nil
-	}
-
-	matcher := q.Eq("Ticker", ticker.ID)
-	if pagination.GetBefore() != 0 {
-		matcher = q.And(q.Eq("Ticker", ticker.ID), q.Lt("ID", pagination.GetBefore()))
-	}
-	if pagination.GetAfter() != 0 {
-		matcher = q.And(q.Eq("Ticker", ticker.ID), q.Gt("ID", pagination.GetAfter()))
-	}
-
-	err := DB.Select(matcher).OrderBy("CreationDate").Limit(pagination.GetLimit()).Reverse().Find(&messages)
-	if err != nil {
-		if err.Error() == "not found" {
-			return messages, nil
-		}
-		return messages, err
-	}
-	return messages, nil
+type Message struct {
+	ID             int       `storm:"id,increment"`
+	CreationDate   time.Time `storm:"index"`
+	Ticker         int       `storm:"index"`
+	Text           string
+	Attachments    []Attachment
+	GeoInformation geojson.FeatureCollection
+	Tweet          Tweet
+	Telegram       TelegramMeta
 }
 
-//DeleteMessage removes a Message for a Ticker
-func DeleteMessage(ticker *Ticker, message *Message) error {
-	uploads := FindUploadsByMessage(message)
-
-	DeleteUploads(uploads)
-
-	err := DB.DeleteStruct(message)
-	if err != nil {
-		log.WithField("error", err).WithField("message", message).Error("failed to delete message")
-		return err
+func NewMessage() Message {
+	return Message{
+		CreationDate: time.Now(),
 	}
-
-	return nil
 }
 
-//DeleteMessages removes all messages for a Ticker.
-func DeleteMessages(ticker *Ticker) error {
-	var messages []*Message
-	if err := DB.Find("Ticker", ticker.ID, &messages); err != nil {
-		log.WithField("error", err).WithField("ticker", ticker.ID).Error("failed find messages for ticker")
-		return err
+type Tweet struct {
+	ID       string
+	UserName string
+}
+
+type TelegramMeta struct {
+	Messages []tgbotapi.Message
+}
+
+type Attachment struct {
+	UUID        string
+	Extension   string
+	ContentType string
+}
+
+func (m *Message) AddAttachment(upload Upload) {
+	attachment := Attachment{
+		UUID:        upload.UUID,
+		Extension:   upload.Extension,
+		ContentType: upload.ContentType,
 	}
 
-	for _, message := range messages {
-		_ = DeleteMessage(ticker, message)
-	}
+	m.Attachments = append(m.Attachments, attachment)
+}
 
-	return nil
+func (m *Message) AddAttachments(uploads []Upload) {
+	for _, upload := range uploads {
+		m.AddAttachment(upload)
+	}
 }

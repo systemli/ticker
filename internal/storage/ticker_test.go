@@ -1,57 +1,40 @@
-package storage_test
+package storage
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
-	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestFindTicker(t *testing.T) {
-	setup()
+var ticker = NewTicker()
 
-	ticker := initTickerTestData()
-
-	ticker, err := storage.FindTicker("localhost")
-	if err != nil {
-		t.Fail()
-		return
-	}
-
-	assert.Equal(t, 1, ticker.ID)
-
-	ticker, err = storage.FindTicker("example.com")
-	if err == nil {
-		t.Fail()
-		return
-	}
+func TestTickerTwitterConnected(t *testing.T) {
+	assert.False(t, ticker.Twitter.Connected())
 }
 
-func TestGetTicker(t *testing.T) {
-	setup()
+func TestTickerReset(t *testing.T) {
+	ticker.Active = true
+	ticker.Description = "Description"
+	ticker.Information.Author = "Author"
+	ticker.Information.Email = "Email"
+	ticker.Information.Twitter = "Twitter"
+	ticker.Twitter.Active = true
+	ticker.Twitter.Token = "Token"
+	ticker.Twitter.Secret = "Secret"
+	ticker.Telegram.Active = true
+	ticker.Telegram.ChannelName = "ChannelName"
+	ticker.Location.Lat = 1
+	ticker.Location.Lon = 2
 
-	ticker := initTickerTestData()
+	ticker.Reset()
 
-	found, err := storage.GetTicker(ticker.ID)
-	if err != nil {
-		t.Fail()
-		return
-	}
-
-	assert.Equal(t, ticker.ID, found.ID)
-
-	_, err = storage.GetTicker(2)
-	if err == nil {
-		t.Fail()
-	}
-}
-
-func initTickerTestData() *model.Ticker {
-	ticker := model.NewTicker()
-	ticker.Domain = "localhost"
-	_ = storage.DB.Save(ticker)
-
-	return ticker
+	assert.False(t, ticker.Active)
+	assert.False(t, ticker.Twitter.Active)
+	assert.False(t, ticker.Telegram.Active)
+	assert.Empty(t, ticker.Description)
+	assert.Empty(t, ticker.Information.Author)
+	assert.Empty(t, ticker.Information.Email)
+	assert.Empty(t, ticker.Information.Twitter)
+	assert.Empty(t, ticker.Telegram.ChannelName)
+	assert.Empty(t, ticker.Location)
 }

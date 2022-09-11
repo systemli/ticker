@@ -5,36 +5,36 @@ import (
 
 	"github.com/dghubble/oauth1"
 	"github.com/gin-gonic/gin"
-
-	. "github.com/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/config"
 )
 
-//PostAuthTwitterHandler returns access token and secret for twitter access.
-func PostAuthTwitterHandler(c *gin.Context) {
-	token, secret, err := config(c).AccessToken(c.Query("oauth_token"), "", c.Query("oauth_verifier"))
+func (h *handler) PostAuthTwitter(c *gin.Context) {
+	oauthConfig := oauthConfig(c, h.config)
+	token, secret, err := oauthConfig.AccessToken(c.Query("oauth_token"), "", c.Query("oauth_verifier"))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.AbortWithStatusJSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.Unauthorized))
 		return
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{"access_token": token, "access_secret": secret})
 }
 
-//PostTwitterRequestTokenHandler returns request tokens for twitter login process.
-func PostTwitterRequestTokenHandler(c *gin.Context) {
-	token, secret, err := config(c).RequestToken()
+func (h *handler) PostTwitterRequestToken(c *gin.Context) {
+	oauthConfig := oauthConfig(c, h.config)
+	token, secret, err := oauthConfig.RequestToken()
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.AbortWithStatusJSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.Unauthorized))
 		return
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{"oauth_token": token, "oauth_token_secret": secret})
 }
 
-func config(c *gin.Context) *oauth1.Config {
+func oauthConfig(c *gin.Context, config config.Config) *oauth1.Config {
 	return &oauth1.Config{
-		ConsumerKey:    Config.TwitterConsumerKey,
-		ConsumerSecret: Config.TwitterConsumerSecret,
+		ConsumerKey:    config.TwitterConsumerKey,
+		ConsumerSecret: config.TwitterConsumerSecret,
 		CallbackURL:    c.Query("callback"),
 		Endpoint: oauth1.Endpoint{
 			RequestTokenURL: "https://api.twitter.com/oauth/request_token",

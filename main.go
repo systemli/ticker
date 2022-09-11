@@ -9,15 +9,14 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/bridge"
+	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/storage"
 
 	"github.com/sethvargo/go-password/password"
 
 	log "github.com/sirupsen/logrus"
-
-	. "github.com/systemli/ticker/internal/api"
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
 )
 
 var (
@@ -26,11 +25,55 @@ var (
 )
 
 func main() {
-	router := API()
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.yml", "path to config.yml")
+	flag.Parse()
+
+	config := config.LoadConfig(configPath)
+	//TODO: Improve startup routine
+	if config.TelegramEnabled() {
+		user, err := bridge.BotUser(config.TelegramBotToken)
+		if err != nil {
+			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
+		} else {
+			config.TelegramBotUser = user
+		}
+	}
+
+	log.Println("Starting Ticker API")
+	log.Printf("Listen on %s", config.Listen)
+
+	buildInfo()
+
+	lvl, err := log.ParseLevel(config.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetLevel(lvl)
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`<html>
+			<head><title>Ticker Metrics Exporter</title></head>
+			<body>
+			<h1>Ticker Metrics Exporter</h1>
+			<p><a href="/metrics">Metrics</a></p>
+			</body>
+			</html>`))
+		})
+		log.Fatal(http.ListenAndServe(config.MetricsListen, nil))
+	}()
+
+	store := storage.NewStorage(config.Database, config.UploadPath)
+	router := api.API(config, store)
 	server := &http.Server{
-		Addr:    Config.Listen,
+		Addr:    config.Listen,
 		Handler: router,
 	}
+
+	firstRun(store, config)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -53,51 +96,6 @@ func main() {
 	}
 }
 
-func init() {
-	var cp = flag.String("config", "config.yml", "path to config.yml")
-	flag.Parse()
-
-	Config = LoadConfig(*cp)
-	//TODO: Improve startup routine
-	if Config.TelegramEnabled() {
-		user, err := bridge.BotUser(Config.TelegramBotToken)
-		if err != nil {
-			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
-		} else {
-			Config.TelegramBotUser = user
-		}
-	}
-	DB = OpenDB(Config.Database)
-
-	firstRun()
-
-	log.Println("Starting Ticker API")
-	log.Printf("Listen on %s", Config.Listen)
-
-	buildInfo()
-
-	lvl, err := log.ParseLevel(Config.LogLevel)
-	if err != nil {
-		panic(err)
-	}
-
-	log.SetLevel(lvl)
-
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			_, _ = w.Write([]byte(`<html>
-			<head><title>Ticker Metrics Exporter</title></head>
-			<body>
-			<h1>Ticker Metrics Exporter</h1>
-			<p><a href="/metrics">Metrics</a></p>
-			</body>
-			</html>`))
-		})
-		log.Fatal(http.ListenAndServe(Config.MetricsListen, nil))
-	}()
-}
-
 func buildInfo() {
 	if GitCommit != "" && GitVersion != "" {
 		log.Println("Build Information")
@@ -106,8 +104,8 @@ func buildInfo() {
 	}
 }
 
-func firstRun() {
-	count, err := DB.Count(&User{})
+func firstRun(store storage.TickerStorage, config config.Config) {
+	count, err := store.CountUser()
 	if err != nil {
 		log.Fatal("error using database")
 	}
@@ -118,12 +116,12 @@ func firstRun() {
 			log.Fatal(err)
 		}
 
-		user, err := NewAdminUser(Config.Initiator, pw)
+		user, err := storage.NewAdminUser(config.Initiator, pw)
 		if err != nil {
 			log.Fatal("could not create first user")
 		}
 
-		err = DB.Save(user)
+		err = store.SaveUser(&user)
 		if err != nil {
 			log.Fatal("could not persist first user")
 		}

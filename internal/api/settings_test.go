@@ -1,170 +1,234 @@
 package api
 
 import (
-	"encoding/json"
+	"bytes"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/appleboy/gofight/v2"
+	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
+	"github.com/stretchr/testify/mock"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetSettingHandler(t *testing.T) {
-	r := setup()
-
-	r.GET("/v1/admin/settings/refresh_interval").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"setting":{"id":0,"name":"refresh_interval","value":10000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	setting := model.NewSetting("refresh_interval", 20000)
-	storage.DB.Save(setting)
-
-	r.GET("/v1/admin/settings/refresh_interval").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"setting":{"id":1,"name":"refresh_interval","value":20000}},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
-func TestGetInactiveSettingsHandler(t *testing.T) {
-	r := setup()
+func TestGetSettingForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.GET("/v1/admin/settings/inactive_settings").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+	h.GetSetting(c)
 
-			type res struct {
-				Data   map[string]model.Setting `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
-
-			var response res
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-
-			setting := response.Data["setting"]
-
-			assert.Equal(t, 0, setting.ID)
-			assert.Equal(t, "inactive_settings", setting.Name)
-
-			value := setting.Value.(map[string]interface{})
-
-			assert.Equal(t, model.SettingInactiveHeadline, value["headline"])
-			assert.Equal(t, model.SettingInactiveSubHeadline, value["sub_headline"])
-			assert.Equal(t, model.SettingInactiveDescription, value["description"])
-			assert.Equal(t, model.SettingInactiveAuthor, value["author"])
-			assert.Equal(t, model.SettingInactiveEmail, value["email"])
-			assert.Equal(t, model.SettingInactiveHomepage, value["homepage"])
-			assert.Equal(t, model.SettingInactiveTwitter, value["twitter"])
-		})
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
-func TestPutInactiveSettingsHandler(t *testing.T) {
-	r := setup()
+func TestGetSettingWithoutParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	body := `{
-		"headline": "Headline",
-		"sub_headline": "Subheadline",
-		"description": "Beschreibung",
-		"author": "Systemli Admin Team",
-		"email": "admin@systemli.org",
-		"homepage": "https://www.systemli.org",
-		"twitter": "systemli"
-	}`
+	h.GetSetting(c)
 
-	r.PUT("/v1/admin/settings/inactive_settings").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			type res struct {
-				Data   map[string]model.Setting `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
-
-			var response res
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-
-			setting := response.Data["setting"]
-
-			assert.Equal(t, 1, setting.ID)
-			assert.Equal(t, "inactive_settings", setting.Name)
-
-			value := setting.Value.(map[string]interface{})
-
-			assert.Equal(t, "Headline", value["headline"])
-			assert.Equal(t, "Subheadline", value["sub_headline"])
-			assert.Equal(t, "Beschreibung", value["description"])
-			assert.Equal(t, "Systemli Admin Team", value["author"])
-			assert.Equal(t, "admin@systemli.org", value["email"])
-			assert.Equal(t, "https://www.systemli.org", value["homepage"])
-			assert.Equal(t, "systemli", value["twitter"])
-		})
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPutRefreshIntervalHandler(t *testing.T) {
-	r := setup()
+func TestGetSettingInactiveSetting(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("name", storage.SettingInactiveName)
+	s := &storage.MockTickerStorage{}
+	s.On("GetInactiveSetting").Return(storage.Setting{})
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	body := `{
-		"refresh_interval": 20000
-	}`
+	h.GetSetting(c)
 
-	r.PUT("/v1/admin/settings/refresh_interval").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-			type res struct {
-				Data   map[string]model.Setting `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
+func TestGetSettingRefreshIntervalSetting(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("name", storage.SettingRefreshInterval)
+	s := &storage.MockTickerStorage{}
+	s.On("GetRefreshIntervalSetting").Return(storage.Setting{})
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-			var response res
+	h.GetSetting(c)
 
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
+func TestPutInactiveSettingsForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-			setting := response.Data["setting"]
+	h.PutInactiveSettings(c)
 
-			assert.Equal(t, 1, setting.ID)
-			assert.Equal(t, "refresh_interval", setting.Name)
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
 
-			value := setting.Value
+func TestPutInactiveSettingsMissingBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	body := `broken_json`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 
-			assert.Equal(t, float64(20000), value)
-		})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutInactiveSettings(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutInactiveSettingsStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	setting := storage.DefaultInactiveSetting()
+	body, _ := json.Marshal(setting.Value)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("SaveInactiveSetting", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutInactiveSettings(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutInactiveSettings(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	setting := storage.DefaultInactiveSetting()
+	body, _ := json.Marshal(setting.Value)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("SaveInactiveSetting", mock.Anything).Return(nil)
+	s.On("GetInactiveSetting").Return(setting)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutInactiveSettings(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPutRefreshIntervalSettingsForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutRefreshInterval(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestPutRefreshIntervalSettingsMissingBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	body := `broken_json`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutRefreshInterval(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutRefreshIntervalSettingsStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	setting := storage.DefaultRefreshIntervalSetting()
+	body, _ := json.Marshal(setting.Value)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("SaveRefreshInterval", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutRefreshInterval(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutRefreshIntervalSettings(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	setting := storage.DefaultRefreshIntervalSetting()
+	body, _ := json.Marshal(setting.Value)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("SaveRefreshInterval", mock.Anything).Return(nil)
+	s.On("GetRefreshIntervalSetting").Return(setting)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutRefreshInterval(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

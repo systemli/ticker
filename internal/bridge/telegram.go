@@ -2,31 +2,21 @@ package bridge
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	log "github.com/sirupsen/logrus"
-	"github.com/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func BotUser(token string) (tgbotapi.User, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
-	if err != nil {
-		return tgbotapi.User{}, err
-	}
-
-	user, err := bot.GetMe()
-	if err != nil {
-		return tgbotapi.User{}, err
-	}
-
-	return user, nil
+type TelegramBridge struct {
+	config  config.Config
+	storage storage.TickerStorage
 }
 
-func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramEnabled() {
+func (tb *TelegramBridge) Send(ticker storage.Ticker, message storage.Message) error {
+	if ticker.Telegram.ChannelName == "" || !tb.config.TelegramEnabled() {
 		return nil
 	}
 
-	bot, err := tgbotapi.NewBotAPI(model.Config.TelegramBotToken)
+	bot, err := tgbotapi.NewBotAPI(tb.config.TelegramBotToken)
 	if err != nil {
 		return err
 	}
@@ -37,18 +27,17 @@ func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 		if err != nil {
 			return err
 		}
-		message.Telegram = model.TelegramMeta{Messages: []tgbotapi.Message{msg}}
+		message.Telegram = storage.TelegramMeta{Messages: []tgbotapi.Message{msg}}
 	} else {
 		var photos []interface{}
 		for _, attachment := range message.Attachments {
-			upload := &model.Upload{}
-			err := storage.DB.One("UUID", attachment.UUID, upload)
+			upload, err := tb.storage.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
 				continue
 			}
 
-			media := tgbotapi.FilePath(upload.FullPath())
+			media := tgbotapi.FilePath(upload.FullPath(tb.config.UploadPath))
 			if upload.ContentType == "image/gif" {
 				photo := tgbotapi.NewInputMediaDocument(media)
 				photo.Caption = message.Text
@@ -69,14 +58,14 @@ func SendTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 		if err != nil {
 			return err
 		}
-		message.Telegram = model.TelegramMeta{Messages: msgs}
+		message.Telegram = storage.TelegramMeta{Messages: msgs}
 	}
 
 	return nil
 }
 
-func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
-	if ticker.Telegram.ChannelName == "" || !model.Config.TelegramEnabled() {
+func (tb *TelegramBridge) Delete(ticker storage.Ticker, message storage.Message) error {
+	if ticker.Telegram.ChannelName == "" || !tb.config.TelegramEnabled() {
 		return nil
 	}
 
@@ -84,7 +73,7 @@ func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 		return nil
 	}
 
-	bot, err := tgbotapi.NewBotAPI(model.Config.TelegramBotToken)
+	bot, err := tgbotapi.NewBotAPI(tb.config.TelegramBotToken)
 	if err != nil {
 		return err
 	}
@@ -99,4 +88,18 @@ func DeleteTelegramMessage(ticker *model.Ticker, message *model.Message) error {
 	}
 
 	return nil
+}
+
+func BotUser(token string) (tgbotapi.User, error) {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return tgbotapi.User{}, err
+	}
+
+	user, err := bot.GetMe()
+	if err != nil {
+		return tgbotapi.User{}, err
+	}
+
+	return user, nil
 }

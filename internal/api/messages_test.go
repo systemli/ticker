@@ -1,329 +1,535 @@
 package api
 
 import (
-	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/appleboy/gofight/v2"
-	"github.com/google/uuid"
-	geojson "github.com/paulmach/go.geojson"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
+	"github.com/stretchr/testify/mock"
+	"github.com/systemli/ticker/internal/bridge"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetMessagesHandler(t *testing.T) {
-	r := setup()
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
-	}
-
-	storage.DB.Save(&ticker)
-
-	r.GET("/v1/admin/tickers/1/messages").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-			assert.Equal(t, `{"data":{"messages":[]},"status":"success","error":null}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	r.GET("/v1/admin/tickers/1/messages").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
-func TestGetMessageHandler(t *testing.T) {
-	r := setup()
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
+func TestGetMessagesForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	storage.DB.Save(&ticker)
+	h.GetMessages(c)
 
-	r.GET("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	r.GET("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	message := model.NewMessage()
-	message.Text = "text"
-	message.Ticker = ticker.ID
-
-	storage.DB.Save(message)
-
-	r.GET("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.Message `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Nil(t, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, "text", response.Data["message"].Text)
-		})
-
-	r.GET("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	var user model.User
-	err := storage.DB.One("ID", 2, &user)
-	if err != nil {
-		t.Fail()
-	}
-
-	user.Tickers = []int{1}
-	err = storage.DB.Save(&user)
-	if err != nil {
-		t.Fail()
-	}
-
-	r.GET("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.Message `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Nil(t, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, "text", response.Data["message"].Text)
-		})
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestPostMessageHandler(t *testing.T) {
-	r := setup()
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
+func TestGetMessagesWithoutParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	storage.DB.Save(&ticker)
+	h.GetMessages(c)
 
-	body := `{
-		"text": "message",
-		"geo_information": {
-			"type" : "FeatureCollection",
-			"features" : [{ 
-				"type" : "Feature", 
-				"properties" : {  
-					"capacity" : "10", 
-					"type" : "U-Rack",
-					"mount" : "Surface"
-				}, 
-				"geometry" : { 
-					"type" : "Point", 
-					"coordinates" : [ -71.073283, 42.417500 ] 
-				}
-			}]
-		}
-	}`
-
-	r.POST("/v1/admin/tickers/1/messages").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	r.POST("/v1/admin/tickers/1/messages").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			type jsonResp struct {
-				Data   map[string]model.Message `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
-
-			var jres jsonResp
-
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Equal(t, nil, jres.Error)
-			assert.Equal(t, 1, len(jres.Data))
-
-			message := jres.Data["message"]
-
-			assert.Equal(t, "message", message.Text)
-			assert.Equal(t, 1, message.Ticker)
-			assert.IsType(t, geojson.FeatureCollection{}, message.GeoInformation)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostMessageWithAttachmentHandler(t *testing.T) {
-	r := setup()
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
+func TestGetMessagesWithoutPermissions(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: false})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	upload := model.Upload{
-		ID:           1,
-		UUID:         uuid.New().String(),
-		CreationDate: time.Now(),
-		TickerID:     1,
-		Path:         "1/1",
-		Extension:    "jpg",
-		ContentType:  "image/jpeg",
-	}
+	h.GetMessages(c)
 
-	storage.DB.Save(&ticker)
-	storage.DB.Save(&upload)
-
-	body := `{
-		"text": "message",
-		"geo_information": {
-			"type" : "FeatureCollection",
-			"features" : [{ 
-				"type" : "Feature", 
-				"properties" : {  
-					"capacity" : "10", 
-					"type" : "U-Rack",
-					"mount" : "Surface"
-				}, 
-				"geometry" : { 
-					"type" : "Point", 
-					"coordinates" : [ -71.073283, 42.417500 ] 
-				}
-			}]
-		},
-		"attachments": [1]
-	}`
-
-	r.POST("/v1/admin/tickers/1/messages").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			type jsonResp struct {
-				Data   map[string]model.MessageResponse `json:"data"`
-				Status string                           `json:"status"`
-				Error  interface{}                      `json:"error"`
-			}
-
-			var jres jsonResp
-
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Equal(t, nil, jres.Error)
-			assert.Equal(t, 1, len(jres.Data))
-
-			message := jres.Data["message"]
-
-			assert.Equal(t, "message", message.Text)
-			assert.Equal(t, 1, message.Ticker)
-
-			assert.Equal(t, 1, len(message.Attachments))
-			assert.NotNil(t, message.Attachments[0].URL)
-			assert.Equal(t, "image/jpeg", message.Attachments[0].ContentType)
-		})
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
-func TestDeleteMessageHandler(t *testing.T) {
-	r := setup()
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
+func TestGetMessagesTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	storage.DB.Save(&ticker)
+	h.GetMessages(c)
 
-	message := model.NewMessage()
-	message.Text = "Text"
-	message.Ticker = 1
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
 
-	storage.DB.Save(message)
+func TestGetMessagesStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.DELETE("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+	h.GetMessages(c)
 
-	r.DELETE("/v1/admin/tickers/1/messages/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-		})
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
 
-	r.DELETE("/v1/admin/tickers/1/messages/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+func TestGetMessagesEmptyResult(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-			type jsonResp struct {
-				Data   map[string]model.Message `json:"data"`
-				Status string                   `json:"status"`
-				Error  interface{}              `json:"error"`
-			}
+	h.GetMessages(c)
 
-			var jres jsonResp
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
+func TestGetMessages(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Nil(t, jres.Data)
-			assert.Nil(t, jres.Error)
-		})
+	h.GetMessages(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGetMessageForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestGetMessageWithoutTickerParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestGetMessageWithoutPermissions(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: false})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestGetMessageWithoutWithoutMessageParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestGetMessageStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	c.AddParam("messageID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestGetMessage(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	c.AddParam("messageID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetMessage(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPostMessageForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestPostMessageFormError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostMessageMissingTickerParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	json := `{"text":"text"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostMessageWithoutPermission(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: false})
+	json := `{"text":"text"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestPostMessageTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	json := `{"text":"text"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestPostMessageUploadsNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	json := `{"text":"text","attachments":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestPostMessageStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	json := `{"text":"text","attachments":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
+	s.On("SaveMessage", mock.Anything).Return(errors.New("storage error"))
+	b := &bridge.MockBridge{}
+	b.On("Send", mock.Anything, mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+		bridges: bridge.Bridges{"mock": b},
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostMessage(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	json := `{"text":"text","attachments":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
+	s.On("SaveMessage", mock.Anything).Return(nil)
+	b := &bridge.MockBridge{}
+	b.On("Send", mock.Anything, mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+		bridges: bridge.Bridges{"mock": b},
+	}
+
+	h.PostMessage(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteMessageForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteMessageMissingTickerParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteMessageWithoutPermission(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: false})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestDeleteMessageTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteMessageMissingMessageParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteMessageMessageNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	c.AddParam("messageID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteMessageStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	c.AddParam("messageID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
+	s.On("DeleteMessage", mock.Anything).Return(errors.New("storage error"))
+	b := &bridge.MockBridge{}
+	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+		bridges: bridge.Bridges{"mock": b},
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteMessage(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.AddParam("tickerID", "1")
+	c.AddParam("messageID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
+	s.On("DeleteMessage", mock.Anything).Return(nil)
+	b := &bridge.MockBridge{}
+	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+		bridges: bridge.Bridges{"mock": b},
+	}
+
+	h.DeleteMessage(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

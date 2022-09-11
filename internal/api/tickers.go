@@ -4,201 +4,176 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/asdine/storm"
-	"github.com/asdine/storm/q"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/storage"
 
 	"github.com/systemli/ticker/internal/bridge"
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
 )
 
-//GetTickersHandler returns all Ticker with paging
-func GetTickersHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) GetTickers(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
-	tickers := make([]*Ticker, 0)
+	var tickers []storage.Ticker
 	if me.IsSuperAdmin {
-		err = DB.All(&tickers, storm.Reverse())
+		tickers, err = h.storage.FindTickers()
 	} else {
 		allowed := me.Tickers
-		err = DB.Select(q.In("ID", allowed)).Reverse().Find(&tickers)
-		if err == storm.ErrNotFound {
-			err = nil
-			tickers = []*Ticker{}
-		}
+		tickers, err = h.storage.FindTickersByIDs(allowed)
 	}
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("tickers", NewTickersResponse(tickers)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"tickers": response.TickersResponse(tickers, h.config)}))
 }
 
-//GetTickerHandler returns a Ticker for the given id
-func GetTickerHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) GetTicker(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-//GetTickerUsersHandler returns Users for the given ticker
-func GetTickerUsersHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) GetTickerUsers(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	//TODO: Discuss need of Pagination
-	users, _ := FindUsersByTicker(ticker)
+	users, _ := h.storage.FindUsersByTicker(ticker)
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
 }
 
-//PostTickerHandler creates and returns a new Ticker
-func PostTickerHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) PostTicker(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
-	ticker := NewTicker()
+	ticker := storage.NewTicker()
 	err := updateTicker(ticker, c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
-	err = DB.Save(ticker)
+	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-//PutTickerHandler updates and returns a existing Ticker
-func PutTickerHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) PutTicker(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	err = updateTicker(&ticker, c)
+	err = updateTicker(ticker, c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
-	err = DB.Save(&ticker)
+	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-//PutTickerUsersHandler changes the allowed users for a ticker
-func PutTickerUsersHandler(c *gin.Context) {
-	me, err := Me(c)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+func (h *handler) PutTickerUsers(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
-	}
-
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
-			return
-		}
 	}
 
 	var body struct {
@@ -207,46 +182,44 @@ func PutTickerUsersHandler(c *gin.Context) {
 
 	err = c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
-	err = AddUsersToTicker(ticker, body.Users)
+	err = h.storage.AddUsersToTicker(ticker, body.Users)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	users, _ := FindUsersByTicker(ticker)
+	users, _ := h.storage.FindUsersByTicker(ticker)
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
 }
 
-//
-func PutTickerTwitterHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) PutTickerTwitter(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
@@ -259,7 +232,7 @@ func PutTickerTwitterHandler(c *gin.Context) {
 
 	err = c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
@@ -276,188 +249,176 @@ func PutTickerTwitterHandler(c *gin.Context) {
 			ticker.Twitter.Secret = body.Secret
 		}
 		ticker.Twitter.Active = body.Active
+
+		tu, err := bridge.TwitterUser(ticker, h.config)
+		if err != nil {
+			log.WithError(err).Error("cant fetch user information from twitter")
+		} else {
+			ticker.Twitter.User = *tu
+		}
 	}
 
-	tu, err := bridge.TwitterUser(&ticker)
+	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		log.WithError(err).Error("cant fetch user information from twitter")
-	} else {
-		ticker.Twitter.User = *tu
-	}
-
-	err = DB.Save(&ticker)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-func PutTickerTelegramHandler(c *gin.Context) {
-	me, err := Me(c)
+func (h *handler) PutTickerTelegram(c *gin.Context) {
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	var tg Telegram
+	var tg storage.Telegram
 	err = c.Bind(&tg)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
 		return
 	}
 
 	ticker.Telegram = tg
 
-	err = DB.Save(&ticker)
+	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-//DeleteTickerHandler deletes a existing Ticker
-func DeleteTickerHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
-		return
-	}
-
-	var ticker Ticker
-	tickerID, err := strconv.Atoi(c.Param("tickerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
-		return
-	}
-
-	err = DB.One("ID", tickerID, &ticker)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
-		return
-	}
-
-	_ = DB.Select(q.Eq("Ticker", tickerID)).Delete(new(Message))
-	_ = DB.Select(q.Eq("ID", tickerID)).Delete(new(Ticker))
-
-	c.JSON(http.StatusOK, gin.H{
-		"data":   nil,
-		"status": ResponseSuccess,
-		"error":  nil,
-	})
-}
-
-//DeleteTickerUserHandler removes ticker credentials for a user
-func DeleteTickerUserHandler(c *gin.Context) {
-	me, err := Me(c)
-	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, ErrorUserNotFound))
+func (h *handler) DeleteTicker(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
-	var ticker Ticker
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
-			return
-		}
+	err = h.storage.DeleteMessages(ticker)
+	if err != nil {
+		log.WithError(err).Error("failed to delete message for ticker")
+	}
+	err = h.storage.DeleteTicker(ticker)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
+}
+
+func (h *handler) DeleteTickerUser(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
+		return
+	}
+
+	tickerID, err := strconv.Atoi(c.Param("tickerID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
+		return
+	}
+
+	ticker, err := h.storage.FindTickerByID(tickerID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
+		return
 	}
 
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
 		return
 	}
 
-	var user User
-	err = DB.One("ID", userID, &user)
+	user, err := h.storage.FindUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
-	err = RemoveTickerFromUser(ticker, user)
+	err = h.storage.RemoveTickerFromUser(ticker, user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	users, _ := FindUsersByTicker(ticker)
+	users, _ := h.storage.FindUsersByTicker(ticker)
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
 }
 
-func ResetTickerHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) ResetTicker(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
-	var ticker Ticker
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
-	err = DB.One("ID", tickerID, &ticker)
+	ticker, err := h.storage.FindTickerByID(tickerID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 		return
 	}
 
-	err = DeleteMessages(&ticker)
+	err = h.storage.DeleteMessages(ticker)
 	if err != nil {
 		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting messages")
 	}
-	err = DeleteUploadsByTicker(&ticker)
+	err = h.storage.DeleteUploadsByTicker(ticker)
 	if err != nil {
 		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting remaining uploads")
 	}
 
 	ticker.Reset()
 
-	err = DB.Save(&ticker)
+	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("ticker", NewTickerResponse(&ticker)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
 func contains(s []int, e int) bool {
@@ -469,7 +430,7 @@ func contains(s []int, e int) bool {
 	return false
 }
 
-func updateTicker(t *Ticker, c *gin.Context) error {
+func updateTicker(t storage.Ticker, c *gin.Context) error {
 	var body struct {
 		Domain      string `json:"domain" binding:"required"`
 		Title       string `json:"title" binding:"required"`
