@@ -96,11 +96,6 @@ func (h *handler) GetTickerUsers(c *gin.Context) {
 }
 
 func (h *handler) PostTicker(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	ticker := storage.NewTicker()
 	err := updateTicker(ticker, c)
 	if err != nil {
@@ -312,11 +307,6 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 }
 
 func (h *handler) DeleteTicker(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
@@ -343,11 +333,6 @@ func (h *handler) DeleteTicker(c *gin.Context) {
 }
 
 func (h *handler) DeleteTickerUser(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	tickerID, err := strconv.Atoi(c.Param("tickerID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))

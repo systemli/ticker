@@ -18,20 +18,6 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetUsersForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetUsers(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestGetUsersStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -218,22 +204,6 @@ func TestPostUser(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPutUserAsNonAdmin(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
-
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PutUser(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestPutUserMissingParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -333,22 +303,6 @@ func TestPutUser(t *testing.T) {
 	h.PutUser(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestDeleteUserAsNonAdmin(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
-
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteUser(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestDeleteUserMissingParam(t *testing.T) {

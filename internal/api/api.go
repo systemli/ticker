@@ -56,25 +56,28 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 
 	// the jwt middleware
 	authMiddleware := auth.AuthMiddleware(storage, config.Secret)
-	userMiddleware := user.UserMiddleware(storage)
 
-	admin := r.Group("/v1/admin").Use(authMiddleware.MiddlewareFunc()).Use(userMiddleware)
+	admin := r.Group("/v1/admin")
 	{
+		userMiddleware := user.UserMiddleware(storage)
+		admin.Use(authMiddleware.MiddlewareFunc())
+		admin.Use(userMiddleware)
+
 		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 
 		admin.GET("/features", handler.GetFeatures)
 
 		admin.GET(`/tickers`, handler.GetTickers)
 		admin.GET(`/tickers/:tickerID`, handler.GetTicker)
-		admin.POST(`/tickers`, handler.PostTicker)
+		admin.POST(`/tickers`, user.NeedAdmin(), handler.PostTicker)
 		admin.PUT(`/tickers/:tickerID`, handler.PutTicker)
 		admin.PUT(`/tickers/:tickerID/twitter`, handler.PutTickerTwitter)
 		admin.PUT(`/tickers/:tickerID/telegram`, handler.PutTickerTelegram)
-		admin.DELETE(`/tickers/:tickerID`, handler.DeleteTicker)
+		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), handler.DeleteTicker)
 		admin.PUT(`/tickers/:tickerID/reset`, handler.ResetTicker)
 		admin.GET(`/tickers/:tickerID/users`, handler.GetTickerUsers)
 		admin.PUT(`/tickers/:tickerID/users`, handler.PutTickerUsers)
-		admin.DELETE(`/tickers/:tickerID/users/:userID`, handler.DeleteTickerUser)
+		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), handler.DeleteTickerUser)
 
 		admin.GET(`/tickers/:tickerID/messages`, handler.GetMessages)
 		admin.GET(`/tickers/:tickerID/messages/:messageID`, handler.GetMessage)
@@ -83,15 +86,15 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 
 		admin.POST(`/upload`, handler.PostUpload)
 
-		admin.GET(`/users`, handler.GetUsers)
+		admin.GET(`/users`, user.NeedAdmin(), handler.GetUsers)
 		admin.GET(`/users/:userID`, handler.GetUser)
-		admin.POST(`/users`, handler.PostUser)
-		admin.PUT(`/users/:userID`, handler.PutUser)
-		admin.DELETE(`/users/:userID`, handler.DeleteUser)
+		admin.POST(`/users`, user.NeedAdmin(), handler.PostUser)
+		admin.PUT(`/users/:userID`, user.NeedAdmin(), handler.PutUser)
+		admin.DELETE(`/users/:userID`, user.NeedAdmin(), handler.DeleteUser)
 
-		admin.GET(`/settings/:name`, handler.GetSetting)
-		admin.PUT(`/settings/inactive_settings`, handler.PutInactiveSettings)
-		admin.PUT(`/settings/refresh_interval`, handler.PutRefreshInterval)
+		admin.GET(`/settings/:name`, user.NeedAdmin(), handler.GetSetting)
+		admin.PUT(`/settings/inactive_settings`, user.NeedAdmin(), handler.PutInactiveSettings)
+		admin.PUT(`/settings/refresh_interval`, user.NeedAdmin(), handler.PutRefreshInterval)
 	}
 
 	public := r.Group("/v1").Use()
