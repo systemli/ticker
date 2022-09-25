@@ -2,7 +2,6 @@ module github.com/systemli/ticker
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.8.0
-	github.com/appleboy/gofight/v2 v2.1.2
 	github.com/asdine/storm v2.1.2+incompatible
 	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb
 	github.com/dghubble/oauth1 v0.7.1
@@ -13,7 +12,6 @@ require (
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/uuid v1.3.0
 	github.com/paulmach/go.geojson v1.4.0
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sethvargo/go-password v0.2.0
 	github.com/sirupsen/logrus v1.9.0
@@ -27,7 +25,11 @@ require (
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
+	github.com/goccy/go-json v0.9.7
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/onsi/ginkgo/v2 v2.1.4
+	github.com/onsi/gomega v1.19.0
+	github.com/swaggo/swag v1.8.5
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect

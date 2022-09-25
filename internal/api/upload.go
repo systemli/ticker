@@ -7,96 +7,107 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
+	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/storage"
 
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
 	"github.com/systemli/ticker/internal/util"
 )
 
 var allowedContentTypes = []string{"image/jpeg", "image/gif", "image/png"}
 
-func PostUpload(c *gin.Context) {
-	me, err := Me(c)
-	if checkError(c, err, http.StatusBadRequest, ErrorCodeDefault, ErrorUserNotFound) {
+func (h *handler) PostUpload(c *gin.Context) {
+	me, err := helper.Me(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
 	if len(form.Value["ticker"]) != 1 {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorTickerIdentifierMissing))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
 
 	tickerID, err := strconv.Atoi(form.Value["ticker"][0])
-	if checkError(c, err, http.StatusBadRequest, ErrorCodeDefault, "can't convert ticker id to int") {
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
 		return
 	}
-	ticker, err := GetTicker(tickerID)
-	if checkError(c, err, http.StatusBadRequest, ErrorCodeDefault, ErrorTickerNotFound) {
+
+	ticker, err := h.storage.FindTickerByID(tickerID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
 	if !me.IsSuperAdmin {
 		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
 	}
 
 	files := form.File["files"]
 	if len(files) < 1 {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorFilesIdentifierMissing))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FilesIdentifierMissing))
 		return
 	}
 	if len(files) > 3 {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, ErrorTooMuchFiles))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TooMuchFiles))
 		return
 	}
-	uploads := make([]*Upload, 0)
+	uploads := make([]storage.Upload, 0)
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
-		if checkError(c, err, http.StatusBadRequest, ErrorCodeDefault, "can't open file in upload") {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 			return
 		}
 
 		contentType := util.DetectContentType(file)
 		if !util.ContainsString(allowedContentTypes, contentType) {
 			log.Error(fmt.Sprintf("%s is not allowed to uploaded", contentType))
-			c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, "failed to upload"))
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, "failed to upload"))
 			return
 		}
 
-		u := NewUpload(fileHeader.Filename, contentType, ticker.ID)
-		err = DB.Save(u)
-		if checkError(c, err, http.StatusInternalServerError, ErrorCodeDefault, "can't save upload") {
+		u := storage.NewUpload(fileHeader.Filename, contentType, ticker.ID)
+		err = h.storage.SaveUpload(&u)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 			return
 		}
 
-		err = preparePath(u.FullPath())
-		if checkError(c, err, http.StatusInternalServerError, ErrorCodeDefault, "can't prepare upload path") {
+		err = preparePath(u, h.config)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 			return
 		}
 
 		if u.ContentType == "image/gif" {
-			err = c.SaveUploadedFile(fileHeader, u.FullPath())
-			if checkError(c, err, http.StatusInternalServerError, ErrorCodeDefault, "can't save gif") {
+			err = c.SaveUploadedFile(fileHeader, u.FullPath(h.config.UploadPath))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.FormError))
 				return
 			}
 		} else {
 			nFile, _ := fileHeader.Open()
 			image, err := util.ResizeImage(nFile, 1280)
-			if checkError(c, err, http.StatusInternalServerError, ErrorCodeDefault, "can't resize file") {
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.FormError))
 				return
 			}
 
-			err = util.SaveImage(image, u.FullPath())
-			if checkError(c, err, http.StatusInternalServerError, ErrorCodeDefault, "can't save uploaded file") {
+			err = util.SaveImage(image, u.FullPath(h.config.UploadPath))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.FormError))
 				return
 			}
 		}
@@ -104,20 +115,11 @@ func PostUpload(c *gin.Context) {
 		uploads = append(uploads, u)
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("uploads", NewUploadsResponse(uploads)))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"uploads": response.UploadsResponse(uploads, h.config)}))
 }
 
-func checkError(c *gin.Context, err error, httpStatus, errorCode int, message string) bool {
-	if err != nil {
-		log.WithError(err).Error(message)
-		c.JSON(httpStatus, NewJSONErrorResponse(errorCode, "failed to upload"))
-		return true
-	}
-
-	return false
-}
-
-func preparePath(path string) error {
-	fs := Config.FileBackend
+func preparePath(upload storage.Upload, config config.Config) error {
+	path := upload.FullPath(config.UploadPath)
+	fs := config.FileBackend
 	return fs.MkdirAll(filepath.Dir(path), 0750)
 }

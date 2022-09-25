@@ -1,284 +1,440 @@
 package api
 
 import (
-	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/appleboy/gofight/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/systemli/ticker/internal/model"
+	"github.com/stretchr/testify/mock"
+	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetUsersHandler(t *testing.T) {
-	r := setup()
-
-	r.GET("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string][]model.UserResponse `json:"data"`
-				Status string                          `json:"status"`
-				Error  interface{}                     `json:"error"`
-			}
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, 2, len(response.Data["users"]))
-			assert.Equal(t, "louis@systemli.org", response.Data["users"][0].Email)
-			assert.Equal(t, "admin@systemli.org", response.Data["users"][1].Email)
-		})
-
-	r.GET("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
-func TestGetUserHandler(t *testing.T) {
-	r := setup()
-
-	r.GET("/v1/admin/users/2000").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1001,"message":"not found"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	r.GET("/v1/admin/users/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-		})
-
-	r.GET("/v1/admin/users/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-}
-
-func TestPostUserHandler(t *testing.T) {
-	r := setup()
-
-	body := `{
-		"email": "user@systemli.org",
-		"password": "password12",
-		"is_super_admin": true
-	}`
-
-	r.POST("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.UserResponse `json:"data"`
-				Status string                        `json:"status"`
-				Error  interface{}                   `json:"error"`
-			}
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, "user@systemli.org", response.Data["user"].Email)
-			assert.True(t, response.Data["user"].IsSuperAdmin)
-		})
-
-	r.POST("/v1/admin/users").
-		SetBody(body).
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	ticker := model.Ticker{
-		ID:     1,
-		Active: true,
-		Domain: "demoticker.org",
+func TestGetUsersForbidden(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
 	}
 
-	storage.DB.Save(&ticker)
+	h.GetUsers(c)
 
-	body = `{
-		"email": "user2@systemli.org",
-		"password": "password12",
-		"is_super_admin": false,
-		"tickers": [1]
-	}`
-
-	r.POST("/v1/admin/users").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.UserResponse `json:"data"`
-				Status string                        `json:"status"`
-				Error  interface{}                   `json:"error"`
-			}
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, "user2@systemli.org", response.Data["user"].Email)
-			assert.Equal(t, []int{ticker.ID}, response.Data["user"].Tickers)
-			assert.False(t, response.Data["user"].IsSuperAdmin)
-		})
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
-func TestPutUserHandler(t *testing.T) {
-	r := setup()
+func TestGetUsersStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	s.On("FindUsers").Return([]storage.User{}, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	body := `{
-		"email": "new@systemli.org",
-		"password": "password13",
-		"role": "user",
-		"is_super_admin": true,
-		"tickers": [1,2,3]
-	}`
+	h.GetUsers(c)
 
-	r.PUT("/v1/admin/users/2").
-		SetBody(body).
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
-
-	r.PUT(`/v1/admin/users/2`).
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		SetBody(body).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.UserResponse `json:"data"`
-				Status string                        `json:"status"`
-				Error  interface{}                   `json:"error"`
-			}
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.Equal(t, 2, response.Data["user"].ID)
-			assert.Equal(t, "new@systemli.org", response.Data["user"].Email)
-			assert.Equal(t, "user", response.Data["user"].Role)
-			assert.True(t, response.Data["user"].IsSuperAdmin)
-			assert.Equal(t, []int{1, 2, 3}, response.Data["user"].Tickers)
-
-			var user model.User
-			err = storage.DB.One("ID", 2, &user)
-			if err != nil {
-				t.Fail()
-			}
-
-			assert.NotEmpty(t, user.EncryptedPassword)
-			assert.Equal(t, true, user.IsSuperAdmin)
-			assert.Equal(t, []int{1, 2, 3}, user.Tickers)
-		})
-
-	body = `{
-		"is_super_admin": false
-	}`
-
-	r.PUT("/v1/admin/users/1").
-		SetBody(body).
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
-
-			var response struct {
-				Data   map[string]model.UserResponse `json:"data"`
-				Status string                        `json:"status"`
-				Error  interface{}                   `json:"error"`
-			}
-
-			err := json.Unmarshal(r.Body.Bytes(), &response)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			assert.Equal(t, model.ResponseSuccess, response.Status)
-			assert.Equal(t, nil, response.Error)
-			assert.Equal(t, 1, len(response.Data))
-			assert.True(t, response.Data["user"].IsSuperAdmin)
-		})
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestDeleteUserHandler(t *testing.T) {
-	r := setup()
+func TestGetUsers(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	s.On("FindUsers").Return([]storage.User{}, nil)
 
-	r.DELETE("/v1/admin/users/3").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 404, r.Code)
-		})
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-	r.DELETE("/v1/admin/users/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + UserToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 403, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1003,"message":"insufficient permissions"}}`, strings.TrimSpace(r.Body.String()))
-		})
+	h.GetUsers(c)
 
-	r.DELETE("/v1/admin/users/2").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 200, r.Code)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-			var jres struct {
-				Data   map[string]interface{} `json:"data"`
-				Status string                 `json:"status"`
-				Error  interface{}            `json:"error"`
-			}
+func TestGetUserMissingParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-			err := json.Unmarshal(r.Body.Bytes(), &jres)
-			if err != nil {
-				t.Fatal(err)
-			}
+	h.GetUser(c)
 
-			assert.Equal(t, model.ResponseSuccess, jres.Status)
-			assert.Nil(t, jres.Data)
-			assert.Nil(t, jres.Error)
-		})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
 
-	r.DELETE("/v1/admin/users/1").
-		SetHeader(map[string]string{"Authorization": "Bearer " + AdminToken}).
-		Run(API(), func(r gofight.HTTPResponse, rq gofight.HTTPRequest) {
-			assert.Equal(t, 400, r.Code)
-			assert.Equal(t, `{"data":{},"status":"error","error":{"code":1000,"message":"self deletion is forbidden"}}`, strings.TrimSpace(r.Body.String()))
+func TestGetUserMissingUserInContext(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
 
-		})
+	h.GetUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestGetUserInsufficentPermission(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	c.Set("user", storage.User{ID: 2, IsSuperAdmin: false})
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetUser(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestGetUserStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetUser(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestGetUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetUser(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPostUserAsNonAdmin(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestPostUserMissingBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Request = &http.Request{}
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostUserStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	json := `{"email":"louis@systemli.org","password":"password1234"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	json := `{"email":"louis@systemli.org","password":"password1234"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPutUserAsNonAdmin(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestPutUserMissingParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutUserNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestPutUserMissingBody(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+	body := `broken_json`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutUserStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+	s.On("SaveUser", mock.Anything).Return(nil)
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteUserAsNonAdmin(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestDeleteUserMissingParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteUserSelfUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "1")
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteUserNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteUserStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+	s.On("DeleteUser", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.AddParam("userID", "2")
+
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
+	s.On("DeleteUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

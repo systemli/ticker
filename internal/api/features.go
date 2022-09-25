@@ -4,19 +4,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	. "github.com/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/config"
 )
 
 type FeaturesResponse map[string]bool
 
-func NewFeaturesResponse() *FeaturesResponse {
-	return &FeaturesResponse{
-		"twitter_enabled":  Config.TwitterEnabled(),
-		"telegram_enabled": Config.TelegramEnabled(),
+func NewFeaturesResponse(config config.Config) FeaturesResponse {
+	return FeaturesResponse{
+		"twitter_enabled":  config.TwitterEnabled(),
+		"telegram_enabled": config.TelegramEnabled(),
 	}
 }
 
-func GetFeaturesHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("features", NewFeaturesResponse()))
+func (h *handler) GetFeatures(c *gin.Context) {
+	features := NewFeaturesResponse(h.config)
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"features": features}))
 }

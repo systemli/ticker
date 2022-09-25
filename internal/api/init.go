@@ -4,29 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/response"
 )
 
-//Settings represents the general Settings for TickerResponse in Init Response.
-type Settings struct {
-	RefreshInterval  int         `json:"refresh_interval,omitempty"`
-	InactiveSettings interface{} `json:"inactive_settings,omitempty"`
-}
-
-type initResponse struct {
-	Data   initData    `json:"data"`
-	Status string      `json:"status"`
-	Error  interface{} `json:"error"`
-}
-
-type initData struct {
-	Ticker   *TickerResponse `json:"ticker"`
-	Settings *Settings       `json:"settings"`
-}
-
-// GetInitHandler returns the basic settings for the ticker.
+// GetInit returns the basic settings for the ticker.
 // @Summary      Retrieves the initial ticker configuration
 // @Description  The first request for retrieving information about the ticker. It is mandatory that the browser sends
 // @Description  the origin as a header. This can be overwritten with a query parameter.
@@ -38,38 +20,23 @@ type initData struct {
 // @Success      200     {object}  initResponse
 // @Failure      500     {object}  interface{}
 // @Router       /init [get]
-func GetInitHandler(c *gin.Context) {
-	settings := settings()
-	domain, err := GetDomain(c)
+func (h *handler) GetInit(c *gin.Context) {
+	settings := response.Settings{
+		RefreshInterval: h.storage.GetRefreshIntervalSetting().Value.(int),
+	}
+	domain, err := helper.GetDomain(c)
 	if err != nil {
-		emptyTickerResponse(c, settings)
+		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))
 		return
 	}
 
-	ticker, err := FindTicker(domain)
+	ticker, err := h.storage.FindTickerByDomain(domain)
 	if err != nil || !ticker.Active {
-		settings.InactiveSettings = GetInactiveSettings().Value
-		emptyTickerResponse(c, settings)
+		settings.InactiveSettings = h.storage.GetInactiveSetting().Value
+		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))
 		return
 	}
 
-	c.JSON(http.StatusOK, initResponse{
-		Data:   initData{Ticker: NewTickerResponse(ticker), Settings: settings},
-		Status: ResponseSuccess,
-		Error:  nil,
-	})
-}
-
-func settings() *Settings {
-	return &Settings{
-		RefreshInterval: GetRefreshIntervalValue(),
-	}
-}
-
-func emptyTickerResponse(c *gin.Context, s *Settings) {
-	c.JSON(http.StatusOK, initResponse{
-		Data:   initData{Ticker: nil, Settings: s},
-		Status: ResponseSuccess,
-		Error:  nil,
-	})
+	data := map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config), "settings": settings}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

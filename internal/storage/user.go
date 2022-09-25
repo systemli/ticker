@@ -1,94 +1,79 @@
 package storage
 
 import (
-	"errors"
+	"time"
 
-	"github.com/asdine/storm/q"
-
-	. "github.com/systemli/ticker/internal/model"
+	"github.com/systemli/ticker/internal/util"
+	"golang.org/x/crypto/bcrypt"
 )
 
-//FindUserByID returns user if one exists with the given id.
-func FindUserByID(id int) (*User, error) {
-	var user User
-
-	err := DB.One("ID", id, &user)
-
-	return &user, err
+type User struct {
+	ID                int       `storm:"id,increment"`
+	CreationDate      time.Time `storm:"index"`
+	Email             string    `storm:"unique"`
+	Role              string
+	EncryptedPassword string
+	IsSuperAdmin      bool
+	Tickers           []int
 }
 
-//FindUsers returns all users.
-func FindUsers() ([]User, error) {
-	users := make([]User, 0)
-	err := DB.Select().Reverse().Find(&users)
+func NewUser(email, password string) (User, error) {
+	user := User{
+		CreationDate:      time.Now(),
+		IsSuperAdmin:      false,
+		Email:             email,
+		Tickers:           []int{},
+		EncryptedPassword: "",
+		Role:              "",
+	}
+
+	pw, err := hashPassword(password)
 	if err != nil {
-		return users, err
+		return user, err
 	}
 
-	return users, nil
+	user.EncryptedPassword = pw
+
+	return user, nil
 }
 
-//FindUsersByTicker returns all users associated with given ticker.
-func FindUsersByTicker(ticker Ticker) ([]User, error) {
-	users := make([]User, 0)
-	query := DB.Select()
-	err := query.Each(new(User), func(record interface{}) error {
-		u := record.(*User)
-
-		for _, id := range u.Tickers {
-			if id == ticker.ID {
-				users = append(users, *u)
-			}
-		}
-
-		return nil
-	})
-
+func NewAdminUser(email, password string) (User, error) {
+	user, err := NewUser(email, password)
 	if err != nil {
-		return users, err
+		return user, err
 	}
 
-	return users, nil
+	user.IsSuperAdmin = true
+
+	return user, err
 }
 
-//UserAuthenticate returns User when authentication was successful.
-func UserAuthenticate(email, password string) (*User, error) {
-	var user User
+func (u *User) Authenticate(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(password))
+	return err == nil
+}
 
-	err := DB.One("Email", email, &user)
+func (u *User) AddTicker(ticker Ticker) {
+	u.Tickers = util.Append(u.Tickers, ticker.ID)
+}
+
+func (u *User) RemoveTicker(ticker Ticker) {
+	u.Tickers = util.Remove(u.Tickers, ticker.ID)
+}
+
+func (u *User) UpdatePassword(password string) {
+	pw, err := hashPassword(password)
 	if err != nil {
-		return &user, err
+		return
 	}
 
-	if user.Authenticate(password) {
-		return &user, nil
-	}
-
-	return &user, errors.New("authentication failed")
+	u.EncryptedPassword = pw
 }
 
-//AddUsersToTicker append Ticker to the given slice of users.
-func AddUsersToTicker(ticker Ticker, ids []int) error {
-	users := make([]User, 0)
-	err := DB.Select(q.In("ID", ids)).Find(&users)
+func hashPassword(password string) (string, error) {
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	for _, user := range users {
-		if user.IsSuperAdmin {
-			continue
-		}
-		user.AddTicker(ticker)
-		err = DB.Save(&user)
-	}
-
-	return err
-}
-
-//RemoveTickerFromUser remove ticker from user.
-func RemoveTickerFromUser(ticker Ticker, user User) error {
-	user.RemoveTicker(ticker)
-
-	return DB.Save(&user)
+	return string(pw), nil
 }

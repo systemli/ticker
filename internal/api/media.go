@@ -7,16 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
 )
 
-func GetMedia(c *gin.Context) {
-	var upload Upload
-
+func (h *handler) GetMedia(c *gin.Context) {
 	parts := strings.Split(c.Param("fileName"), ".")
-	err := DB.One("UUID", parts[0], &upload)
+	upload, err := h.storage.FindUploadByUUID(parts[0])
 	if err != nil {
 		c.String(http.StatusNotFound, "%s", err.Error())
 		return
@@ -28,5 +23,5 @@ func GetMedia(c *gin.Context) {
 
 	c.Header("Cache-Control", cacheControl)
 	c.Header("Expires", expires)
-	c.File(upload.FullPath())
+	c.File(upload.FullPath(h.storage.UploadPath()))
 }

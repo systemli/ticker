@@ -5,61 +5,59 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-
-	. "github.com/systemli/ticker/internal/model"
-	. "github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/storage"
 )
 
-//GetUsersHandler returns all Users
-func GetUsersHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) GetUsers(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
 	//TODO: Discuss need of Pagination
-	users, err := FindUsers()
+	users, err := h.storage.FindUsers()
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("users", NewUsersResponse(users)))
+	data := map[string]interface{}{"users": response.UsersResponse(users)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//GetUserHandler returns a User for the given id
-func GetUserHandler(c *gin.Context) {
+func (h *handler) GetUser(c *gin.Context) {
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
 		return
 	}
 
-	u, err := Me(c)
+	u, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
 		return
 	}
 
-	if !IsAdmin(c) && userID != u.ID {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+	if !helper.IsAdmin(c) && userID != u.ID {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
-	var user User
-	err = DB.One("ID", userID, &user)
+	user, err := h.storage.FindUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UserNotFound))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(user)))
+	data := map[string]interface{}{"user": response.UserResponse(user)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//PostUserHandler creates and returns a new Ticker
-func PostUserHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) PostUser(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
@@ -72,47 +70,46 @@ func PostUserHandler(c *gin.Context) {
 
 	err := c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
 	//TODO: Validation
 
-	user, err := NewUser(body.Email, body.Password)
+	user, err := storage.NewUser(body.Email, body.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
 	user.IsSuperAdmin = body.IsSuperAdmin
 	user.Tickers = body.Tickers
 
-	err = DB.Save(user)
+	err = h.storage.SaveUser(&user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(*user)))
+	data := map[string]interface{}{"user": user}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//PutUserHandler updates a user
-func PutUserHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) PutUser(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
 		return
 	}
 
-	var user User
-	err = DB.One("ID", userID, &user)
+	user, err := h.storage.FindUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
@@ -126,7 +123,7 @@ func PutUserHandler(c *gin.Context) {
 
 	err = c.Bind(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
@@ -140,9 +137,9 @@ func PutUserHandler(c *gin.Context) {
 		user.Role = body.Role
 	}
 
-	me, err := Me(c)
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
 		return
 	}
 	// You only can set/unset other users SuperAdmin property
@@ -154,55 +151,50 @@ func PutUserHandler(c *gin.Context) {
 		user.Tickers = body.Tickers
 	}
 
-	err = DB.Save(&user)
+	err = h.storage.SaveUser(&user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, NewJSONSuccessResponse("user", NewUserResponse(user)))
+	data := map[string]interface{}{"user": user}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
-//DeleteUserHandler deletes a existing User
-func DeleteUserHandler(c *gin.Context) {
-	if !IsAdmin(c) {
-		c.JSON(http.StatusForbidden, NewJSONErrorResponse(ErrorCodeInsufficientPermissions, ErrorInsufficientPermissions))
+func (h *handler) DeleteUser(c *gin.Context) {
+	if !helper.IsAdmin(c) {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 		return
 	}
 
-	var user User
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
 		return
 	}
 
-	me, err := Me(c)
+	me, err := helper.Me(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
 		return
 	}
 
 	if me.ID == userID {
-		c.JSON(http.StatusBadRequest, NewJSONErrorResponse(ErrorCodeDefault, "self deletion is forbidden"))
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, "self deletion is forbidden"))
 		return
 	}
 
-	err = DB.One("ID", userID, &user)
+	user, err := h.storage.FindUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeNotFound, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UserNotFound))
 		return
 	}
 
-	err = DB.DeleteStruct(&user)
+	err = h.storage.DeleteUser(user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, NewJSONErrorResponse(ErrorCodeDefault, err.Error()))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":   nil,
-		"status": ResponseSuccess,
-		"error":  nil,
-	})
+	c.JSON(http.StatusOK, response.SuccessResponse(nil))
 }

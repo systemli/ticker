@@ -1,62 +1,52 @@
 package storage
 
 import (
-	"os"
+	"fmt"
+	"path/filepath"
+	"time"
 
-	"github.com/asdine/storm/q"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/systemli/ticker/internal/model"
+	uuid2 "github.com/google/uuid"
 )
 
-//FindUploadsByMessage returns all uploads for a Message.
-func FindUploadsByMessage(message *model.Message) []*model.Upload {
-	var uploads []*model.Upload
-
-	if len(message.Attachments) > 0 {
-		var uuids []string
-		for _, attachment := range message.Attachments {
-			uuids = append(uuids, attachment.UUID)
-		}
-		err := DB.Select(q.In("UUID", uuids)).Find(&uploads)
-		if err != nil {
-			log.WithField("error", err).Error("failed to find uploads for message")
-		}
-	}
-
-	return uploads
+type Upload struct {
+	ID           int       `storm:"id,increment"`
+	UUID         string    `storm:"index,unique"`
+	CreationDate time.Time `storm:"index"`
+	TickerID     int       `storm:"index"`
+	Path         string
+	Extension    string
+	ContentType  string
 }
 
-//DeleteUploadsByTicker removes all connected uploads with the given Ticker.
-func DeleteUploadsByTicker(ticker *model.Ticker) error {
-	err := DB.Select(q.Eq("TickerID", ticker.ID)).Delete(&model.Upload{})
-	if err != nil && err.Error() == "not found" {
-		return nil
-	}
+func NewUpload(filename, contentType string, tickerID int) Upload {
+	now := time.Now()
+	uuid := uuid2.New()
+	ext := filepath.Ext(filename)[1:]
+	// First version we use a date based directory structure
+	path := fmt.Sprintf("%d/%d", now.Year(), now.Month())
 
-	return err
+	return Upload{
+		CreationDate: now,
+		Path:         path,
+		UUID:         uuid.String(),
+		TickerID:     tickerID,
+		Extension:    ext,
+		ContentType:  contentType,
+	}
 }
 
-//DeleteUpload remove the given Upload.
-func DeleteUpload(upload *model.Upload) error {
-	//TODO: Rework with afero.FS from Config
-	if err := os.Remove(upload.FullPath()); err != nil {
-		log.WithField("error", err).WithField("upload", upload).Error("failed to delete upload file")
-	}
-
-	if err := DB.DeleteStruct(upload); err != nil {
-		log.WithField("error", err).WithField("upload", upload).Error("failed to delete upload")
-		return err
-	}
-
-	return nil
+func (u *Upload) FileName() string {
+	return fmt.Sprintf("%s.%s", u.UUID, u.Extension)
 }
 
-//DeleteUploads removes a map of Upload.
-func DeleteUploads(uploads []*model.Upload) {
-	if len(uploads) > 0 {
-		for _, upload := range uploads {
-			_ = DeleteUpload(upload)
-		}
-	}
+func (u *Upload) FullPath(uploadPath string) string {
+	return fmt.Sprintf("%s/%s/%s", uploadPath, u.Path, u.FileName())
+}
+
+func (u *Upload) URL(uploadPath string) string {
+	return MediaURL(u.FileName(), uploadPath)
+}
+
+func MediaURL(name string, uploadPath string) string {
+	return fmt.Sprintf("%s/media/%s", uploadPath, name)
 }

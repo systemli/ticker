@@ -1,0 +1,45 @@
+package bridge
+
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/storage"
+)
+
+var log = logrus.WithField("package", "bridge")
+
+type Bridge interface {
+	Send(ticker storage.Ticker, message storage.Message) error
+	Delete(ticker storage.Ticker, message storage.Message) error
+}
+
+type Bridges map[string]Bridge
+
+func RegisterBridges(config config.Config, storage storage.TickerStorage) Bridges {
+	twitter := TwitterBridge{config, storage}
+	telegram := TelegramBridge{config, storage}
+
+	return Bridges{"twitter": &twitter, "telegram": &telegram}
+}
+
+func (b *Bridges) Send(ticker storage.Ticker, message storage.Message) error {
+	var err error
+	for name, bridge := range *b {
+		log.WithField("bridge_name", name).Info("sending message")
+		err := bridge.Send(ticker, message)
+		log.WithError(err).WithField("bridge_name", name).Error("failed to send message")
+	}
+
+	return err
+}
+
+func (b *Bridges) Delete(ticker storage.Ticker, message storage.Message) error {
+	var err error
+	for name, bridge := range *b {
+		log.WithField("bridge_name", name).Info("deleting message")
+		err := bridge.Delete(ticker, message)
+		log.WithError(err).WithField("bridge_name", name).Error("failed to delete message")
+	}
+
+	return err
+}
