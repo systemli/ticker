@@ -38,7 +38,7 @@ func TestPostUploadForbidden(t *testing.T) {
 func TestPostUploadMultipartError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", nil)
 	s := &storage.MockTickerStorage{}
 	h := handler{
@@ -54,7 +54,7 @@ func TestPostUploadMultipartError(t *testing.T) {
 func TestPostUploadMissingTickerValue(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.CreateFormField("field")
@@ -75,7 +75,7 @@ func TestPostUploadMissingTickerValue(t *testing.T) {
 func TestPostUploadTickerValueWrong(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.CreateFormField("ticker")
@@ -96,7 +96,7 @@ func TestPostUploadTickerValueWrong(t *testing.T) {
 func TestPostUploadTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -118,7 +118,7 @@ func TestPostUploadTickerNotFound(t *testing.T) {
 func TestPostUploadWrongPermission(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false})
+	c.Set("me", storage.User{IsSuperAdmin: false})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -140,7 +140,7 @@ func TestPostUploadWrongPermission(t *testing.T) {
 func TestPostUploadMissingFiles(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -162,7 +162,7 @@ func TestPostUploadMissingFiles(t *testing.T) {
 func TestPostUpload(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -195,7 +195,7 @@ func TestPostUpload(t *testing.T) {
 func TestPostUploadGIF(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -228,7 +228,7 @@ func TestPostUploadGIF(t *testing.T) {
 func TestPostUploadTooMuchFiles(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")
@@ -262,7 +262,7 @@ func TestPostUploadTooMuchFiles(t *testing.T) {
 func TestPostUploadForbiddenFileType(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	writer.WriteField("ticker", "1")

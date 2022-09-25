@@ -7,61 +7,51 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestStorage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Auth Middleware Suite")
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
-var _ = Describe("User Middleware", func() {
-	When("id is not present", func() {
-		It("should return an error", func() {
-			mockStorage := &storage.MockTickerStorage{}
-			mw := UserMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
+func TestPrefetchUserMissingParam(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	mw := PrefetchUser(s)
 
-			mw(c)
+	mw(c)
 
-			Expect(w.Code).To(Equal(http.StatusBadRequest))
-		})
-	})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
 
-	When("id is present", func() {
-		Context("user not found", func() {
-			mockStorage := &storage.MockTickerStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
-			mw := UserMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Set("id", float64(1))
+func TestPrefetchUserStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	s := &storage.MockTickerStorage{}
+	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
+	mw := PrefetchUser(s)
 
-			mw(c)
+	mw(c)
 
-			Expect(w.Code).To(Equal(http.StatusBadRequest))
-		})
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
 
-		Context("user found", func() {
-			mockStorage := &storage.MockTickerStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
-			mw := UserMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Set("id", float64(1))
+func TestPrefetchUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.AddParam("userID", "1")
+	s := &storage.MockTickerStorage{}
+	user := storage.User{ID: 1}
+	s.On("FindUserByID", mock.Anything).Return(user, nil)
+	mw := PrefetchUser(s)
 
-			mw(c)
+	mw(c)
 
-			user, exists := c.Get("user")
-			Expect(exists).To(BeTrue())
-			Expect(user).To(BeAssignableToTypeOf(storage.User{}))
-		})
-	})
-})
+	us, e := c.Get("user")
+	assert.True(t, e)
+	assert.Equal(t, user, us.(storage.User))
+}

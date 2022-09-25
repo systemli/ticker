@@ -88,7 +88,7 @@ func TestMe(t *testing.T) {
 
 	assert.NotNil(t, err)
 
-	c.Set("user", storage.User{})
+	c.Set("me", storage.User{})
 
 	_, err = Me(c)
 
@@ -101,7 +101,7 @@ func TestIsAdmin(t *testing.T) {
 
 	assert.False(t, isAdmin)
 
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 
 	isAdmin = IsAdmin(c)
 
@@ -129,5 +129,17 @@ func TestMessage(t *testing.T) {
 	c.Set("message", storage.Message{})
 
 	_, err = Message(c)
+	assert.Nil(t, err)
+}
+
+func TestUser(t *testing.T) {
+	c := &gin.Context{}
+
+	_, err := User(c)
+	assert.NotNil(t, err)
+
+	c.Set("user", storage.User{})
+
+	_, err = User(c)
 	assert.Nil(t, err)
 }

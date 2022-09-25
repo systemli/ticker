@@ -35,7 +35,7 @@ func TestGetTickersForbidden(t *testing.T) {
 func TestGetTickersStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("FindTickers").Return([]storage.Ticker{}, errors.New("storage error"))
 	h := handler{
@@ -51,7 +51,7 @@ func TestGetTickersStorageError(t *testing.T) {
 func TestGetTickers(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false, Tickers: []int{1}})
+	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []int{1}})
 	s := &storage.MockTickerStorage{}
 	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
 	h := handler{
@@ -126,7 +126,7 @@ func TestGetTickerUsers(t *testing.T) {
 func TestPostTickerFormError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", nil)
 	s := &storage.MockTickerStorage{}
 	h := handler{
@@ -142,7 +142,7 @@ func TestPostTickerFormError(t *testing.T) {
 func TestPostTickerStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
@@ -161,7 +161,7 @@ func TestPostTickerStorageError(t *testing.T) {
 func TestPostTicker(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")

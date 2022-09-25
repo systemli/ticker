@@ -19,7 +19,7 @@ func init() {
 func TestPrefetchTickerParamMissing(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{})
+	c.Set("me", storage.User{})
 	s := &storage.MockTickerStorage{}
 	mw := PrefetchTicker(s)
 
@@ -32,7 +32,7 @@ func TestPrefetchTickerNoPermission(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
-	c.Set("user", storage.User{IsSuperAdmin: false, Tickers: []int{2}})
+	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []int{2}})
 	s := &storage.MockTickerStorage{}
 	mw := PrefetchTicker(s)
 
@@ -45,7 +45,7 @@ func TestPrefetchTickerStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("storage error"))
 	mw := PrefetchTicker(s)
@@ -59,7 +59,7 @@ func TestPrefetchTicker(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	ticker := storage.Ticker{ID: 1}
 	s.On("FindTickerByID", mock.Anything).Return(ticker, nil)

@@ -36,7 +36,7 @@ func GetDomain(c *gin.Context) (string, error) {
 
 func Me(c *gin.Context) (storage.User, error) {
 	var user storage.User
-	u, exists := c.Get("user")
+	u, exists := c.Get("me")
 	if !exists {
 		return user, errors.New("user not found")
 	}
@@ -69,4 +69,13 @@ func Message(c *gin.Context) (storage.Message, error) {
 	}
 
 	return message.(storage.Message), nil
+}
+
+func User(c *gin.Context) (storage.User, error) {
+	user, exists := c.Get("user")
+	if !exists {
+		return storage.User{}, errors.New("user not found")
+	}
+
+	return user.(storage.User), nil
 }
