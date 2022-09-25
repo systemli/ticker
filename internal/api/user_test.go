@@ -21,7 +21,7 @@ func init() {
 func TestGetUsersStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("FindUsers").Return([]storage.User{}, errors.New("storage error"))
 	h := handler{
@@ -37,7 +37,7 @@ func TestGetUsersStorageError(t *testing.T) {
 func TestGetUsers(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("FindUsers").Return([]storage.User{}, nil)
 
@@ -62,29 +62,14 @@ func TestGetUserMissingParam(t *testing.T) {
 
 	h.GetUser(c)
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestGetUserMissingUserInContext(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.AddParam("userID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetUser(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestGetUserInsufficentPermission(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.AddParam("userID", "1")
-	c.Set("user", storage.User{ID: 2, IsSuperAdmin: false})
+	c.Set("user", storage.User{ID: 1})
+	c.Set("me", storage.User{ID: 2, IsSuperAdmin: false})
 
 	s := &storage.MockTickerStorage{}
 	h := handler{
@@ -101,7 +86,7 @@ func TestGetUserStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("userID", "1")
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 
 	s := &storage.MockTickerStorage{}
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
@@ -115,14 +100,30 @@ func TestGetUserStorageError(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
+func TestGetUserMissingPermission(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("user", storage.User{ID: 2})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: false})
+
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetUser(c)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
 func TestGetUser(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.AddParam("userID", "1")
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{ID: 1})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: false})
 
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -133,26 +134,9 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPostUserAsNonAdmin(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: false})
-
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostUser(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestPostUserMissingBody(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Request = &http.Request{}
 
 	s := &storage.MockTickerStorage{}
@@ -172,7 +156,7 @@ func TestPostUserStorageError(t *testing.T) {
 	json := `{"email":"louis@systemli.org","password":"password1234"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
@@ -191,7 +175,7 @@ func TestPostUser(t *testing.T) {
 	json := `{"email":"louis@systemli.org","password":"password1234"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
@@ -204,29 +188,11 @@ func TestPostUser(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPutUserMissingParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PutUser(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
 func TestPutUserNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
-
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -240,15 +206,12 @@ func TestPutUserNotFound(t *testing.T) {
 func TestPutUserMissingBody(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{})
 	body := `broken_json`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
-
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -262,16 +225,13 @@ func TestPutUserMissingBody(t *testing.T) {
 func TestPutUserStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{})
 	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
-
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -285,16 +245,13 @@ func TestPutUserStorageError(t *testing.T) {
 func TestPutUser(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{})
 	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
 	s.On("SaveUser", mock.Anything).Return(nil)
-
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -308,43 +265,8 @@ func TestPutUser(t *testing.T) {
 func TestDeleteUserMissingParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteUser(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestDeleteUserSelfUser(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "1")
-
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteUser(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestDeleteUserNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
-
-	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -355,14 +277,28 @@ func TestDeleteUserNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
+func TestDeleteUserSelfUser(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{ID: 1})
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
 func TestDeleteUserStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
-
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{ID: 2})
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
 	s.On("DeleteUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -377,11 +313,9 @@ func TestDeleteUserStorageError(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{ID: 1, IsSuperAdmin: true})
-	c.AddParam("userID", "2")
-
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{ID: 2})
 	s := &storage.MockTickerStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
 	s.On("DeleteUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,

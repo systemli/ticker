@@ -9,6 +9,7 @@ import (
 	"github.com/systemli/ticker/internal/api/middleware/auth"
 	"github.com/systemli/ticker/internal/api/middleware/cors"
 	"github.com/systemli/ticker/internal/api/middleware/logger"
+	"github.com/systemli/ticker/internal/api/middleware/me"
 	"github.com/systemli/ticker/internal/api/middleware/message"
 	"github.com/systemli/ticker/internal/api/middleware/prometheus"
 	"github.com/systemli/ticker/internal/api/middleware/ticker"
@@ -61,9 +62,9 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 
 	admin := r.Group("/v1/admin")
 	{
-		userMiddleware := user.UserMiddleware(storage)
+		meMiddleware := me.MeMiddleware(storage)
 		admin.Use(authMiddleware.MiddlewareFunc())
-		admin.Use(userMiddleware)
+		admin.Use(meMiddleware)
 
 		admin.GET("/refresh_token", authMiddleware.RefreshHandler)
 
@@ -89,10 +90,10 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.POST(`/upload`, handler.PostUpload)
 
 		admin.GET(`/users`, user.NeedAdmin(), handler.GetUsers)
-		admin.GET(`/users/:userID`, handler.GetUser)
+		admin.GET(`/users/:userID`, user.PrefetchUser(storage), handler.GetUser)
 		admin.POST(`/users`, user.NeedAdmin(), handler.PostUser)
-		admin.PUT(`/users/:userID`, user.NeedAdmin(), handler.PutUser)
-		admin.DELETE(`/users/:userID`, user.NeedAdmin(), handler.DeleteUser)
+		admin.PUT(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(storage), handler.PutUser)
+		admin.DELETE(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(storage), handler.DeleteUser)
 
 		admin.GET(`/settings/:name`, user.NeedAdmin(), handler.GetSetting)
 		admin.PUT(`/settings/inactive_settings`, user.NeedAdmin(), handler.PutInactiveSettings)

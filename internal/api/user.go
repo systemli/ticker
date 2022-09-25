@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
@@ -23,26 +22,15 @@ func (h *handler) GetUsers(c *gin.Context) {
 }
 
 func (h *handler) GetUser(c *gin.Context) {
-	userID, err := strconv.Atoi(c.Param("userID"))
+	me, _ := helper.Me(c)
+	user, err := helper.User(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
-	u, err := helper.Me(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
-		return
-	}
-
-	if !helper.IsAdmin(c) && userID != u.ID {
+	if !helper.IsAdmin(c) && user.ID != me.ID {
 		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
-	user, err := h.storage.FindUserByID(userID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UserNotFound))
 		return
 	}
 
@@ -51,11 +39,6 @@ func (h *handler) GetUser(c *gin.Context) {
 }
 
 func (h *handler) PostUser(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	var body struct {
 		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
 		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
@@ -70,7 +53,6 @@ func (h *handler) PostUser(c *gin.Context) {
 	}
 
 	//TODO: Validation
-
 	user, err := storage.NewUser(body.Email, body.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
@@ -91,15 +73,10 @@ func (h *handler) PostUser(c *gin.Context) {
 }
 
 func (h *handler) PutUser(c *gin.Context) {
-	userID, err := strconv.Atoi(c.Param("userID"))
+	me, _ := helper.Me(c)
+	user, err := helper.User(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
-		return
-	}
-
-	user, err := h.storage.FindUserByID(userID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
@@ -127,11 +104,6 @@ func (h *handler) PutUser(c *gin.Context) {
 		user.Role = body.Role
 	}
 
-	me, err := helper.Me(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
-		return
-	}
 	// You only can set/unset other users SuperAdmin property
 	if me.ID != user.ID {
 		user.IsSuperAdmin = body.IsSuperAdmin
@@ -152,26 +124,15 @@ func (h *handler) PutUser(c *gin.Context) {
 }
 
 func (h *handler) DeleteUser(c *gin.Context) {
-	userID, err := strconv.Atoi(c.Param("userID"))
+	me, _ := helper.Me(c)
+	user, err := helper.User(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
-	me, err := helper.Me(c)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, ""))
-		return
-	}
-
-	if me.ID == userID {
+	if me.ID == user.ID {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, "self deletion is forbidden"))
-		return
-	}
-
-	user, err := h.storage.FindUserByID(userID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UserNotFound))
 		return
 	}
 

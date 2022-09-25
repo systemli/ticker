@@ -27,7 +27,7 @@ func TestNeedAdminMissingUser(t *testing.T) {
 func TestNeedAdminNonAdmin(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{})
+	c.Set("me", storage.User{})
 	mw := NeedAdmin()
 
 	mw(c)
