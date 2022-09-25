@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/systemli/ticker/internal/api/util"
+	"github.com/systemli/ticker/internal/api/pagination"
 )
 
 func TestStorage(t *testing.T) {
@@ -202,7 +202,7 @@ var _ = Describe("Storage", func() {
 		It("shouldn't find any messages", func() {
 			ticker := Ticker{ID: 1, Active: true}
 			ctx := gin.Context{}
-			pagination := util.NewPagination(&ctx)
+			pagination := pagination.NewPagination(&ctx)
 			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
@@ -226,7 +226,7 @@ var _ = Describe("Storage", func() {
 
 		It("should return messages on active ticker", func() {
 			ctx := gin.Context{}
-			pagination := util.NewPagination(&ctx)
+			pagination := pagination.NewPagination(&ctx)
 			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(1))
@@ -238,7 +238,7 @@ var _ = Describe("Storage", func() {
 					URL: &url.URL{RawQuery: fmt.Sprintf("after=%d", message.ID)},
 				},
 			}
-			pagination := util.NewPagination(&ctx)
+			pagination := pagination.NewPagination(&ctx)
 			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
@@ -250,7 +250,7 @@ var _ = Describe("Storage", func() {
 					URL: &url.URL{RawQuery: fmt.Sprintf("before=%d", message.ID)},
 				},
 			}
-			pagination := util.NewPagination(&ctx)
+			pagination := pagination.NewPagination(&ctx)
 			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
@@ -262,7 +262,7 @@ var _ = Describe("Storage", func() {
 			Expect(err).To(BeNil())
 
 			ctx := gin.Context{}
-			pagination := util.NewPagination(&ctx)
+			pagination := pagination.NewPagination(&ctx)
 			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))

@@ -6,7 +6,7 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/q"
 	"github.com/sirupsen/logrus"
-	"github.com/systemli/ticker/internal/api/util"
+	"github.com/systemli/ticker/internal/api/pagination"
 )
 
 var log = logrus.WithField("package", "storage")
@@ -33,7 +33,7 @@ type TickerStorage interface {
 	DeleteUploads(uploads []Upload)
 	DeleteUploadsByTicker(ticker Ticker) error
 	FindMessage(tickerID, messageID int) (Message, error)
-	FindMessagesByTicker(ticker Ticker, pagination util.Pagination) ([]Message, error)
+	FindMessagesByTicker(ticker Ticker, pagination pagination.Pagination) ([]Message, error)
 	SaveMessage(message *Message) error
 	DeleteMessage(message Message) error
 	DeleteMessages(ticker Ticker) error
@@ -268,7 +268,7 @@ func (s *Storage) FindMessage(tickerID, messageID int) (Message, error) {
 	return message, err
 }
 
-func (s *Storage) FindMessagesByTicker(ticker Ticker, pagination util.Pagination) ([]Message, error) {
+func (s *Storage) FindMessagesByTicker(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
 	messages := make([]Message, 0)
 
 	if !ticker.Active {

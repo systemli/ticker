@@ -1,4 +1,4 @@
-package util
+package pagination
 
 import (
 	"strconv"
@@ -8,14 +8,14 @@ import (
 
 const DefaultLimit = 10
 
-//Pagination represents data for retrieving time related structures.
+// Pagination represents data for retrieving time related structures.
 type Pagination struct {
 	limit  int
 	before int
 	after  int
 }
 
-//NewPagination returns a Pagination.
+// NewPagination returns a Pagination.
 func NewPagination(c *gin.Context) *Pagination {
 	var pagination Pagination
 
@@ -37,17 +37,17 @@ func NewPagination(c *gin.Context) *Pagination {
 	return &pagination
 }
 
-//GetLimit returns limit.
+// GetLimit returns limit.
 func (p *Pagination) GetLimit() int {
 	return p.limit
 }
 
-//GetBefore return before.
+// GetBefore return before.
 func (p *Pagination) GetBefore() int {
 	return p.before
 }
 
-//GetAfter returns after.
+// GetAfter returns after.
 func (p *Pagination) GetAfter() int {
 	return p.after
 }
