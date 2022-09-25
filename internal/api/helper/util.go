@@ -52,3 +52,12 @@ func IsAdmin(c *gin.Context) bool {
 
 	return u.IsSuperAdmin
 }
+
+func Ticker(c *gin.Context) (storage.Ticker, error) {
+	ticker, exists := c.Get("ticker")
+	if !exists {
+		return storage.Ticker{}, errors.New("ticker not found")
+	}
+
+	return ticker.(storage.Ticker), nil
+}

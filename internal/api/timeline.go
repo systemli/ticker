@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/pagination"
 	"github.com/systemli/ticker/internal/api/response"
-	"github.com/systemli/ticker/internal/api/util"
 )
 
 // GetTimeline returns the public timeline for a ticker.
@@ -39,7 +39,7 @@ func (h *handler) GetTimeline(c *gin.Context) {
 		return
 	}
 
-	pagination := util.NewPagination(c)
+	pagination := pagination.NewPagination(c)
 	messages, err := h.storage.FindMessagesByTicker(ticker, *pagination)
 	if err != nil {
 		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))

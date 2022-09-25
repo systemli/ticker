@@ -7,39 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 	geojson "github.com/paulmach/go.geojson"
 	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/pagination"
 	"github.com/systemli/ticker/internal/api/response"
-	"github.com/systemli/ticker/internal/api/util"
 	"github.com/systemli/ticker/internal/storage"
 )
 
 func (h *handler) GetMessages(c *gin.Context) {
-	me, err := helper.Me(c)
+	ticker, err := helper.Ticker(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
-		return
-	}
-
-	tickerID, err := strconv.Atoi(c.Param("tickerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
-		return
-	}
-
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-			return
-		}
-	}
-
-	ticker, err := h.storage.FindTickerByID(tickerID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
 	//TODO: Pagination
-	messages, err := h.storage.FindMessagesByTicker(ticker, util.Pagination{})
+	messages, err := h.storage.FindMessagesByTicker(ticker, pagination.Pagination{})
 	if err != nil {
 		if err.Error() == "not found" {
 			c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"messages": []string{}}))
@@ -55,23 +36,10 @@ func (h *handler) GetMessages(c *gin.Context) {
 }
 
 func (h *handler) GetMessage(c *gin.Context) {
-	me, err := helper.Me(c)
+	ticker, err := helper.Ticker(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
-	}
-
-	tickerID, err := strconv.Atoi(c.Param("tickerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
-		return
-	}
-
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-			return
-		}
 	}
 
 	messageID, err := strconv.Atoi(c.Param("messageID"))
@@ -79,7 +47,7 @@ func (h *handler) GetMessage(c *gin.Context) {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageIdentierMissing))
 		return
 	}
-	message, err := h.storage.FindMessage(tickerID, messageID)
+	message, err := h.storage.FindMessage(ticker.ID, messageID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.MessageNotFound))
 		return
@@ -90,9 +58,9 @@ func (h *handler) GetMessage(c *gin.Context) {
 }
 
 func (h *handler) PostMessage(c *gin.Context) {
-	me, err := helper.Me(c)
+	ticker, err := helper.Ticker(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
@@ -107,26 +75,6 @@ func (h *handler) PostMessage(c *gin.Context) {
 		return
 	}
 
-	tickerID, err := strconv.Atoi(c.Param("tickerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
-		return
-	}
-
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-			return
-		}
-	}
-
-	ticker, err := h.storage.FindTickerByID(tickerID)
-	if err != nil {
-		log.WithError(err).Error("failed to find the ticker")
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
-		return
-	}
-
 	var uploads []storage.Upload
 	if len(body.Attachments) > 0 {
 		uploads, err = h.storage.FindUploadsByIDs(body.Attachments)
@@ -138,7 +86,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 
 	message := storage.NewMessage()
 	message.Text = body.Text
-	message.Ticker = tickerID
+	message.Ticker = ticker.ID
 	message.GeoInformation = body.GeoInformation
 	message.AddAttachments(uploads)
 
@@ -154,29 +102,9 @@ func (h *handler) PostMessage(c *gin.Context) {
 }
 
 func (h *handler) DeleteMessage(c *gin.Context) {
-	me, err := helper.Me(c)
+	ticker, err := helper.Ticker(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
-		return
-	}
-
-	tickerID, err := strconv.Atoi(c.Param("tickerID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerIdentifierMissing))
-		return
-	}
-
-	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
-			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-			return
-		}
-	}
-
-	ticker, err := h.storage.FindTickerByID(tickerID)
-	if err != nil {
-		log.WithError(err).Error("failed to find the ticker")
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
@@ -186,7 +114,7 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	message, err := h.storage.FindMessage(tickerID, messageID)
+	message, err := h.storage.FindMessage(ticker.ID, messageID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageNotFound))
 		return

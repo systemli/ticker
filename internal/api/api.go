@@ -10,6 +10,7 @@ import (
 	"github.com/systemli/ticker/internal/api/middleware/cors"
 	"github.com/systemli/ticker/internal/api/middleware/logger"
 	"github.com/systemli/ticker/internal/api/middleware/prometheus"
+	"github.com/systemli/ticker/internal/api/middleware/ticker"
 	"github.com/systemli/ticker/internal/api/middleware/user"
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/config"
@@ -68,21 +69,21 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.GET("/features", handler.GetFeatures)
 
 		admin.GET(`/tickers`, handler.GetTickers)
-		admin.GET(`/tickers/:tickerID`, handler.GetTicker)
+		admin.GET(`/tickers/:tickerID`, ticker.PrefetchTicker(storage), handler.GetTicker)
 		admin.POST(`/tickers`, user.NeedAdmin(), handler.PostTicker)
-		admin.PUT(`/tickers/:tickerID`, handler.PutTicker)
-		admin.PUT(`/tickers/:tickerID/twitter`, handler.PutTickerTwitter)
-		admin.PUT(`/tickers/:tickerID/telegram`, handler.PutTickerTelegram)
-		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), handler.DeleteTicker)
-		admin.PUT(`/tickers/:tickerID/reset`, handler.ResetTicker)
-		admin.GET(`/tickers/:tickerID/users`, handler.GetTickerUsers)
-		admin.PUT(`/tickers/:tickerID/users`, handler.PutTickerUsers)
-		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), handler.DeleteTickerUser)
+		admin.PUT(`/tickers/:tickerID`, ticker.PrefetchTicker(storage), handler.PutTicker)
+		admin.PUT(`/tickers/:tickerID/twitter`, ticker.PrefetchTicker(storage), handler.PutTickerTwitter)
+		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(storage), handler.PutTickerTelegram)
+		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), ticker.PrefetchTicker(storage), handler.DeleteTicker)
+		admin.PUT(`/tickers/:tickerID/reset`, ticker.PrefetchTicker(storage), ticker.PrefetchTicker(storage), handler.ResetTicker)
+		admin.GET(`/tickers/:tickerID/users`, ticker.PrefetchTicker(storage), handler.GetTickerUsers)
+		admin.PUT(`/tickers/:tickerID/users`, user.NeedAdmin(), ticker.PrefetchTicker(storage), handler.PutTickerUsers)
+		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), ticker.PrefetchTicker(storage), handler.DeleteTickerUser)
 
-		admin.GET(`/tickers/:tickerID/messages`, handler.GetMessages)
-		admin.GET(`/tickers/:tickerID/messages/:messageID`, handler.GetMessage)
-		admin.POST(`/tickers/:tickerID/messages`, handler.PostMessage)
-		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, handler.DeleteMessage)
+		admin.GET(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(storage), handler.GetMessages)
+		admin.GET(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), handler.GetMessage)
+		admin.POST(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(storage), handler.PostMessage)
+		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), handler.DeleteMessage)
 
 		admin.POST(`/upload`, handler.PostUpload)
 

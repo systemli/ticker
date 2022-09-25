@@ -19,58 +19,11 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetMessagesForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessages(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestGetMessagesWithoutParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessages(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestGetMessagesWithoutPermissions(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false})
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessages(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestGetMessagesTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
 	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -84,10 +37,8 @@ func TestGetMessagesTickerNotFound(t *testing.T) {
 func TestGetMessagesStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -102,10 +53,8 @@ func TestGetMessagesStorageError(t *testing.T) {
 func TestGetMessagesEmptyResult(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -120,10 +69,8 @@ func TestGetMessagesEmptyResult(t *testing.T) {
 func TestGetMessages(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 	h := handler{
 		storage: s,
@@ -135,7 +82,7 @@ func TestGetMessages(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestGetMessageForbidden(t *testing.T) {
+func TestGetMessageTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	s := &storage.MockTickerStorage{}
@@ -149,42 +96,10 @@ func TestGetMessageForbidden(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestGetMessageWithoutTickerParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestGetMessageWithoutPermissions(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false})
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessage(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestGetMessageWithoutWithoutMessageParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
 	h := handler{
 		storage: s,
@@ -199,8 +114,7 @@ func TestGetMessageWithoutWithoutMessageParam(t *testing.T) {
 func TestGetMessageStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
@@ -217,8 +131,7 @@ func TestGetMessageStorageError(t *testing.T) {
 func TestGetMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
@@ -232,7 +145,7 @@ func TestGetMessage(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPostMessageForbidden(t *testing.T) {
+func TestPostMessageTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	s := &storage.MockTickerStorage{}
@@ -249,7 +162,7 @@ func TestPostMessageForbidden(t *testing.T) {
 func TestPostMessageFormError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
 	s := &storage.MockTickerStorage{}
 	h := handler{
@@ -262,73 +175,15 @@ func TestPostMessageFormError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostMessageMissingTickerParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	json := `{"text":"text"}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostMessageWithoutPermission(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false})
-	json := `{"text":"text"}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
-func TestPostMessageTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	json := `{"text":"text"}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
 func TestPostMessageUploadsNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("ticker", storage.Ticker{})
 	json := `{"text":"text","attachments":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -343,13 +198,12 @@ func TestPostMessageUploadsNotFound(t *testing.T) {
 func TestPostMessageStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("ticker", storage.Ticker{})
 	json := `{"text":"text","attachments":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
 	s.On("SaveMessage", mock.Anything).Return(errors.New("storage error"))
 	b := &bridge.MockBridge{}
@@ -368,13 +222,11 @@ func TestPostMessageStorageError(t *testing.T) {
 func TestPostMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("ticker", storage.Ticker{})
 	json := `{"text":"text","attachments":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
 	s.On("SaveMessage", mock.Anything).Return(nil)
 	b := &bridge.MockBridge{}
@@ -390,58 +242,10 @@ func TestPostMessage(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestDeleteMessageForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestDeleteMessageMissingTickerParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestDeleteMessageWithoutPermission(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: false})
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestDeleteMessageTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -455,10 +259,9 @@ func TestDeleteMessageTickerNotFound(t *testing.T) {
 func TestDeleteMessageMissingMessageParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("tickerID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -472,11 +275,9 @@ func TestDeleteMessageMissingMessageParam(t *testing.T) {
 func TestDeleteMessageMessageNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -491,11 +292,9 @@ func TestDeleteMessageMessageNotFound(t *testing.T) {
 func TestDeleteMessageStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
 	s.On("DeleteMessage", mock.Anything).Return(errors.New("storage error"))
 	b := &bridge.MockBridge{}
@@ -514,11 +313,9 @@ func TestDeleteMessageStorageError(t *testing.T) {
 func TestDeleteMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("user", storage.User{IsSuperAdmin: true})
-	c.AddParam("tickerID", "1")
+	c.Set("ticker", storage.Ticker{})
 	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
 	s.On("DeleteMessage", mock.Anything).Return(nil)
 	b := &bridge.MockBridge{}

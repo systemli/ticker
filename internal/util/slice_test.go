@@ -1,11 +1,9 @@
-package util_test
+package util
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	. "github.com/systemli/ticker/internal/util"
 )
 
 func TestContains(t *testing.T) {

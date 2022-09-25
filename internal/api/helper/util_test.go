@@ -107,3 +107,15 @@ func TestIsAdmin(t *testing.T) {
 
 	assert.True(t, isAdmin)
 }
+
+func TestTicker(t *testing.T) {
+	c := &gin.Context{}
+
+	_, err := Ticker(c)
+	assert.NotNil(t, err)
+
+	c.Set("ticker", storage.Ticker{})
+
+	_, err = Ticker(c)
+	assert.Nil(t, err)
+}

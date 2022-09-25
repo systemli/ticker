@@ -48,7 +48,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 	}
 
 	if !me.IsSuperAdmin {
-		if !contains(me.Tickers, tickerID) {
+		if !util.Contains(me.Tickers, tickerID) {
 			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 			return
 		}
