@@ -20,20 +20,6 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetSettingForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetSetting(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestGetSettingWithoutParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -81,20 +67,6 @@ func TestGetSettingRefreshIntervalSetting(t *testing.T) {
 	h.GetSetting(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestPutInactiveSettingsForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PutInactiveSettings(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestPutInactiveSettingsMissingBody(t *testing.T) {
@@ -156,20 +128,6 @@ func TestPutInactiveSettings(t *testing.T) {
 	h.PutInactiveSettings(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestPutRefreshIntervalSettingsForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PutRefreshInterval(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestPutRefreshIntervalSettingsMissingBody(t *testing.T) {

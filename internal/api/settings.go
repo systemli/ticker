@@ -29,11 +29,6 @@ func (h *handler) GetSetting(c *gin.Context) {
 }
 
 func (h *handler) PutInactiveSettings(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	value := storage.InactiveSettings{}
 	err := c.Bind(&value)
 	if err != nil {
@@ -53,11 +48,6 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 }
 
 func (h *handler) PutRefreshInterval(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	value := storage.RefreshIntervalSettings{}
 	err := c.Bind(&value)
 	if err != nil {

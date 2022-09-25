@@ -11,11 +11,6 @@ import (
 )
 
 func (h *handler) GetUsers(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	//TODO: Discuss need of Pagination
 	users, err := h.storage.FindUsers()
 	if err != nil {
@@ -96,11 +91,6 @@ func (h *handler) PostUser(c *gin.Context) {
 }
 
 func (h *handler) PutUser(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))
@@ -162,11 +152,6 @@ func (h *handler) PutUser(c *gin.Context) {
 }
 
 func (h *handler) DeleteUser(c *gin.Context) {
-	if !helper.IsAdmin(c) {
-		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-		return
-	}
-
 	userID, err := strconv.Atoi(c.Param("userID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserIdentifierMissing))

@@ -224,20 +224,6 @@ func TestGetTickerUsers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPostTickerForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostTicker(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestPostTickerFormError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -788,20 +774,6 @@ func TestPutTickerTelegram(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestDeleteTickerForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteTicker(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestDeleteTickerMissingParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -870,20 +842,6 @@ func TestDeleteTicker(t *testing.T) {
 	h.DeleteTicker(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestDeleteTickerUserForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteTickerUser(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestDeleteTickerMissingTickerParam(t *testing.T) {
