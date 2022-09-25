@@ -82,42 +82,10 @@ func TestGetMessages(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestGetMessageTickerNotFound(t *testing.T) {
+func TestGetMessageNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestGetMessageWithoutWithoutMessageParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.GetMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestGetMessageStorageError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.AddParam("messageID", "1")
-	s := &storage.MockTickerStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -131,10 +99,8 @@ func TestGetMessageStorageError(t *testing.T) {
 func TestGetMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.AddParam("messageID", "1")
+	c.Set("message", storage.Message{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -256,29 +222,11 @@ func TestDeleteMessageTickerNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
-func TestDeleteMessageMissingMessageParam(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
 func TestDeleteMessageMessageNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	c.AddParam("messageID", "1")
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -293,9 +241,8 @@ func TestDeleteMessageStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	c.AddParam("messageID", "1")
+	c.Set("message", storage.Message{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
 	s.On("DeleteMessage", mock.Anything).Return(errors.New("storage error"))
 	b := &bridge.MockBridge{}
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
@@ -314,9 +261,8 @@ func TestDeleteMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	c.AddParam("messageID", "1")
+	c.Set("message", storage.Message{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, nil)
 	s.On("DeleteMessage", mock.Anything).Return(nil)
 	b := &bridge.MockBridge{}
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
