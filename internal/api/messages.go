@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	geojson "github.com/paulmach/go.geojson"
@@ -36,20 +35,9 @@ func (h *handler) GetMessages(c *gin.Context) {
 }
 
 func (h *handler) GetMessage(c *gin.Context) {
-	ticker, err := helper.Ticker(c)
+	message, err := helper.Message(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
-		return
-	}
-
-	messageID, err := strconv.Atoi(c.Param("messageID"))
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageIdentierMissing))
-		return
-	}
-	message, err := h.storage.FindMessage(ticker.ID, messageID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.MessageNotFound))
 		return
 	}
 
@@ -108,15 +96,9 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	messageID, err := strconv.Atoi(c.Param("messageID"))
+	message, err := helper.Message(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.MessageIdentierMissing))
-		return
-	}
-
-	message, err := h.storage.FindMessage(ticker.ID, messageID)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.MessageNotFound))
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 

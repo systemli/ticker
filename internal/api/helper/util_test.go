@@ -19,7 +19,7 @@ func TestGetDomainEmptyOrigin(t *testing.T) {
 
 	domain, err := GetDomain(&c)
 	assert.Equal(t, "", domain)
-	assert.Equal(t, "Origin header not found", err.Error())
+	assert.Equal(t, "origin header not found", err.Error())
 }
 
 func TestGetDomainLocalhost(t *testing.T) {
@@ -117,5 +117,17 @@ func TestTicker(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 
 	_, err = Ticker(c)
+	assert.Nil(t, err)
+}
+
+func TestMessage(t *testing.T) {
+	c := &gin.Context{}
+
+	_, err := Message(c)
+	assert.NotNil(t, err)
+
+	c.Set("message", storage.Message{})
+
+	_, err = Message(c)
 	assert.Nil(t, err)
 }

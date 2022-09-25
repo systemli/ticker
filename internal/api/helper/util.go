@@ -17,7 +17,7 @@ func GetDomain(c *gin.Context) (string, error) {
 
 	origin = c.Request.Header.Get("Origin")
 	if origin == "" {
-		return "", errors.New("Origin header not found")
+		return "", errors.New("origin header not found")
 	}
 
 	u, err := url.Parse(origin)
@@ -60,4 +60,13 @@ func Ticker(c *gin.Context) (storage.Ticker, error) {
 	}
 
 	return ticker.(storage.Ticker), nil
+}
+
+func Message(c *gin.Context) (storage.Message, error) {
+	message, exists := c.Get("message")
+	if !exists {
+		return storage.Message{}, errors.New("message not found")
+	}
+
+	return message.(storage.Message), nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/systemli/ticker/internal/api/middleware/auth"
 	"github.com/systemli/ticker/internal/api/middleware/cors"
 	"github.com/systemli/ticker/internal/api/middleware/logger"
+	"github.com/systemli/ticker/internal/api/middleware/message"
 	"github.com/systemli/ticker/internal/api/middleware/prometheus"
 	"github.com/systemli/ticker/internal/api/middleware/ticker"
 	"github.com/systemli/ticker/internal/api/middleware/user"
@@ -81,9 +82,9 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), ticker.PrefetchTicker(storage), handler.DeleteTickerUser)
 
 		admin.GET(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(storage), handler.GetMessages)
-		admin.GET(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), handler.GetMessage)
+		admin.GET(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), message.PrefetchMessage(storage), handler.GetMessage)
 		admin.POST(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(storage), handler.PostMessage)
-		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), handler.DeleteMessage)
+		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(storage), message.PrefetchMessage(storage), handler.DeleteMessage)
 
 		admin.POST(`/upload`, handler.PostUpload)
 
