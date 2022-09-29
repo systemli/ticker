@@ -32,7 +32,7 @@ type Data map[string]interface{}
 type Status string
 
 type Response struct {
-	Data   Data   `json:"data"`
+	Data   Data   `json:"data" swaggertype:"object,string"`
 	Status Status `json:"status"`
 	Error  Error  `json:"error,omitempty"`
 }

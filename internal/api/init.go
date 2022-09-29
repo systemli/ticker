@@ -17,8 +17,8 @@ import (
 // @Produce      json
 // @Param        origin  query     string  false  "Origin from the ticker, e.g. demoticker.org"
 // @Param        origin  header    string  false  "Origin from the ticker, e.g. http://demoticker.org"
-// @Success      200     {object}  initResponse
-// @Failure      500     {object}  interface{}
+// @Success      200     {object}  response.Response
+// @Failure      500     {object}  response.Response
 // @Router       /init [get]
 func (h *handler) GetInit(c *gin.Context) {
 	settings := response.Settings{
