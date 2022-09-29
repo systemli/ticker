@@ -22,9 +22,9 @@ import (
 // @Param        limit   query     int     false  "Limit for fetched messages, default: 10"
 // @Param        before  query     int     false  "ID of the message we look for older entries"
 // @Param        after   query     int     false  "ID of the message we look for newer entries"
-// @Success      200     {object}  timelineResponse
-// @Success      400     {object}  errorResponse
-// @Failure      500     {object}  interface{}
+// @Success      200     {object}  response.Response
+// @Success      400     {object}  response.Response
+// @Failure      500     {object}  response.Response
 // @Router       /timeline [get]
 func (h *handler) GetTimeline(c *gin.Context) {
 	domain, err := helper.GetDomain(c)
