@@ -1,7 +1,8 @@
+config.yml
 docs/docs.go
 docs/swagger.json
 docs/swagger.yaml
 dist/
 ticker.db
-config.yml
 site/
+uploads/
