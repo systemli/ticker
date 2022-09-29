@@ -8,6 +8,12 @@ See the rendered documentation under [https://systemli.github.io/ticker/](https:
 
 You can find and adjust the documentation under [docs/](/docs)
 
+## Contribution
+
+We welcome contributions to this project. Feel free to fork the repository and commit your changes and submit a Pull Request. To ease the process you can easily use Gitpod to create a virtual environment.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/systemli/ticker)
+
 ## Licence
 
 GPL-3.0
