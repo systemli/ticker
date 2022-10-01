@@ -29,7 +29,6 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
-	github.com/swaggo/swag v1.8.5
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
