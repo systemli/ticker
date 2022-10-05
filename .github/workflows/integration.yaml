@@ -66,3 +66,17 @@ jobs:
 
       - name: Docker
         run: docker build .
+
+  automerge:
+    name: Merge Automatically
+    needs: [test, build]
+    runs-on: ubuntu-20.04
+
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3
+        with:
+          github-token: ${{ secrets.SYSTEMLI_TOKEN }}
