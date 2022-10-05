@@ -25,7 +25,7 @@ require (
 require (
 	github.com/DataDog/zstd v1.4.0 // indirect
 	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
-	github.com/goccy/go-json v0.9.7
+	github.com/goccy/go-json v0.9.11
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.2
