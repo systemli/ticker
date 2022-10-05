@@ -1,7 +1,7 @@
 module github.com/systemli/ticker
 
 require (
-	github.com/appleboy/gin-jwt/v2 v2.8.0
+	github.com/appleboy/gin-jwt/v2 v2.9.0
 	github.com/asdine/storm v2.1.2+incompatible
 	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb
 	github.com/dghubble/oauth1 v0.7.1
