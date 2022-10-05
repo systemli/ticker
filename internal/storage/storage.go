@@ -33,7 +33,8 @@ type TickerStorage interface {
 	DeleteUploads(uploads []Upload)
 	DeleteUploadsByTicker(ticker Ticker) error
 	FindMessage(tickerID, messageID int) (Message, error)
-	FindMessagesByTicker(ticker Ticker, pagination pagination.Pagination) ([]Message, error)
+	FindMessagesByTicker(ticker Ticker) ([]Message, error)
+	FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination) ([]Message, error)
 	SaveMessage(message *Message) error
 	DeleteMessage(message Message) error
 	DeleteMessages(ticker Ticker) error
@@ -268,7 +269,17 @@ func (s *Storage) FindMessage(tickerID, messageID int) (Message, error) {
 	return message, err
 }
 
-func (s *Storage) FindMessagesByTicker(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
+func (s *Storage) FindMessagesByTicker(ticker Ticker) ([]Message, error) {
+	messages := make([]Message, 0)
+
+	err := s.db.Select(q.Eq("Ticker", ticker.ID)).Reverse().Find(&messages)
+	if err != nil && err.Error() == "not found" {
+		return messages, nil
+	}
+	return messages, err
+}
+
+func (s *Storage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
 	messages := make([]Message, 0)
 
 	if !ticker.Active {

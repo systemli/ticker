@@ -27,20 +27,14 @@ import (
 // @Failure      500     {object}  response.Response
 // @Router       /timeline [get]
 func (h *handler) GetTimeline(c *gin.Context) {
-	domain, err := helper.GetDomain(c)
-	if err != nil {
-		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
-		return
-	}
-
-	ticker, err := h.storage.FindTickerByDomain(domain)
+	ticker, err := helper.Ticker(c)
 	if err != nil {
 		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
 	pagination := pagination.NewPagination(c)
-	messages, err := h.storage.FindMessagesByTicker(ticker, *pagination)
+	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 	if err != nil {
 		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))
 		return

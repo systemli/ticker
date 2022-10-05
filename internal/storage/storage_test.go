@@ -203,7 +203,7 @@ var _ = Describe("Storage", func() {
 			ticker := Ticker{ID: 1, Active: true}
 			ctx := gin.Context{}
 			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
+			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
 		})
@@ -224,10 +224,23 @@ var _ = Describe("Storage", func() {
 			Expect(err).To(BeNil())
 		})
 
+		It("should return all messages", func() {
+			messages, err := storage.FindMessagesByTicker(ticker)
+			Expect(err).To(BeNil())
+			Expect(messages).To(HaveLen(1))
+		})
+
+		It("should return no messages", func() {
+			ticker1 := NewTicker()
+			messages, err := storage.FindMessagesByTicker(ticker1)
+			Expect(err).To(BeNil())
+			Expect(messages).To(HaveLen(0))
+		})
+
 		It("should return messages on active ticker", func() {
 			ctx := gin.Context{}
 			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
+			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(1))
 		})
@@ -239,7 +252,7 @@ var _ = Describe("Storage", func() {
 				},
 			}
 			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
+			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
 		})
@@ -251,7 +264,7 @@ var _ = Describe("Storage", func() {
 				},
 			}
 			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
+			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
 		})
@@ -263,7 +276,7 @@ var _ = Describe("Storage", func() {
 
 			ctx := gin.Context{}
 			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTicker(ticker, *pagination)
+			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 			Expect(err).To(BeNil())
 			Expect(messages).To(HaveLen(0))
 		})
