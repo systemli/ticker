@@ -59,7 +59,7 @@ func (h *handler) GetTickerUsers(c *gin.Context) {
 
 func (h *handler) PostTicker(c *gin.Context) {
 	ticker := storage.NewTicker()
-	err := updateTicker(ticker, c)
+	err := updateTicker(&ticker, c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
@@ -81,7 +81,7 @@ func (h *handler) PutTicker(c *gin.Context) {
 		return
 	}
 
-	err = updateTicker(ticker, c)
+	err = updateTicker(&ticker, c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
@@ -277,7 +277,7 @@ func (h *handler) ResetTicker(c *gin.Context) {
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-func updateTicker(t storage.Ticker, c *gin.Context) error {
+func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	var body struct {
 		Domain      string `json:"domain" binding:"required"`
 		Title       string `json:"title" binding:"required"`
