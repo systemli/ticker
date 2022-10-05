@@ -25,9 +25,10 @@ func RegisterBridges(config config.Config, storage storage.TickerStorage) Bridge
 func (b *Bridges) Send(ticker storage.Ticker, message storage.Message) error {
 	var err error
 	for name, bridge := range *b {
-		log.WithField("bridge_name", name).Info("sending message")
 		err := bridge.Send(ticker, message)
-		log.WithError(err).WithField("bridge_name", name).Error("failed to send message")
+		if err != nil {
+			log.WithError(err).WithField("bridge_name", name).Error("failed to send message")
+		}
 	}
 
 	return err
@@ -36,9 +37,10 @@ func (b *Bridges) Send(ticker storage.Ticker, message storage.Message) error {
 func (b *Bridges) Delete(ticker storage.Ticker, message storage.Message) error {
 	var err error
 	for name, bridge := range *b {
-		log.WithField("bridge_name", name).Info("deleting message")
 		err := bridge.Delete(ticker, message)
-		log.WithError(err).WithField("bridge_name", name).Error("failed to delete message")
+		if err != nil {
+			log.WithError(err).WithField("bridge_name", name).Error("failed to delete message")
+		}
 	}
 
 	return err
