@@ -67,7 +67,9 @@ func Authorizator(s storage.TickerStorage) func(data interface{}, c *gin.Context
 		id := int(data.(float64))
 
 		user, err := s.FindUserByID(id)
-		log.WithError(err).Debug("user not found")
+		if err != nil {
+			log.WithError(err).WithField("data", data).Debug("user not found")
+		}
 
 		return user.ID != 0
 	}

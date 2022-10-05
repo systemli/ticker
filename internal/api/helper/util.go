@@ -38,7 +38,7 @@ func Me(c *gin.Context) (storage.User, error) {
 	var user storage.User
 	u, exists := c.Get("me")
 	if !exists {
-		return user, errors.New("user not found")
+		return user, errors.New("me not found")
 	}
 
 	return u.(storage.User), nil
