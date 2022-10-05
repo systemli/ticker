@@ -63,7 +63,7 @@ func TestGetMessagesEmptyResult(t *testing.T) {
 
 	h.GetMessages(c)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestGetMessages(t *testing.T) {

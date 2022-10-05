@@ -36,3 +36,21 @@ func PrefetchTicker(s storage.TickerStorage) gin.HandlerFunc {
 		c.Set("ticker", ticker)
 	}
 }
+
+func PrefetchTickerFromRequest(s storage.TickerStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		domain, err := helper.GetDomain(c)
+		if err != nil {
+			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+			return
+		}
+
+		ticker, err := s.FindTickerByDomain(domain)
+		if err != nil {
+			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+			return
+		}
+
+		c.Set("ticker", ticker)
+	}
+}

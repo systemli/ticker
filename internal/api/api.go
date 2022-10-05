@@ -107,7 +107,7 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		public.POST(`/admin/auth/twitter`, handler.PostAuthTwitter)
 
 		public.GET(`/init`, handler.GetInit)
-		public.GET(`/timeline`, handler.GetTimeline)
+		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(storage), handler.GetTimeline)
 	}
 
 	r.GET(`/media/:fileName`, handler.GetMedia)

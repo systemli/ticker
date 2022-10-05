@@ -157,8 +157,31 @@ func (_m *MockTickerStorage) FindMessage(tickerID int, messageID int) (Message, 
 	return r0, r1
 }
 
-// FindMessagesByTicker provides a mock function with given fields: ticker, _a1
-func (_m *MockTickerStorage) FindMessagesByTicker(ticker Ticker, _a1 pagination.Pagination) ([]Message, error) {
+// FindMessagesByTicker provides a mock function with given fields: ticker
+func (_m *MockTickerStorage) FindMessagesByTicker(ticker Ticker) ([]Message, error) {
+	ret := _m.Called(ticker)
+
+	var r0 []Message
+	if rf, ok := ret.Get(0).(func(Ticker) []Message); ok {
+		r0 = rf(ticker)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Message)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(Ticker) error); ok {
+		r1 = rf(ticker)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindMessagesByTickerAndPagination provides a mock function with given fields: ticker, _a1
+func (_m *MockTickerStorage) FindMessagesByTickerAndPagination(ticker Ticker, _a1 pagination.Pagination) ([]Message, error) {
 	ret := _m.Called(ticker, _a1)
 
 	var r0 []Message

@@ -72,3 +72,52 @@ func TestPrefetchTicker(t *testing.T) {
 	assert.Equal(t, ticker, ti.(storage.Ticker))
 
 }
+
+func TestPrefetchTickerFromRequestMissingOrigin(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+	s := &storage.MockTickerStorage{}
+	mw := PrefetchTickerFromRequest(s)
+
+	mw(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	ticker, exists := c.Get("ticker")
+	assert.Equal(t, nil, ticker)
+	assert.False(t, exists)
+}
+
+func TestPrefetchTickerFromRequestTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+	c.Request.Header.Set("Origin", "https://demoticker.org")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	mw := PrefetchTickerFromRequest(s)
+
+	mw(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	ticker, exists := c.Get("ticker")
+	assert.Equal(t, nil, ticker)
+	assert.False(t, exists)
+}
+
+func TestPrefetchTickerFromRequest(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+	c.Request.Header.Set("Origin", "https://demoticker.org")
+	s := &storage.MockTickerStorage{}
+	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, nil)
+	mw := PrefetchTickerFromRequest(s)
+
+	mw(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	ticker, exists := c.Get("ticker")
+	assert.NotNil(t, ticker)
+	assert.True(t, exists)
+}
