@@ -27,8 +27,10 @@ require (
 	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
 	github.com/goccy/go-json v0.9.11
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/gorilla/feeds v1.1.1
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.2
+	github.com/swaggo/swag v1.8.6
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
