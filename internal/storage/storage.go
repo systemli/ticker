@@ -249,7 +249,9 @@ func (s *Storage) DeleteUpload(upload Upload) error {
 func (s *Storage) DeleteUploads(uploads []Upload) {
 	for _, upload := range uploads {
 		err := s.DeleteUpload(upload)
-		log.WithError(err).WithFields(logrus.Fields{"id": upload.ID, "uuid": upload.UUID}).Error("failed to delete upload")
+		if err != nil {
+			log.WithError(err).WithFields(logrus.Fields{"id": upload.ID, "uuid": upload.UUID}).Error("failed to delete upload")
+		}
 	}
 }
 
