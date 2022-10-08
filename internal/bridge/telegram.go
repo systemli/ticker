@@ -12,7 +12,7 @@ type TelegramBridge struct {
 }
 
 func (tb *TelegramBridge) Send(ticker storage.Ticker, message storage.Message) error {
-	if ticker.Telegram.ChannelName == "" || !tb.config.TelegramEnabled() {
+	if ticker.Telegram.ChannelName == "" || !tb.config.TelegramEnabled() || !ticker.Telegram.Active {
 		return nil
 	}
 
