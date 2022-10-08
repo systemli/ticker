@@ -364,7 +364,7 @@ var _ = Describe("Storage", func() {
 	When("settings are fetched", func() {
 		It("should return default refresh interval", func() {
 			refreshInterval := storage.GetRefreshIntervalSetting()
-			Expect(refreshInterval.Value.(RefreshIntervalSettings).RefreshInterval).To(Equal(SettingDefaultRefreshInterval))
+			Expect(refreshInterval.Value.(float64)).To(Equal(SettingDefaultRefreshInterval))
 		})
 
 		It("should return default inactive settings", func() {
@@ -372,7 +372,7 @@ var _ = Describe("Storage", func() {
 			Expect(InactiveSetting.Value).To(Equal(DefaultInactiveSettings()))
 		})
 
-		refreshInterval := 20000
+		refreshInterval := float64(20000)
 		err := storage.SaveRefreshInterval(refreshInterval)
 		fmt.Println(err)
 		Expect(err).To(BeNil())

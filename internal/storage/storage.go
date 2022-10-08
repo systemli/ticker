@@ -43,7 +43,7 @@ type TickerStorage interface {
 	GetRefreshIntervalSetting() Setting
 	GetRefreshIntervalSettingValue() int
 	SaveInactiveSetting(inactiveSettings InactiveSettings) error
-	SaveRefreshInterval(refreshInterval int) error
+	SaveRefreshInterval(refreshInterval float64) error
 	FindUploadByUUID(uuid string) (Upload, error)
 	FindUploadsByIDs(ids []int) ([]Upload, error)
 	UploadPath() string
@@ -382,7 +382,7 @@ func (s *Storage) SaveInactiveSetting(inactiveSettings InactiveSettings) error {
 	return s.db.Save(&setting)
 }
 
-func (s *Storage) SaveRefreshInterval(refreshInterval int) error {
+func (s *Storage) SaveRefreshInterval(refreshInterval float64) error {
 	setting, err := s.FindSetting(SettingRefreshInterval)
 	if err != nil {
 		setting = Setting{Name: SettingRefreshInterval, Value: refreshInterval}
