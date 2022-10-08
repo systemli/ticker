@@ -40,17 +40,21 @@ func main() {
 		}
 	}
 
-	log.Println("Starting Ticker API")
-	log.Printf("Listen on %s", config.Listen)
-
-	buildInfo()
-
 	lvl, err := log.ParseLevel(config.LogLevel)
 	if err != nil {
 		panic(err)
 	}
-
+	if config.LogFormat == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	}
 	log.SetLevel(lvl)
+
+	log.Infof("starting ticker api on %s", config.Listen)
+	if GitCommit != "" && GitVersion != "" {
+		log.Infof("build info: %s (commit: %s)", GitVersion, GitCommit)
+	}
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
@@ -86,21 +90,13 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 
-	log.Println("Shutdown Ticker")
+	log.Infoln("Shutdown Ticker")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func buildInfo() {
-	if GitCommit != "" && GitVersion != "" {
-		log.Println("Build Information")
-		log.Printf("Version: %s", GitVersion)
-		log.Printf("Commit: %s", GitCommit)
 	}
 }
 
