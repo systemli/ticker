@@ -9,8 +9,8 @@ import (
 var log = logrus.WithField("package", "bridge")
 
 type Bridge interface {
-	Send(ticker storage.Ticker, message storage.Message) error
-	Delete(ticker storage.Ticker, message storage.Message) error
+	Send(ticker storage.Ticker, message *storage.Message) error
+	Delete(ticker storage.Ticker, message *storage.Message) error
 }
 
 type Bridges map[string]Bridge
@@ -22,7 +22,7 @@ func RegisterBridges(config config.Config, storage storage.TickerStorage) Bridge
 	return Bridges{"twitter": &twitter, "telegram": &telegram}
 }
 
-func (b *Bridges) Send(ticker storage.Ticker, message storage.Message) error {
+func (b *Bridges) Send(ticker storage.Ticker, message *storage.Message) error {
 	var err error
 	for name, bridge := range *b {
 		err := bridge.Send(ticker, message)
@@ -34,7 +34,7 @@ func (b *Bridges) Send(ticker storage.Ticker, message storage.Message) error {
 	return err
 }
 
-func (b *Bridges) Delete(ticker storage.Ticker, message storage.Message) error {
+func (b *Bridges) Delete(ticker storage.Ticker, message *storage.Message) error {
 	var err error
 	for name, bridge := range *b {
 		err := bridge.Delete(ticker, message)

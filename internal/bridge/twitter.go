@@ -17,7 +17,7 @@ type TwitterBridge struct {
 	storage storage.TickerStorage
 }
 
-func (tb *TwitterBridge) Send(ticker storage.Ticker, message storage.Message) error {
+func (tb *TwitterBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	if !ticker.Twitter.Active {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (tb *TwitterBridge) Send(ticker storage.Ticker, message storage.Message) er
 	return nil
 }
 
-func (tb *TwitterBridge) Delete(ticker storage.Ticker, message storage.Message) error {
+func (tb *TwitterBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
 	if err := twitterConnectionEnabled(ticker, tb.config); err != nil {
 		return nil
 	}
