@@ -13,11 +13,11 @@ type MockBridge struct {
 }
 
 // Delete provides a mock function with given fields: ticker, message
-func (_m *MockBridge) Delete(ticker storage.Ticker, message storage.Message) error {
+func (_m *MockBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
 	ret := _m.Called(ticker, message)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(storage.Ticker, storage.Message) error); ok {
+	if rf, ok := ret.Get(0).(func(storage.Ticker, *storage.Message) error); ok {
 		r0 = rf(ticker, message)
 	} else {
 		r0 = ret.Error(0)
@@ -27,11 +27,11 @@ func (_m *MockBridge) Delete(ticker storage.Ticker, message storage.Message) err
 }
 
 // Send provides a mock function with given fields: ticker, message
-func (_m *MockBridge) Send(ticker storage.Ticker, message storage.Message) error {
+func (_m *MockBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	ret := _m.Called(ticker, message)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(storage.Ticker, storage.Message) error); ok {
+	if rf, ok := ret.Get(0).(func(storage.Ticker, *storage.Message) error); ok {
 		r0 = rf(ticker, message)
 	} else {
 		r0 = ret.Error(0)

@@ -72,7 +72,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 	message.GeoInformation = body.GeoInformation
 	message.AddAttachments(uploads)
 
-	_ = h.bridges.Send(ticker, message)
+	_ = h.bridges.Send(ticker, &message)
 
 	err = h.storage.SaveMessage(&message)
 	if err != nil {
@@ -96,7 +96,7 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	_ = h.bridges.Delete(ticker, message)
+	_ = h.bridges.Delete(ticker, &message)
 
 	err = h.storage.DeleteMessage(message)
 	if err != nil {
