@@ -12,15 +12,9 @@ the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 
 ## First run
 
-- make sure you have pulled git submodules
+- make sure you have pulled the repository
 ```shell
-git clone --recurse-submodules git@github.com:systemli/ticker.git
-```
-
-- or if you already cloned the repo
-```shell
-cd <path-to-ticker>
-git submodule update --init --recursive
+git clone git@github.com:systemli/ticker.git
 ```
 
 - start the ticker

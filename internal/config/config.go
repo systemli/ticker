@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Listen                string `mapstructure:"listen"`
 	LogLevel              string `mapstructure:"log_level"`
+	LogFormat             string `mapstructure:"log_format"`
 	Initiator             string `mapstructure:"initiator"`
 	Secret                string `mapstructure:"secret"`
 	Database              string `mapstructure:"database"`
@@ -34,6 +35,7 @@ func NewConfig() Config {
 	return Config{
 		Listen:        ":8080",
 		LogLevel:      "debug",
+		LogFormat:     "json",
 		Initiator:     "admin@systemli.org",
 		Secret:        secret,
 		Database:      "ticker.db",
@@ -62,6 +64,7 @@ func LoadConfig(path string) Config {
 
 	viper.SetDefault("listen", c.Listen)
 	viper.SetDefault("log_level", c.LogLevel)
+	viper.SetDefault("log_format", c.LogFormat)
 	viper.SetDefault("initiator", c.Initiator)
 	viper.SetDefault("secret", c.Secret)
 	viper.SetDefault("database", c.Database)

@@ -39,15 +39,13 @@ _As mentioned above, this isn't best practice._
 __You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
 1. `cd /var/www/`
 The directory where we gonna install all the things
-1. `git clone --recurse-submodules https://github.com/systemli/ticker`
+2. `git clone https://github.com/systemli/ticker`
 Clone the repository onto your disk
-1. `cd ticker`
+3. `cd ticker`
 Go into the just cloned repository
-3. `git submodule update --init --recursive`
-Initialise all the submodules
-6. `go build -o build/ticker`
+4. `go build -o build/ticker`
 Build the application
-7. Go to "Configuration, Service and Stuff"
+5. Go to "Configuration, Service and Stuff"
 
 ### Downloading a release from GitHub:
 
