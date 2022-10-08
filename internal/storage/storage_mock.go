@@ -545,11 +545,11 @@ func (_m *MockTickerStorage) SaveMessage(message *Message) error {
 }
 
 // SaveRefreshInterval provides a mock function with given fields: refreshInterval
-func (_m *MockTickerStorage) SaveRefreshInterval(refreshInterval int) error {
+func (_m *MockTickerStorage) SaveRefreshInterval(refreshInterval float64) error {
 	ret := _m.Called(refreshInterval)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int) error); ok {
+	if rf, ok := ret.Get(0).(func(float64) error); ok {
 		r0 = rf(refreshInterval)
 	} else {
 		r0 = ret.Error(0)

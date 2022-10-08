@@ -3,7 +3,7 @@ package response
 import "github.com/systemli/ticker/internal/storage"
 
 type Settings struct {
-	RefreshInterval  int         `json:"refresh_interval,omitempty"`
+	RefreshInterval  float64     `json:"refresh_interval,omitempty"`
 	InactiveSettings interface{} `json:"inactive_settings,omitempty"`
 }
 

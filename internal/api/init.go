@@ -22,7 +22,7 @@ import (
 // @Router       /init [get]
 func (h *handler) GetInit(c *gin.Context) {
 	settings := response.Settings{
-		RefreshInterval: int(h.storage.GetRefreshIntervalSetting().Value.(float64)),
+		RefreshInterval: h.storage.GetRefreshIntervalSetting().Value.(float64),
 	}
 	domain, err := helper.GetDomain(c)
 	if err != nil {

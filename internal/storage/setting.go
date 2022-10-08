@@ -1,16 +1,16 @@
 package storage
 
 const (
-	SettingInactiveName           = `inactive_settings`
-	SettingRefreshInterval        = `refresh_interval`
-	SettingInactiveHeadline       = `The ticker is currently inactive.`
-	SettingInactiveSubHeadline    = `Please contact us if you want to use it.`
-	SettingInactiveDescription    = `...`
-	SettingInactiveAuthor         = `systemli.org Ticker Team`
-	SettingInactiveEmail          = `admin@systemli.org`
-	SettingInactiveHomepage       = `https://www.systemli.org/`
-	SettingInactiveTwitter        = `systemli`
-	SettingDefaultRefreshInterval = 10000
+	SettingInactiveName                   = `inactive_settings`
+	SettingRefreshInterval                = `refresh_interval`
+	SettingInactiveHeadline               = `The ticker is currently inactive.`
+	SettingInactiveSubHeadline            = `Please contact us if you want to use it.`
+	SettingInactiveDescription            = `...`
+	SettingInactiveAuthor                 = `systemli.org Ticker Team`
+	SettingInactiveEmail                  = `admin@systemli.org`
+	SettingInactiveHomepage               = `https://www.systemli.org/`
+	SettingInactiveTwitter                = `systemli`
+	SettingDefaultRefreshInterval float64 = 10000
 )
 
 type Setting struct {
@@ -30,7 +30,7 @@ type InactiveSettings struct {
 }
 
 type RefreshIntervalSettings struct {
-	RefreshInterval int `json:"refresh_interval" binding:"required"`
+	RefreshInterval float64 `json:"refresh_interval" binding:"required"`
 }
 
 func NewSetting(name string, value interface{}) Setting {
@@ -41,8 +41,8 @@ func DefaultRefreshIntervalSetting() Setting {
 	return NewSetting(SettingRefreshInterval, DefaultRefreshIntervalSettings())
 }
 
-func DefaultRefreshIntervalSettings() RefreshIntervalSettings {
-	return RefreshIntervalSettings{RefreshInterval: SettingDefaultRefreshInterval}
+func DefaultRefreshIntervalSettings() float64 {
+	return SettingDefaultRefreshInterval
 }
 
 func DefaultInactiveSetting() Setting {
