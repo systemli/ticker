@@ -12,25 +12,18 @@ import (
 )
 
 var (
-	reqCnt = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "The total number of requests",
-	}, []string{"handler", "origin", "code"})
-
-	reqDur = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "http_request_duration_seconds",
-		Help: "The HTTP requests latency in seconds",
+	requestDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_request_duration_seconds",
+		Help:    "The HTTP requests latency in seconds",
+		Buckets: []float64{0.5, 0.9, 0.95, 0.99},
 	}, []string{"handler", "origin", "code"})
 )
 
 func NewPrometheus() gin.HandlerFunc {
-	err := prometheus.Register(reqCnt)
+	err := prometheus.Register(requestDurationHistogram)
 	if err != nil {
-		log.WithError(err).Error(`"reqCnt" could not be registered in Prometheus`)
-	}
-	err = prometheus.Register(reqDur)
-	if err != nil {
-		log.WithError(err).Error(`"reqDur" could not be registered in Prometheus`)
+		log.WithError(err).Error(`"requestDurationHistogram" could not be registered in Prometheus`)
+		return func(c *gin.Context) {}
 	}
 
 	return func(c *gin.Context) {
@@ -41,17 +34,16 @@ func NewPrometheus() gin.HandlerFunc {
 		handler := prepareHandler(c.HandlerName())
 		origin := prepareOrigin(c)
 		code := strconv.Itoa(c.Writer.Status())
-
 		elapsed := float64(time.Since(start)) / float64(time.Second)
-		reqDur.WithLabelValues(handler, origin, code).Observe(elapsed)
-		reqCnt.WithLabelValues(handler, origin, code).Inc()
+
+		requestDurationHistogram.WithLabelValues(handler, origin, code).Observe(elapsed)
 	}
 }
 
 func prepareHandler(h string) string {
 	s := strings.Split(h, ".")
 
-	return s[len(s)-1]
+	return strings.TrimSuffix(s[len(s)-1], "-fm")
 }
 
 func prepareOrigin(c *gin.Context) string {
