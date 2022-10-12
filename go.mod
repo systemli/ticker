@@ -28,6 +28,7 @@ require (
 	github.com/goccy/go-json v0.9.11
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/feeds v1.1.1
+	github.com/mattn/go-mastodon v0.0.5
 	github.com/onsi/ginkgo/v2 v2.2.0
 	github.com/onsi/gomega v1.20.2
 	github.com/swaggo/swag v1.8.6

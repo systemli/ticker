@@ -18,8 +18,9 @@ type Bridges map[string]Bridge
 func RegisterBridges(config config.Config, storage storage.TickerStorage) Bridges {
 	twitter := TwitterBridge{config, storage}
 	telegram := TelegramBridge{config, storage}
+	mastodon := MastodonBridge{config, storage}
 
-	return Bridges{"twitter": &twitter, "telegram": &telegram}
+	return Bridges{"twitter": &twitter, "telegram": &telegram, "mastodon": &mastodon}
 }
 
 func (b *Bridges) Send(ticker storage.Ticker, message *storage.Message) error {

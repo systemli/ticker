@@ -21,6 +21,7 @@ const (
 	FormError               ErrorMessage = "invalid form values"
 	StorageError            ErrorMessage = "failed to save"
 	UploadsNotFound         ErrorMessage = "uploads not found"
+	MastodonError           ErrorMessage = "unable to connect to mastodon"
 
 	StatusSuccess Status = `success`
 	StatusError   Status = `error`

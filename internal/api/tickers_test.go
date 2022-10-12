@@ -1,13 +1,16 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mattn/go-mastodon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/systemli/ticker/internal/config"
@@ -541,6 +544,152 @@ func TestDeleteTickerTelegram(t *testing.T) {
 	}
 
 	h.DeleteTickerTelegram(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestPutTickerMastodonTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerMastodon(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestPutTickerMastodonFormError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", nil)
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerMastodon(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutTickerMastodonConnectError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	body := `{"active":true,"server":"http://localhost","secret":"secret","token":"token","access_token":"access_token"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerMastodon(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutTickerMastodonStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		account := mastodon.Account{}
+		json, _ := json.Marshal(account)
+		w.Write(json)
+	}))
+	defer server.Close()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerMastodon(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutTickerMastodon(t *testing.T) {
+	w := httptest.NewRecorder()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		account := mastodon.Account{}
+		json, _ := json.Marshal(account)
+		w.Write(json)
+	}))
+	defer server.Close()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerMastodon(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteTickerMastodonTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerMastodon(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteTickerMastodonStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerMastodon(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteTickerMastodon(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerMastodon(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }

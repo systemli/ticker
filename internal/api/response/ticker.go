@@ -17,6 +17,7 @@ type Ticker struct {
 	Information  Information `json:"information"`
 	Twitter      Twitter     `json:"twitter"`
 	Telegram     Telegram    `json:"telegram"`
+	Mastodon     Mastodon    `json:"mastodon"`
 	Location     Location    `json:"location"`
 }
 
@@ -42,6 +43,16 @@ type Telegram struct {
 	Active      bool   `json:"active"`
 	BotUsername string `json:"bot_username"`
 	ChannelName string `json:"channel_name"`
+}
+
+type Mastodon struct {
+	Active      bool   `json:"active"`
+	Connected   bool   `json:"connected"`
+	Name        string `json:"name"`
+	Server      string `json:"server"`
+	ScreenName  string `json:"screen_name"`
+	Description string `json:"description"`
+	ImageURL    string `json:"image_url"`
 }
 
 type Location struct {
@@ -77,6 +88,14 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Active:      t.Telegram.Active,
 			BotUsername: config.TelegramBotUser.UserName,
 			ChannelName: t.Telegram.ChannelName,
+		},
+		Mastodon: Mastodon{
+			Active:     t.Mastodon.Active,
+			Connected:  t.Mastodon.Connected(),
+			Name:       t.Mastodon.User.Username,
+			Server:     t.Mastodon.Server,
+			ScreenName: t.Mastodon.User.DisplayName,
+			ImageURL:   t.Mastodon.User.Avatar,
 		},
 		Location: Location{
 			Lat: t.Location.Lat,

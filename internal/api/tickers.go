@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mattn/go-mastodon"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
@@ -213,6 +214,70 @@ func (h *handler) DeleteTickerTelegram(c *gin.Context) {
 	}
 
 	ticker.Telegram.Reset()
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) PutTickerMastodon(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body storage.Mastodon
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	if body.Secret != "" || body.Token != "" || body.AccessToken != "" || body.Server != "" {
+		client := mastodon.NewClient(&mastodon.Config{
+			Server:       body.Server,
+			ClientID:     body.Token,
+			ClientSecret: body.Secret,
+			AccessToken:  body.AccessToken,
+		})
+
+		account, err := client.GetAccountCurrentUser(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeBadCredentials, response.MastodonError))
+			return
+		}
+
+		ticker.Mastodon.Server = body.Server
+		ticker.Mastodon.Secret = body.Secret
+		ticker.Mastodon.Token = body.Token
+		ticker.Mastodon.AccessToken = body.AccessToken
+		ticker.Mastodon.User = *account
+	}
+
+	ticker.Mastodon.Active = body.Active
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerMastodon(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	ticker.Mastodon.Reset()
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
