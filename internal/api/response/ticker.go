@@ -41,6 +41,7 @@ type Twitter struct {
 
 type Telegram struct {
 	Active      bool   `json:"active"`
+	Connected   bool   `json:"connected"`
 	BotUsername string `json:"bot_username"`
 	ChannelName string `json:"channel_name"`
 }
@@ -86,6 +87,7 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 		},
 		Telegram: Telegram{
 			Active:      t.Telegram.Active,
+			Connected:   t.Telegram.Connected(),
 			BotUsername: config.TelegramBotUser.UserName,
 			ChannelName: t.Telegram.ChannelName,
 		},

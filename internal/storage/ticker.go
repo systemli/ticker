@@ -75,6 +75,10 @@ func (tg *Telegram) Reset() {
 	tg.ChannelName = ""
 }
 
+func (tg *Telegram) Connected() bool {
+	return tg.ChannelName != ""
+}
+
 type Mastodon struct {
 	Active      bool   `json:"active"`
 	Server      string `json:"server"`

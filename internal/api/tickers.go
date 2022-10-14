@@ -188,14 +188,17 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	var tg storage.Telegram
-	err = c.Bind(&tg)
+	var body storage.Telegram
+	err = c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
 		return
 	}
 
-	ticker.Telegram = tg
+	ticker.Telegram.Active = body.Active
+	if body.ChannelName != "" {
+		ticker.Telegram.ChannelName = body.ChannelName
+	}
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
