@@ -4,6 +4,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/mattn/go-mastodon"
 	geojson "github.com/paulmach/go.geojson"
 )
 
@@ -16,6 +17,7 @@ type Message struct {
 	GeoInformation geojson.FeatureCollection
 	Tweet          Tweet
 	Telegram       TelegramMeta
+	Mastodon       mastodon.Status
 }
 
 func NewMessage() Message {

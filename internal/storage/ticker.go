@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/mattn/go-mastodon"
 )
 
 type Ticker struct {
@@ -16,6 +17,7 @@ type Ticker struct {
 	Information  Information
 	Twitter      Twitter
 	Telegram     Telegram
+	Mastodon     Mastodon
 	Location     Location
 }
 
@@ -33,6 +35,7 @@ func (t *Ticker) Reset() {
 
 	t.Twitter.Reset()
 	t.Telegram.Reset()
+	t.Mastodon.Reset()
 }
 
 type Information struct {
@@ -70,6 +73,28 @@ type Telegram struct {
 func (tg *Telegram) Reset() {
 	tg.Active = false
 	tg.ChannelName = ""
+}
+
+type Mastodon struct {
+	Active      bool   `json:"active"`
+	Server      string `json:"server"`
+	Token       string `json:"token"`
+	Secret      string `json:"secret"`
+	AccessToken string `json:"access_token"`
+	User        mastodon.Account
+}
+
+func (m *Mastodon) Connected() bool {
+	return m.Token != "" && m.Secret != "" && m.AccessToken != ""
+}
+
+func (m *Mastodon) Reset() {
+	m.Active = false
+	m.Server = ""
+	m.Token = ""
+	m.Secret = ""
+	m.AccessToken = ""
+	m.User = mastodon.Account{}
 }
 
 type Location struct {

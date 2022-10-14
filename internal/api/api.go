@@ -78,6 +78,8 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.DELETE(`/tickers/:tickerID/twitter`, ticker.PrefetchTicker(storage), handler.DeleteTickerTwitter)
 		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(storage), handler.PutTickerTelegram)
 		admin.DELETE(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(storage), handler.DeleteTickerTelegram)
+		admin.PUT(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(storage), handler.PutTickerMastodon)
+		admin.DELETE(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(storage), handler.DeleteTickerMastodon)
 		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), ticker.PrefetchTicker(storage), handler.DeleteTicker)
 		admin.PUT(`/tickers/:tickerID/reset`, ticker.PrefetchTicker(storage), ticker.PrefetchTicker(storage), handler.ResetTicker)
 		admin.GET(`/tickers/:tickerID/users`, ticker.PrefetchTicker(storage), handler.GetTickerUsers)
