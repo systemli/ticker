@@ -348,25 +348,6 @@ func TestPutTickerTwitterFormError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPutTickerTwitterDisconnect(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	body := `{"disconnect":true}`
-	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/twitter", strings.NewReader(body))
-	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
-	s.On("SaveTicker", mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PutTickerTwitter(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
 func TestPutTickerTwitterConnect(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -388,7 +369,7 @@ func TestPutTickerTwitterStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := `{"disconnect":true}`
+	body := `{"active":false}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/twitter", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockTickerStorage{}
@@ -401,6 +382,52 @@ func TestPutTickerTwitterStorageError(t *testing.T) {
 	h.PutTickerTwitter(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteTickerTwitterTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTwitter(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteTickerTwitterStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTwitter(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteTickerTwitter(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTwitter(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestPutTickerTelegramTickerNotFound(t *testing.T) {
@@ -468,6 +495,52 @@ func TestPutTickerTelegram(t *testing.T) {
 	}
 
 	h.PutTickerTelegram(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteTickerTelegramTickerNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	s := &storage.MockTickerStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTelegram(c)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteTickerTelegramStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTelegram(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestDeleteTickerTelegram(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockTickerStorage{}
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.DeleteTickerTelegram(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }

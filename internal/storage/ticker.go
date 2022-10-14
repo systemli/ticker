@@ -29,13 +29,10 @@ func (t *Ticker) Reset() {
 	t.Active = false
 	t.Description = ""
 	t.Information = Information{}
-	t.Twitter.Secret = ""
-	t.Twitter.Token = ""
-	t.Twitter.Active = false
-	t.Twitter.User = twitter.User{}
-	t.Telegram.Active = false
-	t.Telegram.ChannelName = ""
 	t.Location = Location{}
+
+	t.Twitter.Reset()
+	t.Telegram.Reset()
 }
 
 type Information struct {
@@ -48,10 +45,17 @@ type Information struct {
 }
 
 type Twitter struct {
-	Active bool
-	Token  string
-	Secret string
+	Active bool   `json:"active"`
+	Token  string `json:"token"`
+	Secret string `json:"secret"`
 	User   twitter.User
+}
+
+func (tw *Twitter) Reset() {
+	tw.Active = false
+	tw.Token = ""
+	tw.Secret = ""
+	tw.User = twitter.User{}
 }
 
 func (tw *Twitter) Connected() bool {
@@ -61,6 +65,11 @@ func (tw *Twitter) Connected() bool {
 type Telegram struct {
 	Active      bool   `json:"active"`
 	ChannelName string `json:"channel_name"`
+}
+
+func (tg *Telegram) Reset() {
+	tg.Active = false
+	tg.ChannelName = ""
 }
 
 type Location struct {

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dghubble/go-twitter/twitter"
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
@@ -131,12 +130,7 @@ func (h *handler) PutTickerTwitter(c *gin.Context) {
 		return
 	}
 
-	var body struct {
-		Active     bool   `json:"active,omitempty"`
-		Disconnect bool   `json:"disconnect"`
-		Token      string `json:"token,omitempty"`
-		Secret     string `json:"secret,omitempty"`
-	}
+	var body storage.Twitter
 
 	err = c.Bind(&body)
 	if err != nil {
@@ -144,27 +138,38 @@ func (h *handler) PutTickerTwitter(c *gin.Context) {
 		return
 	}
 
-	if body.Disconnect {
-		ticker.Twitter.Token = ""
-		ticker.Twitter.Secret = ""
-		ticker.Twitter.Active = false
-		ticker.Twitter.User = twitter.User{}
-	} else {
-		if body.Token != "" {
-			ticker.Twitter.Token = body.Token
-		}
-		if body.Secret != "" {
-			ticker.Twitter.Secret = body.Secret
-		}
-		ticker.Twitter.Active = body.Active
-
-		tu, err := bridge.TwitterUser(ticker, h.config)
-		if err != nil {
-			log.WithError(err).Error("cant fetch user information from twitter")
-		} else {
-			ticker.Twitter.User = *tu
-		}
+	ticker.Twitter.Active = body.Active
+	if body.Token != "" {
+		ticker.Twitter.Token = body.Token
 	}
+	if body.Secret != "" {
+		ticker.Twitter.Secret = body.Secret
+	}
+
+	tu, err := bridge.TwitterUser(ticker, h.config)
+	if err != nil {
+		log.WithError(err).Error("cant fetch user information from twitter")
+	} else {
+		ticker.Twitter.User = *tu
+	}
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerTwitter(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	ticker.Twitter.Reset()
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
@@ -190,6 +195,24 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 	}
 
 	ticker.Telegram = tg
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerTelegram(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	ticker.Telegram.Reset()
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
