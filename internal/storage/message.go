@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -55,4 +56,29 @@ func (m *Message) AddAttachments(uploads []Upload) {
 	for _, upload := range uploads {
 		m.AddAttachment(upload)
 	}
+}
+
+func (m *Message) TwitterURL() string {
+	if m.Tweet.ID == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("https://twitter.com/%s/status/%s", m.Tweet.UserName, m.Tweet.ID)
+}
+
+func (m *Message) TelegramURL() string {
+	if len(m.Telegram.Messages) == 0 {
+		return ""
+	}
+
+	message := m.Telegram.Messages[0]
+	return fmt.Sprintf("https://t.me/%s/%d", message.Chat.UserName, message.MessageID)
+}
+
+func (m *Message) MastodonURL() string {
+	if m.Mastodon.ID == "" {
+		return ""
+	}
+
+	return m.Mastodon.URL
 }

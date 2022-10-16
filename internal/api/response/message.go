@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
 type Message struct {
-	ID               int                 `json:"id"`
-	CreationDate     time.Time           `json:"creation_date"`
-	Text             string              `json:"text"`
-	Ticker           int                 `json:"ticker"`
-	TweetID          string              `json:"tweet_id"`
-	TweetUser        string              `json:"tweet_user"`
-	TelegramMessages []tgbotapi.Message  `json:"telegram_messages"`
-	GeoInformation   string              `json:"geo_information"`
-	Attachments      []MessageAttachment `json:"attachments"`
+	ID             int                 `json:"id"`
+	CreationDate   time.Time           `json:"creation_date"`
+	Text           string              `json:"text"`
+	Ticker         int                 `json:"ticker"`
+	TwitterURL     string              `json:"twitter_url,omitempty"`
+	TelegramURL    string              `json:"telegram_url,omitempty"`
+	MastodonURL    string              `json:"mastodon_url,omitempty"`
+	GeoInformation string              `json:"geo_information"`
+	Attachments    []MessageAttachment `json:"attachments"`
 }
 
 type MessageAttachment struct {
@@ -36,15 +35,15 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 	}
 
 	return Message{
-		ID:               message.ID,
-		CreationDate:     message.CreationDate,
-		Text:             message.Text,
-		Ticker:           message.Ticker,
-		TweetID:          message.Tweet.ID,
-		TweetUser:        message.Tweet.UserName,
-		TelegramMessages: message.Telegram.Messages,
-		GeoInformation:   string(m),
-		Attachments:      attachments,
+		ID:             message.ID,
+		CreationDate:   message.CreationDate,
+		Text:           message.Text,
+		Ticker:         message.Ticker,
+		TwitterURL:     message.TwitterURL(),
+		TelegramURL:    message.TelegramURL(),
+		MastodonURL:    message.MastodonURL(),
+		GeoInformation: string(m),
+		Attachments:    attachments,
 	}
 }
 
