@@ -144,3 +144,38 @@ func (h *handler) DeleteUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.SuccessResponse(nil))
 }
+
+func (h *handler) PutMe(c *gin.Context) {
+	me, err := helper.Me(c)
+	if err != nil {
+		c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeDefault, response.Unauthorized))
+		return
+	}
+
+	var body struct {
+		Password    string `json:"password" binding:"required"`
+		NewPassword string `json:"new_password" binding:"required" validate:"min=10"`
+	}
+
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
+		return
+	}
+
+	if !me.Authenticate(body.Password) {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.PasswordError))
+		return
+	}
+
+	me.UpdatePassword(body.NewPassword)
+
+	err = h.storage.SaveUser(&me)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	data := map[string]interface{}{"user": me}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
+}

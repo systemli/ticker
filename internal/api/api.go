@@ -96,6 +96,7 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.GET(`/users`, user.NeedAdmin(), handler.GetUsers)
 		admin.GET(`/users/:userID`, user.PrefetchUser(storage), handler.GetUser)
 		admin.POST(`/users`, user.NeedAdmin(), handler.PostUser)
+		admin.PUT(`/users/me`, handler.PutMe)
 		admin.PUT(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(storage), handler.PutUser)
 		admin.DELETE(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(storage), handler.DeleteUser)
 
