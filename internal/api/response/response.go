@@ -22,6 +22,7 @@ const (
 	StorageError            ErrorMessage = "failed to save"
 	UploadsNotFound         ErrorMessage = "uploads not found"
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
+	PasswordError           ErrorMessage = "could not authenticate password"
 
 	StatusSuccess Status = `success`
 	StatusError   Status = `error`

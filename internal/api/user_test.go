@@ -326,3 +326,87 @@ func TestDeleteUser(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+
+func TestPutMeUnauthenticated(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	json := `{"password":"password1234","new_password":"password5678"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+	h.PutMe(c)
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestPutMeFormError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
+	json := `{"wrongparameter":"password1234","new_password":"password5678"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+	h.PutMe(c)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutMeWrongPassword(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
+	json := `{"password":"wrongpassword","new_password":"password5678"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+	h.PutMe(c)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutMeStorageError(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
+	json := `{"password":"password1234","new_password":"password5678"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+	h.PutMe(c)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutMeOk(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
+	json := `{"password":"password1234","new_password":"password5678"}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockTickerStorage{}
+	s.On("SaveUser", mock.Anything).Return(nil)
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+	h.PutMe(c)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
