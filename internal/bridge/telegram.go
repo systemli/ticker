@@ -30,7 +30,7 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 		message.Telegram = storage.TelegramMeta{Messages: []tgbotapi.Message{msg}}
 	} else {
 		var photos []interface{}
-		for _, attachment := range message.Attachments {
+		for i, attachment := range message.Attachments {
 			upload, err := tb.storage.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
@@ -40,11 +40,15 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 			media := tgbotapi.FilePath(upload.FullPath(tb.config.UploadPath))
 			if upload.ContentType == "image/gif" {
 				photo := tgbotapi.NewInputMediaDocument(media)
-				photo.Caption = message.Text
+				if i == 0 {
+					photo.Caption = message.Text
+				}
 				photos = append(photos, photo)
 			} else {
 				photo := tgbotapi.NewInputMediaPhoto(media)
-				photo.Caption = message.Text
+				if i == 0 {
+					photo.Caption = message.Text
+				}
 				photos = append(photos, photo)
 			}
 		}
