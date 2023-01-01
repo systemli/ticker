@@ -28,7 +28,7 @@ require (
 	github.com/goccy/go-json v0.10.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/feeds v1.1.1
-	github.com/mattn/go-mastodon v0.0.5
+	github.com/mattn/go-mastodon v0.0.6
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/onsi/gomega v1.22.1
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
