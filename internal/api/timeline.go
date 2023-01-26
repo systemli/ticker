@@ -7,6 +7,7 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/pagination"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/storage"
 )
 
 // GetTimeline returns the public timeline for a ticker.
@@ -33,11 +34,14 @@ func (h *handler) GetTimeline(c *gin.Context) {
 		return
 	}
 
-	pagination := pagination.NewPagination(c)
-	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
-	if err != nil {
-		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))
-		return
+	messages := make([]storage.Message, 0)
+	if ticker.Active {
+		pagination := pagination.NewPagination(c)
+		messages, err = h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
+		if err != nil {
+			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"messages": response.TimelineResponse(messages, h.config)}))

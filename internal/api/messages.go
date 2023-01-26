@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	geojson "github.com/paulmach/go.geojson"
 	"github.com/systemli/ticker/internal/api/helper"
+	"github.com/systemli/ticker/internal/api/pagination"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -17,8 +18,8 @@ func (h *handler) GetMessages(c *gin.Context) {
 		return
 	}
 
-	//TODO: Pagination
-	messages, err := h.storage.FindMessagesByTicker(ticker)
+	pagination := pagination.NewPagination(c)
+	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return

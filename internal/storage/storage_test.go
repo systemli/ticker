@@ -269,18 +269,6 @@ var _ = Describe("Storage", func() {
 			Expect(messages).To(HaveLen(0))
 		})
 
-		It("should not return messages for inactive ticker", func() {
-			ticker.Active = false
-			err := storage.SaveTicker(&ticker)
-			Expect(err).To(BeNil())
-
-			ctx := gin.Context{}
-			pagination := pagination.NewPagination(&ctx)
-			messages, err := storage.FindMessagesByTickerAndPagination(ticker, *pagination)
-			Expect(err).To(BeNil())
-			Expect(messages).To(HaveLen(0))
-		})
-
 		It("should return the message when queried", func() {
 			found, err := storage.FindMessage(message.Ticker, message.ID)
 			Expect(err).To(BeNil())

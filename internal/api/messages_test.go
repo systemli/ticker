@@ -39,7 +39,7 @@ func TestGetMessagesStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
+	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -55,7 +55,7 @@ func TestGetMessagesEmptyResult(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
+	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -71,7 +71,7 @@ func TestGetMessages(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockTickerStorage{}
-	s.On("FindMessagesByTicker", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
+	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
