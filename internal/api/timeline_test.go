@@ -53,10 +53,26 @@ func TestGetTimelineTickerNotFound(t *testing.T) {
 	assert.Contains(t, w.Body.String(), response.TickerNotFound)
 }
 
+func TestGetTimelineTickerInactive(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{Active: false})
+	s := &storage.MockTickerStorage{}
+
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.GetTimeline(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
 func TestGetTimelineMessageFetchError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
+	c.Set("ticker", storage.Ticker{Active: true})
 	s := &storage.MockTickerStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 

@@ -284,10 +284,6 @@ func (s *Storage) FindMessagesByTicker(ticker Ticker) ([]Message, error) {
 func (s *Storage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
 	messages := make([]Message, 0)
 
-	if !ticker.Active {
-		return messages, nil
-	}
-
 	matcher := q.Eq("Ticker", ticker.ID)
 	if pagination.GetBefore() != 0 {
 		matcher = q.And(q.Eq("Ticker", ticker.ID), q.Lt("ID", pagination.GetBefore()))
