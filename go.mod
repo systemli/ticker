@@ -19,7 +19,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
-	golang.org/x/crypto v0.4.0
+	golang.org/x/crypto v0.5.0
 )
 
 require (
