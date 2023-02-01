@@ -1,7 +1,7 @@
 module github.com/systemli/ticker
 
 require (
-	github.com/appleboy/gin-jwt/v2 v2.9.0
+	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/asdine/storm v2.1.2+incompatible
 	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb
 	github.com/dghubble/oauth1 v0.7.2
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
-	golang.org/x/crypto v0.1.0
+	golang.org/x/crypto v0.4.0
 )
 
 require (
