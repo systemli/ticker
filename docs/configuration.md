@@ -13,9 +13,6 @@ initiator: "admin@systemli.org"
 database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
-# twitter configuration
-twitter_consumer_key: ""
-twitter_consumer_secret: ""
 # telegram configuration
 telegram_bot_token: ""
 # listen port for prometheus metrics exporter
@@ -38,8 +35,6 @@ The following env vars can be used:
 * TICKER_LOG_LEVEL
 * TICKER_INITIATOR
 * TICKER_SECRET
-* TICKER_TWITTER_CONSUMER_KEY
-* TICKER_TWITTER_CONSUMER_SECRET
 * TICKER_TELEGRAM_BOT_TOKEN
 * TICKER_METRICS_LISTEN
 * TICKER_UPLOAD_PATH

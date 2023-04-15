@@ -35,17 +35,6 @@ func TestLoadConfigWithFallback(t *testing.T) {
 	assert.Equal(t, ":8080", c.Listen)
 }
 
-func TestConfig_TwitterEnabled(t *testing.T) {
-	c := NewConfig()
-
-	assert.False(t, c.TwitterEnabled())
-
-	c.TwitterConsumerKey = "a"
-	c.TwitterConsumerSecret = "a"
-
-	assert.True(t, c.TwitterEnabled())
-}
-
 func TestConfig_TelegramEnabled(t *testing.T) {
 	c := NewConfig()
 

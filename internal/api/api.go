@@ -74,8 +74,6 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 		admin.GET(`/tickers/:tickerID`, ticker.PrefetchTicker(storage), handler.GetTicker)
 		admin.POST(`/tickers`, user.NeedAdmin(), handler.PostTicker)
 		admin.PUT(`/tickers/:tickerID`, ticker.PrefetchTicker(storage), handler.PutTicker)
-		admin.PUT(`/tickers/:tickerID/twitter`, ticker.PrefetchTicker(storage), handler.PutTickerTwitter)
-		admin.DELETE(`/tickers/:tickerID/twitter`, ticker.PrefetchTicker(storage), handler.DeleteTickerTwitter)
 		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(storage), handler.PutTickerTelegram)
 		admin.DELETE(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(storage), handler.DeleteTickerTelegram)
 		admin.PUT(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(storage), handler.PutTickerMastodon)
@@ -108,8 +106,6 @@ func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
 	public := r.Group("/v1").Use()
 	{
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
-		public.POST(`/admin/auth/twitter/request_token`, handler.PostTwitterRequestToken)
-		public.POST(`/admin/auth/twitter`, handler.PostAuthTwitter)
 
 		public.GET(`/init`, handler.GetInit)
 		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(storage), handler.GetTimeline)

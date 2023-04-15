@@ -16,7 +16,6 @@ func TestMessagesResponse(t *testing.T) {
 	response := MessagesResponse([]storage.Message{message}, config)
 
 	assert.Equal(t, 1, len(response))
-	assert.Empty(t, response[0].TwitterURL)
 	assert.Empty(t, response[0].TelegramURL)
 	assert.Empty(t, response[0].MastodonURL)
 	assert.Equal(t, `{"type":"FeatureCollection","features":[]}`, response[0].GeoInformation)

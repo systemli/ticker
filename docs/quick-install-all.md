@@ -71,9 +71,6 @@ initiator: "<your e-mail>"
 database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "<your special little secret> (make it LOOOONG!)"
-# twitter configuration
-twitter_consumer_key: ""
-twitter_consumer_secret: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files

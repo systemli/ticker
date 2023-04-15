@@ -3,8 +3,6 @@ module github.com/systemli/ticker
 require (
 	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/asdine/storm v2.1.2+incompatible
-	github.com/dghubble/go-twitter v0.0.0-20211115160449-93a8679adecb
-	github.com/dghubble/oauth1 v0.7.2
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/size v0.0.0-20220102055520-f75bacbc2df3
@@ -37,5 +35,3 @@ require (
 )
 
 go 1.16
-
-replace github.com/dghubble/go-twitter => github.com/0x46616c6b/go-twitter v0.0.0-media

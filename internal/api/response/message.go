@@ -13,7 +13,6 @@ type Message struct {
 	CreationDate   time.Time           `json:"creation_date"`
 	Text           string              `json:"text"`
 	Ticker         int                 `json:"ticker"`
-	TwitterURL     string              `json:"twitter_url,omitempty"`
 	TelegramURL    string              `json:"telegram_url,omitempty"`
 	MastodonURL    string              `json:"mastodon_url,omitempty"`
 	GeoInformation string              `json:"geo_information"`
@@ -39,7 +38,6 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 		CreationDate:   message.CreationDate,
 		Text:           message.Text,
 		Ticker:         message.Ticker,
-		TwitterURL:     message.TwitterURL(),
 		TelegramURL:    message.TelegramURL(),
 		MastodonURL:    message.MastodonURL(),
 		GeoInformation: string(m),

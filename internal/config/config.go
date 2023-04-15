@@ -12,20 +12,18 @@ import (
 )
 
 type Config struct {
-	Listen                string `mapstructure:"listen"`
-	LogLevel              string `mapstructure:"log_level"`
-	LogFormat             string `mapstructure:"log_format"`
-	Initiator             string `mapstructure:"initiator"`
-	Secret                string `mapstructure:"secret"`
-	Database              string `mapstructure:"database"`
-	TwitterConsumerKey    string `mapstructure:"twitter_consumer_key"`
-	TwitterConsumerSecret string `mapstructure:"twitter_consumer_secret"`
-	TelegramBotToken      string `mapstructure:"telegram_bot_token"`
-	TelegramBotUser       tgbotapi.User
-	MetricsListen         string `mapstructure:"metrics_listen"`
-	UploadPath            string `mapstructure:"upload_path"`
-	UploadURL             string `mapstructure:"upload_url"`
-	FileBackend           afero.Fs
+	Listen           string `mapstructure:"listen"`
+	LogLevel         string `mapstructure:"log_level"`
+	LogFormat        string `mapstructure:"log_format"`
+	Initiator        string `mapstructure:"initiator"`
+	Secret           string `mapstructure:"secret"`
+	Database         string `mapstructure:"database"`
+	TelegramBotToken string `mapstructure:"telegram_bot_token"`
+	TelegramBotUser  tgbotapi.User
+	MetricsListen    string `mapstructure:"metrics_listen"`
+	UploadPath       string `mapstructure:"upload_path"`
+	UploadURL        string `mapstructure:"upload_url"`
+	FileBackend      afero.Fs
 }
 
 // NewConfig returns config with default values.
@@ -46,11 +44,6 @@ func NewConfig() Config {
 	}
 }
 
-// TwitterEnabled returns true if required keys not empty.
-func (c *Config) TwitterEnabled() bool {
-	return c.TwitterConsumerKey != "" && c.TwitterConsumerSecret != ""
-}
-
 // TelegramEnabled returns true if the required token is not empty.
 func (c *Config) TelegramEnabled() bool {
 	return c.TelegramBotToken != ""
@@ -69,8 +62,6 @@ func LoadConfig(path string) Config {
 	viper.SetDefault("secret", c.Secret)
 	viper.SetDefault("database", c.Database)
 	viper.SetDefault("metrics_listen", c.MetricsListen)
-	viper.SetDefault("twitter_consumer_key", "")
-	viper.SetDefault("twitter_consumer_secret", "")
 	viper.SetDefault("telegram_bot_token", "")
 	viper.SetDefault("upload_path", c.UploadPath)
 	viper.SetDefault("upload_url", c.UploadURL)

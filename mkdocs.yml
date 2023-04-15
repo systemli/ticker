@@ -19,8 +19,6 @@ extra:
   social:
     - icon: fontawesome/solid/globe
       link: https://www.systemli.org
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/systemli
     - icon: fontawesome/brands/github
       link: https://github.com/systemli
 
