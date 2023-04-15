@@ -16,17 +16,6 @@ func TestAddAttachments(t *testing.T) {
 	assert.Equal(t, 1, len(message.Attachments))
 }
 
-func TestTwitterURL(t *testing.T) {
-	message := NewMessage()
-
-	assert.Empty(t, message.TwitterURL())
-
-	message.Tweet.ID = "1"
-	message.Tweet.UserName = "systemli"
-
-	assert.Equal(t, "https://twitter.com/systemli/status/1", message.TwitterURL())
-}
-
 func TestTelegramURL(t *testing.T) {
 	message := NewMessage()
 

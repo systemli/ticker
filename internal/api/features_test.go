@@ -27,7 +27,7 @@ func TestGetFeatures(t *testing.T) {
 
 	h.GetFeatures(c)
 
-	expected := `{"data":{"features":{"telegram_enabled":false,"twitter_enabled":false}},"status":"success","error":{}}`
+	expected := `{"data":{"features":{"telegram_enabled":false}},"status":"success","error":{}}`
 	assert.Equal(t, expected, w.Body.String())
 	assert.Equal(t, http.StatusOK, w.Code)
 }

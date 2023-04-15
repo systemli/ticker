@@ -9,8 +9,6 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
-
-	"github.com/systemli/ticker/internal/bridge"
 )
 
 func (h *handler) GetTickers(c *gin.Context) {
@@ -122,63 +120,6 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 	users, _ := h.storage.FindUsersByTicker(ticker)
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
-}
-
-func (h *handler) PutTickerTwitter(c *gin.Context) {
-	ticker, err := helper.Ticker(c)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
-		return
-	}
-
-	var body storage.Twitter
-
-	err = c.Bind(&body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
-		return
-	}
-
-	ticker.Twitter.Active = body.Active
-	if body.Token != "" {
-		ticker.Twitter.Token = body.Token
-	}
-	if body.Secret != "" {
-		ticker.Twitter.Secret = body.Secret
-	}
-
-	tu, err := bridge.TwitterUser(ticker, h.config)
-	if err != nil {
-		log.WithError(err).Error("cant fetch user information from twitter")
-	} else {
-		ticker.Twitter.User = *tu
-	}
-
-	err = h.storage.SaveTicker(&ticker)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
-}
-
-func (h *handler) DeleteTickerTwitter(c *gin.Context) {
-	ticker, err := helper.Ticker(c)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
-		return
-	}
-
-	ticker.Twitter.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
 func (h *handler) PutTickerTelegram(c *gin.Context) {

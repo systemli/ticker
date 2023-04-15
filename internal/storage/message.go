@@ -58,14 +58,6 @@ func (m *Message) AddAttachments(uploads []Upload) {
 	}
 }
 
-func (m *Message) TwitterURL() string {
-	if m.Tweet.ID == "" {
-		return ""
-	}
-
-	return fmt.Sprintf("https://twitter.com/%s/status/%s", m.Tweet.UserName, m.Tweet.ID)
-}
-
 func (m *Message) TelegramURL() string {
 	if len(m.Telegram.Messages) == 0 {
 		return ""

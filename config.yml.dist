@@ -10,9 +10,6 @@ initiator: "admin@systemli.org"
 database: "ticker.db"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
-# twitter configuration
-twitter_consumer_key: ""
-twitter_consumer_secret: ""
 # telegram configuration
 telegram_bot_token: ""
 # listen port for prometheus metrics exporter

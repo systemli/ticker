@@ -8,10 +8,6 @@ import (
 
 var ticker = NewTicker()
 
-func TestTickerTwitterConnected(t *testing.T) {
-	assert.False(t, ticker.Twitter.Connected())
-}
-
 func TestTickerMastodonConnect(t *testing.T) {
 	assert.False(t, ticker.Mastodon.Connected())
 }
@@ -22,9 +18,6 @@ func TestTickerReset(t *testing.T) {
 	ticker.Information.Author = "Author"
 	ticker.Information.Email = "Email"
 	ticker.Information.Twitter = "Twitter"
-	ticker.Twitter.Active = true
-	ticker.Twitter.Token = "Token"
-	ticker.Twitter.Secret = "Secret"
 	ticker.Telegram.Active = true
 	ticker.Telegram.ChannelName = "ChannelName"
 	ticker.Location.Lat = 1
@@ -33,7 +26,6 @@ func TestTickerReset(t *testing.T) {
 	ticker.Reset()
 
 	assert.False(t, ticker.Active)
-	assert.False(t, ticker.Twitter.Active)
 	assert.False(t, ticker.Telegram.Active)
 	assert.Empty(t, ticker.Description)
 	assert.Empty(t, ticker.Information.Author)
