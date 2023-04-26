@@ -3,7 +3,7 @@ name: Documentation
 on:
   push:
     branches:
-      - 'main'
+      - "main"
 
 jobs:
   mkdocs:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.17.x'
+          go-version-file: "go.mod"
 
       - name: Cache Go Dependencies
         uses: actions/cache@v3
