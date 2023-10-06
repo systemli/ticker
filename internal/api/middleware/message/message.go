@@ -10,7 +10,7 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func PrefetchMessage(s storage.TickerStorage) gin.HandlerFunc {
+func PrefetchMessage(s storage.Storage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ticker, _ := helper.Ticker(c)
 

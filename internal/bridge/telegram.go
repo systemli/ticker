@@ -8,7 +8,7 @@ import (
 
 type TelegramBridge struct {
 	config  config.Config
-	storage storage.TickerStorage
+	storage storage.Storage
 }
 
 func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) error {

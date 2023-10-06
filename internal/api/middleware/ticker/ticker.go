@@ -11,7 +11,7 @@ import (
 	"github.com/systemli/ticker/internal/util"
 )
 
-func PrefetchTicker(s storage.TickerStorage) gin.HandlerFunc {
+func PrefetchTicker(s storage.Storage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := helper.Me(c)
 		tickerID, err := strconv.Atoi(c.Param("tickerID"))
@@ -37,7 +37,7 @@ func PrefetchTicker(s storage.TickerStorage) gin.HandlerFunc {
 	}
 }
 
-func PrefetchTickerFromRequest(s storage.TickerStorage) gin.HandlerFunc {
+func PrefetchTickerFromRequest(s storage.Storage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		domain, err := helper.GetDomain(c)
 		if err != nil {

@@ -11,7 +11,7 @@ import (
 
 type MastodonBridge struct {
 	config  config.Config
-	storage storage.TickerStorage
+	storage storage.Storage
 }
 
 func (mb *MastodonBridge) Send(ticker storage.Ticker, message *storage.Message) error {

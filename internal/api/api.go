@@ -23,7 +23,7 @@ var log = logrus.New().WithField("package", "api")
 
 type handler struct {
 	config  config.Config
-	storage storage.TickerStorage
+	storage storage.Storage
 	bridges bridge.Bridges
 }
 
@@ -41,7 +41,7 @@ type handler struct {
 // @host          localhost:8080
 // @BasePath      /v1
 
-func API(config config.Config, storage storage.TickerStorage) *gin.Engine {
+func API(config config.Config, storage storage.Storage) *gin.Engine {
 	handler := handler{
 		config:  config,
 		storage: storage,
