@@ -13,15 +13,17 @@ the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 ## First run
 
 - make sure you have pulled the repository
-```shell
-git clone git@github.com:systemli/ticker.git
-```
+
+    ```shell
+    git clone git@github.com:systemli/ticker.git
+    ```
 
 - start the ticker
-```shell
-cp config.yml.dist config.yml
-go run .
-```
+
+    ```shell
+    cp config.yml.dist config.yml
+    go run . run
+    ```
 
 Now you have a running ticker API!
 
