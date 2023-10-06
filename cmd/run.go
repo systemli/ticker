@@ -40,7 +40,7 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			store := storage.NewStorage(cfg.Database, cfg.UploadPath)
+			store := storage.NewStormStorage(cfg.Database, cfg.UploadPath)
 			router := api.API(cfg, store)
 			server := &http.Server{
 				Addr:    cfg.Listen,
@@ -72,7 +72,7 @@ var (
 	}
 )
 
-func firstRun(store storage.TickerStorage, config config.Config) {
+func firstRun(store storage.Storage, config config.Config) {
 	count, err := store.CountUser()
 	if err != nil {
 		log.Fatal("error using database")

@@ -15,7 +15,7 @@ type Bridge interface {
 
 type Bridges map[string]Bridge
 
-func RegisterBridges(config config.Config, storage storage.TickerStorage) Bridges {
+func RegisterBridges(config config.Config, storage storage.Storage) Bridges {
 	telegram := TelegramBridge{config, storage}
 	mastodon := MastodonBridge{config, storage}
 

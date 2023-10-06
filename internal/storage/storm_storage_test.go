@@ -22,7 +22,7 @@ func TestStorage(t *testing.T) {
 
 var _ = Describe("Storage", func() {
 	var storagePath = fmt.Sprintf("%s/storage_%d.db", strings.TrimSuffix(os.TempDir(), "/"), time.Now().Unix())
-	var storage = NewStorage(storagePath, "/uploads")
+	var storage = NewStormStorage(storagePath, "/uploads")
 
 	BeforeEach(func() {
 		storage.DropAll()
