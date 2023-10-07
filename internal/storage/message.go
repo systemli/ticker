@@ -5,38 +5,40 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/mattn/go-mastodon"
 	geojson "github.com/paulmach/go.geojson"
 )
 
 type Message struct {
-	ID             int       `storm:"id,increment"`
-	CreationDate   time.Time `storm:"index"`
-	Ticker         int       `storm:"index"`
+	ID             int `gorm:"primaryKey"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	TickerID       int `gorm:"index"`
 	Text           string
 	Attachments    []Attachment
-	GeoInformation geojson.FeatureCollection
-	Tweet          Tweet
-	Telegram       TelegramMeta
-	Mastodon       mastodon.Status
+	GeoInformation geojson.FeatureCollection `gorm:"serializer:json"`
+	Telegram       TelegramMeta              `gorm:"serializer:json"`
+	Mastodon       MastodonMeta              `gorm:"serializer:json"`
 }
 
 func NewMessage() Message {
-	return Message{
-		CreationDate: time.Now(),
-	}
-}
-
-type Tweet struct {
-	ID       string
-	UserName string
+	return Message{}
 }
 
 type TelegramMeta struct {
 	Messages []tgbotapi.Message
 }
 
+type MastodonMeta struct {
+	ID  string `json:"id"`
+	URI string `json:"uri"`
+	URL string `json:"url"`
+}
+
 type Attachment struct {
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	MessageID   int `gorm:"index"`
 	UUID        string
 	Extension   string
 	ContentType string

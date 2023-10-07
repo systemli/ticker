@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func init() {
 func TestGetFeedTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -38,7 +37,7 @@ func TestGetFeedMessageFetchError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 
 	h := handler{
@@ -58,18 +57,17 @@ func TestGetFeed(t *testing.T) {
 	ticker := storage.Ticker{
 		ID:    1,
 		Title: "Title",
-		Information: storage.Information{
+		Information: storage.TickerInformation{
 			URL:    "https://demoticker.org",
 			Author: "Author",
 			Email:  "author@demoticker.org",
 		},
 	}
 	c.Set("ticker", ticker)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	message := storage.Message{
-		Ticker:       ticker.ID,
-		CreationDate: time.Now(),
-		Text:         "Text",
+		TickerID: ticker.ID,
+		Text:     "Text",
 	}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{message}, nil)
 

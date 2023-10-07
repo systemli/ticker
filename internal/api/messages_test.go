@@ -23,7 +23,7 @@ func TestGetMessagesTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -38,7 +38,7 @@ func TestGetMessagesStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -54,7 +54,7 @@ func TestGetMessagesEmptyResult(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -70,7 +70,7 @@ func TestGetMessages(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 	h := handler{
 		storage: s,
@@ -85,7 +85,7 @@ func TestGetMessages(t *testing.T) {
 func TestGetMessageNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -100,7 +100,7 @@ func TestGetMessage(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("message", storage.Message{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -114,7 +114,7 @@ func TestGetMessage(t *testing.T) {
 func TestPostMessageTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -130,7 +130,7 @@ func TestPostMessageFormError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -149,7 +149,7 @@ func TestPostMessageUploadsNotFound(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -169,7 +169,7 @@ func TestPostMessageStorageError(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.AddParam("tickerID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
 	s.On("SaveMessage", mock.Anything).Return(errors.New("storage error"))
 	b := &bridge.MockBridge{}
@@ -192,7 +192,7 @@ func TestPostMessage(t *testing.T) {
 	json := `{"text":"text","attachments":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
 	s.On("SaveMessage", mock.Anything).Return(nil)
 	b := &bridge.MockBridge{}
@@ -211,7 +211,7 @@ func TestPostMessage(t *testing.T) {
 func TestDeleteMessageTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -226,7 +226,7 @@ func TestDeleteMessageMessageNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -242,7 +242,7 @@ func TestDeleteMessageStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.Set("message", storage.Message{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessage", mock.Anything).Return(errors.New("storage error"))
 	b := &bridge.MockBridge{}
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
@@ -262,7 +262,7 @@ func TestDeleteMessage(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.Set("message", storage.Message{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessage", mock.Anything).Return(nil)
 	b := &bridge.MockBridge{}
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)

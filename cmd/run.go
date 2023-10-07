@@ -9,11 +9,15 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sethvargo/go-password/password"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 var (
@@ -40,8 +44,41 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			store := storage.NewStormStorage(cfg.Database, cfg.UploadPath)
-			router := api.API(cfg, store)
+			var dialector gorm.Dialector
+			switch cfg.Database.Type {
+			case "sqlite":
+				dialector = sqlite.Open(cfg.Database.DSN)
+			case "mysql":
+				dialector = mysql.Open(cfg.Database.DSN)
+			case "postgres":
+				dialector = postgres.Open(cfg.Database.DSN)
+			default:
+				log.Fatalf("unknown database type %s", cfg.Database.Type)
+			}
+
+			db, err := gorm.Open(dialector, &gorm.Config{
+				Logger: logger.NewGormLogger(log),
+			})
+			if err != nil {
+				log.WithError(err).Fatal("could not connect to database")
+			}
+			store := storage.NewSqlStorage(db, cfg.UploadPath)
+			err = db.AutoMigrate(
+				&storage.Attachment{},
+				&storage.Message{},
+				&storage.Setting{},
+				&storage.Ticker{},
+				&storage.TickerInformation{},
+				&storage.TickerMastodon{},
+				&storage.TickerTelegram{},
+				&storage.Upload{},
+				&storage.User{},
+			)
+			if err != nil {
+				log.WithError(err).Fatal("could not migrate database")
+			}
+
+			router := api.API(cfg, store, log)
 			server := &http.Server{
 				Addr:    cfg.Listen,
 				Handler: router,
@@ -84,7 +121,8 @@ func firstRun(store storage.Storage, config config.Config) {
 			log.Fatal(err)
 		}
 
-		user, err := storage.NewAdminUser(config.Initiator, pw)
+		user, err := storage.NewUser(config.Initiator, pw)
+		user.IsSuperAdmin = true
 		if err != nil {
 			log.Fatal("could not create first user")
 		}

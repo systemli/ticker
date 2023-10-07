@@ -21,7 +21,7 @@ func TestStorage(t *testing.T) {
 var _ = Describe("Me Middleware", func() {
 	When("id is not present", func() {
 		It("should return an error", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mw := MeMiddleware(mockStorage)
 			gin.SetMode(gin.ReleaseMode)
 			w := httptest.NewRecorder()
@@ -35,7 +35,7 @@ var _ = Describe("Me Middleware", func() {
 
 	When("id is present", func() {
 		Context("user not found", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 			mw := MeMiddleware(mockStorage)
 			gin.SetMode(gin.ReleaseMode)
@@ -49,7 +49,7 @@ var _ = Describe("Me Middleware", func() {
 		})
 
 		Context("user found", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
 			mw := MeMiddleware(mockStorage)
 			gin.SetMode(gin.ReleaseMode)

@@ -28,7 +28,7 @@ var _ = Describe("Auth Middleware", func() {
 
 	When("Authenticator", func() {
 		Context("empty form is sent", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 
 			authenticator := Authenticator(mockStorage)
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
@@ -42,7 +42,7 @@ var _ = Describe("Auth Middleware", func() {
 		})
 
 		Context("user not found", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByEmail", mock.Anything).Return(storage.User{}, errors.New("not found"))
 
 			authenticator := Authenticator(mockStorage)
@@ -65,7 +65,7 @@ var _ = Describe("Auth Middleware", func() {
 				EncryptedPassword: string(hashedPassword),
 				IsSuperAdmin:      false,
 			}
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByEmail", mock.Anything).Return(user, nil)
 
 			authenticator := Authenticator(mockStorage)
@@ -92,7 +92,7 @@ var _ = Describe("Auth Middleware", func() {
 
 	When("Authorizator", func() {
 		Context("storage returns no user", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("user not found"))
 			authorizator := Authorizator(mockStorage)
 			rr := httptest.NewRecorder()
@@ -105,7 +105,7 @@ var _ = Describe("Auth Middleware", func() {
 		})
 
 		Context("storage returns a user", func() {
-			mockStorage := &storage.MockTickerStorage{}
+			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
 			authorizator := Authorizator(mockStorage)
 			rr := httptest.NewRecorder()

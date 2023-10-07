@@ -23,7 +23,7 @@ func TestGetMedia(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodGet, "/media", nil)
 
 	upload := storage.NewUpload("image.jpg", "image/jpeg", 1)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUploadByUUID", mock.Anything).Return(upload, nil)
 	s.On("UploadPath").Return("./uploads")
 
@@ -42,7 +42,7 @@ func TestGetMediaNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found"))
 
 	h := handler{

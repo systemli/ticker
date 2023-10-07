@@ -12,17 +12,14 @@ type User struct {
 	Email        string    `json:"email"`
 	Role         string    `json:"role"`
 	IsSuperAdmin bool      `json:"is_super_admin"`
-	Tickers      []int     `json:"tickers"`
 }
 
 func UserResponse(user storage.User) User {
 	return User{
 		ID:           user.ID,
-		CreationDate: user.CreationDate,
+		CreationDate: user.CreatedAt,
 		Email:        user.Email,
-		Role:         user.Role,
 		IsSuperAdmin: user.IsSuperAdmin,
-		Tickers:      user.Tickers,
 	}
 }
 

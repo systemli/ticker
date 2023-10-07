@@ -20,7 +20,7 @@ func TestPrefetchTickerParamMissing(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	mw := PrefetchTicker(s)
 
 	mw(c)
@@ -32,8 +32,8 @@ func TestPrefetchTickerNoPermission(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
-	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []int{2}})
-	s := &storage.MockTickerStorage{}
+	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []storage.Ticker{{ID: 2}}})
+	s := &storage.MockStorage{}
 	mw := PrefetchTicker(s)
 
 	mw(c)
@@ -46,7 +46,7 @@ func TestPrefetchTickerStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("storage error"))
 	mw := PrefetchTicker(s)
 
@@ -60,7 +60,7 @@ func TestPrefetchTicker(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	ticker := storage.Ticker{ID: 1}
 	s.On("FindTickerByID", mock.Anything).Return(ticker, nil)
 	mw := PrefetchTicker(s)
@@ -77,7 +77,7 @@ func TestPrefetchTickerFromRequestMissingOrigin(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	mw := PrefetchTickerFromRequest(s)
 
 	mw(c)
@@ -93,7 +93,7 @@ func TestPrefetchTickerFromRequestTickerNotFound(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 	c.Request.Header.Set("Origin", "https://demoticker.org")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	mw := PrefetchTickerFromRequest(s)
 
@@ -110,7 +110,7 @@ func TestPrefetchTickerFromRequest(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 	c.Request.Header.Set("Origin", "https://demoticker.org")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, nil)
 	mw := PrefetchTickerFromRequest(s)
 

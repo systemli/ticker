@@ -69,7 +69,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 
 	message := storage.NewMessage()
 	message.Text = body.Text
-	message.Ticker = ticker.ID
+	message.TickerID = ticker.ID
 	message.GeoInformation = body.GeoInformation
 	message.AddAttachments(uploads)
 

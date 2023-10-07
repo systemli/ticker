@@ -20,7 +20,7 @@ func TestPrefetchMessageParamMissing(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	mw := PrefetchMessage(s)
 
 	mw(c)
@@ -33,7 +33,7 @@ func TestPrefetchMessageStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("messageID", "1")
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
 	mw := PrefetchMessage(s)
 
@@ -47,7 +47,7 @@ func TestPrefetchMessage(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("messageID", "1")
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	message := storage.Message{ID: 1}
 	s.On("FindMessage", mock.Anything, mock.Anything).Return(message, nil)
 	mw := PrefetchMessage(s)

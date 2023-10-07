@@ -16,8 +16,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
 )
+
+var l = logger.NewLogrus("debug", "text")
 
 func init() {
 	logrus.SetOutput(io.Discard)
@@ -26,8 +29,8 @@ func init() {
 
 func TestHealthz(t *testing.T) {
 	c := config.NewConfig()
-	s := &storage.MockTickerStorage{}
-	r := API(c, s)
+	s := &storage.MockStorage{}
+	r := API(c, s, l)
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	w := httptest.NewRecorder()
@@ -39,11 +42,11 @@ func TestHealthz(t *testing.T) {
 
 func TestLoginNotSuccessful(t *testing.T) {
 	c := config.NewConfig()
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	user := storage.User{}
 	user.UpdatePassword("password")
 	s.On("FindUserByEmail", mock.Anything).Return(user, nil)
-	r := API(c, s)
+	r := API(c, s, l)
 
 	body := `{"username":"louis@systemli.org","password":"WRONG"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
@@ -62,11 +65,11 @@ func TestLoginNotSuccessful(t *testing.T) {
 
 func TestLoginSuccessful(t *testing.T) {
 	c := config.NewConfig()
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	user := storage.User{}
 	user.UpdatePassword("password")
 	s.On("FindUserByEmail", mock.Anything).Return(user, nil)
-	r := API(c, s)
+	r := API(c, s, l)
 
 	body := `{"username":"louis@systemli.org","password":"password"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))

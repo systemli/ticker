@@ -54,7 +54,7 @@ type Location struct {
 func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 	return Ticker{
 		ID:           t.ID,
-		CreationDate: t.CreationDate,
+		CreationDate: t.CreatedAt,
 		Domain:       t.Domain,
 		Title:        t.Title,
 		Description:  t.Description,

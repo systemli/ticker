@@ -52,7 +52,7 @@ func buildFeed(ticker storage.Ticker, messages []storage.Message) *feeds.Feed {
 	for _, message := range messages {
 		item := &feeds.Item{
 			Id:          strconv.Itoa(message.ID),
-			Created:     message.CreationDate,
+			Created:     message.CreatedAt,
 			Description: message.Text,
 			Title:       message.Text,
 			Link:        &feeds.Link{},

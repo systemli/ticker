@@ -6,8 +6,10 @@ log_level: "error"
 log_format: "json"
 # initiator is the email for the first admin user (see password in logs)
 initiator: "admin@systemli.org"
-# database is the path to the bolt file
-database: "ticker.db"
+# configuration for the database
+database:
+    type: "sqlite" # postgres, mysql, sqlite
+    dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration

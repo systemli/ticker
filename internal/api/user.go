@@ -59,8 +59,15 @@ func (h *handler) PostUser(c *gin.Context) {
 		return
 	}
 
+	// load tickers by body.Tickers
+	tickers, err := h.storage.FindTickersByIDs(body.Tickers)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
 	user.IsSuperAdmin = body.IsSuperAdmin
-	user.Tickers = body.Tickers
+	user.Tickers = tickers
 
 	err = h.storage.SaveUser(&user)
 	if err != nil {
@@ -68,7 +75,7 @@ func (h *handler) PostUser(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"user": user}
+	data := map[string]interface{}{"user": response.UserResponse(user)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -83,7 +90,6 @@ func (h *handler) PutUser(c *gin.Context) {
 	var body struct {
 		Email        string `json:"email,omitempty" validate:"email"`
 		Password     string `json:"password,omitempty" validate:"min=10"`
-		Role         string `json:"role,omitempty"`
 		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
 		Tickers      []int  `json:"tickers,omitempty"`
 	}
@@ -100,9 +106,6 @@ func (h *handler) PutUser(c *gin.Context) {
 	if body.Password != "" {
 		user.UpdatePassword(body.Password)
 	}
-	if body.Role != "" {
-		user.Role = body.Role
-	}
 
 	// You only can set/unset other users SuperAdmin property
 	if me.ID != user.ID {
@@ -110,7 +113,13 @@ func (h *handler) PutUser(c *gin.Context) {
 	}
 
 	if body.Tickers != nil {
-		user.Tickers = body.Tickers
+		tickers, err := h.storage.FindTickersByIDs(body.Tickers)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+			return
+		}
+
+		user.Tickers = tickers
 	}
 
 	err = h.storage.SaveUser(&user)
@@ -119,7 +128,7 @@ func (h *handler) PutUser(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"user": user}
+	data := map[string]interface{}{"user": response.UserResponse(user)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -176,6 +185,6 @@ func (h *handler) PutMe(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"user": me}
+	data := map[string]interface{}{"user": response.UserResponse(me)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

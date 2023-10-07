@@ -12,18 +12,23 @@ import (
 )
 
 type Config struct {
-	Listen           string `mapstructure:"listen"`
-	LogLevel         string `mapstructure:"log_level"`
-	LogFormat        string `mapstructure:"log_format"`
-	Initiator        string `mapstructure:"initiator"`
-	Secret           string `mapstructure:"secret"`
-	Database         string `mapstructure:"database"`
-	TelegramBotToken string `mapstructure:"telegram_bot_token"`
+	Listen           string   `mapstructure:"listen"`
+	LogLevel         string   `mapstructure:"log_level"`
+	LogFormat        string   `mapstructure:"log_format"`
+	Initiator        string   `mapstructure:"initiator"`
+	Secret           string   `mapstructure:"secret"`
+	Database         Database `mapstructure:"database"`
+	TelegramBotToken string   `mapstructure:"telegram_bot_token"`
 	TelegramBotUser  tgbotapi.User
 	MetricsListen    string `mapstructure:"metrics_listen"`
 	UploadPath       string `mapstructure:"upload_path"`
 	UploadURL        string `mapstructure:"upload_url"`
 	FileBackend      afero.Fs
+}
+
+type Database struct {
+	Type string `mapstructure:"type"`
+	DSN  string `mapstructure:"dsn"`
 }
 
 // NewConfig returns config with default values.
@@ -36,7 +41,7 @@ func NewConfig() Config {
 		LogFormat:     "json",
 		Initiator:     "admin@systemli.org",
 		Secret:        secret,
-		Database:      "ticker.db",
+		Database:      Database{Type: "sqlite", DSN: "ticker.db"},
 		MetricsListen: ":8181",
 		UploadPath:    "uploads",
 		UploadURL:     "http://localhost:8080",

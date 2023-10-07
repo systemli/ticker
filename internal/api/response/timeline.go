@@ -36,7 +36,7 @@ func TimelineResponse(messages []storage.Message, config config.Config) []Timeli
 
 		timeline = append(timeline, TimelineEntry{
 			ID:             message.ID,
-			CreationDate:   message.CreationDate,
+			CreationDate:   message.CreatedAt,
 			Text:           message.Text,
 			GeoInformation: string(m),
 			Attachments:    attachments,

@@ -22,8 +22,7 @@ func (h *handler) GetTickers(c *gin.Context) {
 	if me.IsSuperAdmin {
 		tickers, err = h.storage.FindTickers()
 	} else {
-		allowed := me.Tickers
-		tickers, err = h.storage.FindTickersByIDs(allowed)
+		tickers = me.Tickers
 	}
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
@@ -111,15 +110,21 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.AddUsersToTicker(ticker, body.Users)
+	newUsers, err := h.storage.FindUsersByIDs(body.Users)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	users, _ := h.storage.FindUsersByTicker(ticker)
+	ticker.Users = append(ticker.Users, newUsers...)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(ticker.Users)}))
 }
 
 func (h *handler) PutTickerTelegram(c *gin.Context) {
@@ -129,7 +134,7 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	var body storage.Telegram
+	var body storage.TickerTelegram
 	err = c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
@@ -175,7 +180,7 @@ func (h *handler) PutTickerMastodon(c *gin.Context) {
 		return
 	}
 
-	var body storage.Mastodon
+	var body storage.TickerMastodon
 	err = c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
@@ -271,15 +276,13 @@ func (h *handler) DeleteTickerUser(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.RemoveTickerFromUser(ticker, user)
+	err = h.storage.DeleteTickerUser(&ticker, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	users, _ := h.storage.FindUsersByTicker(ticker)
-
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(ticker.Users)}))
 }
 
 func (h *handler) ResetTicker(c *gin.Context) {

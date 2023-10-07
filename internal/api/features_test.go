@@ -18,7 +18,7 @@ func init() {
 func TestGetFeatures(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 
 	h := handler{
 		storage: s,

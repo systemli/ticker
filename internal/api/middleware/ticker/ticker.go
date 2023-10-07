@@ -21,13 +21,18 @@ func PrefetchTicker(s storage.Storage) gin.HandlerFunc {
 		}
 
 		if !user.IsSuperAdmin {
-			if !util.Contains(user.Tickers, tickerID) {
+			var tickerIDs []int
+			for _, t := range user.Tickers {
+				tickerIDs = append(tickerIDs, t.ID)
+			}
+			if !util.Contains(tickerIDs, tickerID) {
 				c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
 				return
 			}
 		}
 
 		ticker, err := s.FindTickerByID(tickerID)
+
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 			return
