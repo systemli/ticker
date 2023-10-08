@@ -12,6 +12,14 @@ func TestTickerMastodonConnect(t *testing.T) {
 	assert.False(t, ticker.Mastodon.Connected())
 }
 
+func TestTickerTelegramConnected(t *testing.T) {
+	assert.False(t, ticker.Telegram.Connected())
+
+	ticker.Telegram.ChannelName = "ChannelName"
+
+	assert.True(t, ticker.Telegram.Connected())
+}
+
 func TestTickerReset(t *testing.T) {
 	ticker.Active = true
 	ticker.Description = "Description"
