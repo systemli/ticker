@@ -52,14 +52,12 @@ func (h *handler) PostUser(c *gin.Context) {
 		return
 	}
 
-	//TODO: Validation
 	user, err := storage.NewUser(body.Email, body.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	// load tickers by body.Tickers
 	tickers, err := h.storage.FindTickersByIDs(body.Tickers)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
