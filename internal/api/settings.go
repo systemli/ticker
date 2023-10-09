@@ -15,17 +15,21 @@ func (h *handler) GetSetting(c *gin.Context) {
 		return
 	}
 
-	var setting storage.Setting
 	if c.Param("name") == storage.SettingInactiveName {
-		setting = h.storage.GetInactiveSetting()
+		setting := h.storage.GetInactiveSettings()
+		data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
+		c.JSON(http.StatusOK, response.SuccessResponse(data))
+		return
 	}
 
 	if c.Param("name") == storage.SettingRefreshInterval {
-		setting = h.storage.GetRefreshIntervalSetting()
+		setting := h.storage.GetRefreshIntervalSettings()
+		data := map[string]interface{}{"setting": response.RefreshIntervalSettingsResponse(setting)}
+		c.JSON(http.StatusOK, response.SuccessResponse(data))
+		return
 	}
 
-	data := map[string]interface{}{"setting": response.SettingResponse(setting)}
-	c.JSON(http.StatusOK, response.SuccessResponse(data))
+	c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.SettingNotFound))
 }
 
 func (h *handler) PutInactiveSettings(c *gin.Context) {
@@ -36,14 +40,14 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.SaveInactiveSetting(value)
+	err = h.storage.SaveInactiveSettings(value)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	setting := h.storage.GetInactiveSetting()
-	data := map[string]interface{}{"setting": response.SettingResponse(setting)}
+	setting := h.storage.GetInactiveSettings()
+	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -55,13 +59,13 @@ func (h *handler) PutRefreshInterval(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.SaveRefreshInterval(value.RefreshInterval)
+	err = h.storage.SaveRefreshIntervalSettings(storage.RefreshIntervalSettings{RefreshInterval: value.RefreshInterval})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	setting := h.storage.GetRefreshIntervalSetting()
-	data := map[string]interface{}{"setting": response.SettingResponse(setting)}
+	setting := h.storage.GetRefreshIntervalSettings()
+	data := map[string]interface{}{"setting": response.RefreshIntervalSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

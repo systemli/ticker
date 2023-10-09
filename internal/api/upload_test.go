@@ -24,7 +24,7 @@ func init() {
 func TestPostUploadForbidden(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -40,7 +40,7 @@ func TestPostUploadMultipartError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", nil)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -61,7 +61,7 @@ func TestPostUploadMissingTickerValue(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -82,7 +82,7 @@ func TestPostUploadTickerValueWrong(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -103,7 +103,7 @@ func TestPostUploadTickerNotFound(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -125,7 +125,7 @@ func TestPostUploadWrongPermission(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
@@ -147,7 +147,7 @@ func TestPostUploadMissingFiles(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
@@ -179,7 +179,7 @@ func TestPostUpload(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
@@ -212,7 +212,7 @@ func TestPostUploadGIF(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
@@ -246,7 +246,7 @@ func TestPostUploadTooMuchFiles(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
@@ -279,7 +279,7 @@ func TestPostUploadForbiddenFileType(t *testing.T) {
 	_ = writer.Close()
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{

@@ -9,13 +9,14 @@ import (
 )
 
 type Upload struct {
-	ID           int       `storm:"id,increment"`
-	UUID         string    `storm:"index,unique"`
-	CreationDate time.Time `storm:"index"`
-	TickerID     int       `storm:"index"`
-	Path         string
-	Extension    string
-	ContentType  string
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	UUID        string `gorm:"index;unique"`
+	TickerID    int    `gorm:"index"`
+	Path        string
+	Extension   string
+	ContentType string
 }
 
 func NewUpload(filename, contentType string, tickerID int) Upload {
@@ -26,12 +27,11 @@ func NewUpload(filename, contentType string, tickerID int) Upload {
 	path := fmt.Sprintf("%d/%d", now.Year(), now.Month())
 
 	return Upload{
-		CreationDate: now,
-		Path:         path,
-		UUID:         uuid.String(),
-		TickerID:     tickerID,
-		Extension:    ext,
-		ContentType:  contentType,
+		Path:        path,
+		UUID:        uuid.String(),
+		TickerID:    tickerID,
+		Extension:   ext,
+		ContentType: contentType,
 	}
 }
 

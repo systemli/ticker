@@ -19,8 +19,8 @@ func TestGetInit(t *testing.T) {
 
 	ticker := storage.NewTicker()
 	ticker.Active = true
-	s := &storage.MockTickerStorage{}
-	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: float64(10000)})
+	s := &storage.MockStorage{}
+	s.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
 	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
 
 	h := handler{
@@ -38,8 +38,8 @@ func TestGetInitInvalidDomain(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/init", nil)
 
-	s := &storage.MockTickerStorage{}
-	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: float64(10000)})
+	s := &storage.MockStorage{}
+	s.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
 
 	h := handler{
 		storage: s,
@@ -57,9 +57,9 @@ func TestGetInitInactiveTicker(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
 
 	ticker := storage.NewTicker()
-	s := &storage.MockTickerStorage{}
-	s.On("GetRefreshIntervalSetting").Return(storage.Setting{Value: float64(10000)})
-	s.On("GetInactiveSetting").Return(storage.DefaultInactiveSetting())
+	s := &storage.MockStorage{}
+	s.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
+	s.On("GetInactiveSettings").Return(storage.DefaultInactiveSettings())
 	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
 
 	h := handler{

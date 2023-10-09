@@ -6,10 +6,6 @@ import (
 	ginlogrus "github.com/toorop/gin-logrus"
 )
 
-func Logger(level string) gin.HandlerFunc {
-	lvl, _ := logrus.ParseLevel(level)
-	logger := logrus.New()
-	logger.SetLevel(lvl)
-
+func Logger(logger *logrus.Logger) gin.HandlerFunc {
 	return ginlogrus.Logger(logger)
 }

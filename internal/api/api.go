@@ -41,7 +41,7 @@ type handler struct {
 // @host          localhost:8080
 // @BasePath      /v1
 
-func API(config config.Config, storage storage.Storage) *gin.Engine {
+func API(config config.Config, storage storage.Storage, log *logrus.Logger) *gin.Engine {
 	handler := handler{
 		config:  config,
 		storage: storage,
@@ -51,7 +51,7 @@ func API(config config.Config, storage storage.Storage) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
-	r.Use(logger.Logger(config.LogLevel))
+	r.Use(logger.Logger(log))
 	r.Use(gin.Recovery())
 	r.Use(cors.NewCORS())
 	r.Use(prometheus.NewPrometheus())

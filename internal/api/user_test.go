@@ -22,7 +22,7 @@ func TestGetUsersStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUsers").Return([]storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -38,7 +38,7 @@ func TestGetUsers(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUsers").Return([]storage.User{}, nil)
 
 	h := handler{
@@ -54,7 +54,7 @@ func TestGetUsers(t *testing.T) {
 func TestGetUserMissingParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -71,7 +71,7 @@ func TestGetUserInsufficentPermission(t *testing.T) {
 	c.Set("user", storage.User{ID: 1})
 	c.Set("me", storage.User{ID: 2, IsSuperAdmin: false})
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -88,7 +88,7 @@ func TestGetUserStorageError(t *testing.T) {
 	c.AddParam("userID", "1")
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -106,7 +106,7 @@ func TestGetUserMissingPermission(t *testing.T) {
 	c.Set("user", storage.User{ID: 2})
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: false})
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -123,7 +123,7 @@ func TestGetUser(t *testing.T) {
 	c.Set("user", storage.User{ID: 1})
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: false})
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -139,7 +139,25 @@ func TestPostUserMissingBody(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = &http.Request{}
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostUserTooLongPassword(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	json := `{"email":"louis@systemli.org","password":"swusp-dud-gust-grong-yuz-swuft-plaft-glact-skast-swem-yen-kom-tut-prisp-gont"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -157,7 +175,28 @@ func TestPostUserStorageError(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
+	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PostUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPostUserStorageError2(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	json := `{"email":"louis@systemli.org","password":"password1234"}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, errors.New("storage error"))
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -176,7 +215,8 @@ func TestPostUser(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -192,7 +232,7 @@ func TestPutUserNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -211,7 +251,7 @@ func TestPutUserMissingBody(t *testing.T) {
 	body := `broken_json`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -230,7 +270,29 @@ func TestPutUserStorageError(t *testing.T) {
 	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
+	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutUser(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestPutUserStorageError2(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
+	c.Set("user", storage.User{})
+	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, errors.New("storage error"))
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -250,7 +312,8 @@ func TestPutUser(t *testing.T) {
 	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
+	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{{ID: 1}}, nil)
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -266,7 +329,7 @@ func TestDeleteUserMissingParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -282,7 +345,7 @@ func TestDeleteUserSelfUser(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{ID: 1})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -298,7 +361,7 @@ func TestDeleteUserStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{ID: 2})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -315,7 +378,7 @@ func TestDeleteUser(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{ID: 2})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -333,7 +396,7 @@ func TestPutMeUnauthenticated(t *testing.T) {
 	json := `{"password":"password1234","new_password":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -350,7 +413,7 @@ func TestPutMeFormError(t *testing.T) {
 	json := `{"wrongparameter":"password1234","new_password":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -367,7 +430,7 @@ func TestPutMeWrongPassword(t *testing.T) {
 	json := `{"password":"wrongpassword","new_password":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -384,7 +447,7 @@ func TestPutMeStorageError(t *testing.T) {
 	json := `{"password":"password1234","new_password":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -401,7 +464,7 @@ func TestPutMeOk(t *testing.T) {
 	json := `{"password":"password1234","new_password":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,

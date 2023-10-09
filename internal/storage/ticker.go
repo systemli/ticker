@@ -4,74 +4,87 @@ import (
 	"time"
 
 	"github.com/mattn/go-mastodon"
+	"gorm.io/gorm"
 )
 
 type Ticker struct {
-	ID           int       `storm:"id,increment"`
-	CreationDate time.Time `storm:"index"`
-	Domain       string    `storm:"unique"`
-	Title        string
-	Description  string
-	Active       bool
-	Information  Information
-	Telegram     Telegram
-	Mastodon     Mastodon
-	Location     Location
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Domain      string `gorm:"unique"`
+	Title       string
+	Description string
+	Active      bool
+	Information TickerInformation
+	Telegram    TickerTelegram
+	Mastodon    TickerMastodon
+	Location    TickerLocation
+	Users       []User `gorm:"many2many:user_tickers;"`
 }
 
 func NewTicker() Ticker {
-	return Ticker{
-		CreationDate: time.Now(),
-	}
+	return Ticker{}
 }
 
 func (t *Ticker) Reset() {
 	t.Active = false
 	t.Description = ""
-	t.Information = Information{}
-	t.Location = Location{}
+	t.Information = TickerInformation{}
+	t.Location = TickerLocation{}
 
 	t.Telegram.Reset()
 	t.Mastodon.Reset()
 }
 
-type Information struct {
-	Author   string
-	URL      string
-	Email    string
-	Twitter  string
-	Facebook string
-	Telegram string
+type TickerInformation struct {
+	ID        int `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TickerID  int
+	Author    string
+	URL       string
+	Email     string
+	Twitter   string
+	Facebook  string
+	Telegram  string
 }
 
-type Telegram struct {
+type TickerTelegram struct {
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	TickerID    int    `gorm:"index"`
 	Active      bool   `json:"active"`
 	ChannelName string `json:"channel_name"`
 }
 
-func (tg *Telegram) Reset() {
+func (tg *TickerTelegram) Reset() {
 	tg.Active = false
 	tg.ChannelName = ""
 }
 
-func (tg *Telegram) Connected() bool {
+func (tg *TickerTelegram) Connected() bool {
 	return tg.ChannelName != ""
 }
 
-type Mastodon struct {
-	Active      bool   `json:"active"`
-	Server      string `json:"server"`
-	Token       string `json:"token"`
-	Secret      string `json:"secret"`
-	AccessToken string `json:"access_token"`
-	User        mastodon.Account
+type TickerMastodon struct {
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	TickerID    int              `gorm:"index"`
+	Active      bool             `json:"active"`
+	Server      string           `json:"server"`
+	Token       string           `json:"token"`
+	Secret      string           `json:"secret"`
+	AccessToken string           `json:"access_token"`
+	User        mastodon.Account `gorm:"type:json"`
 }
 
-func (m *Mastodon) Connected() bool {
+func (m *TickerMastodon) Connected() bool {
 	return m.Token != "" && m.Secret != "" && m.AccessToken != ""
 }
 
-func (m *Mastodon) Reset() {
+func (m *TickerMastodon) Reset() {
 	m.Active = false
 	m.Server = ""
 	m.Token = ""
@@ -80,7 +93,10 @@ func (m *Mastodon) Reset() {
 	m.User = mastodon.Account{}
 }
 
-type Location struct {
-	Lat float64
-	Lon float64
+type TickerLocation struct {
+	gorm.Model
+	ID       int `gorm:"primaryKey"`
+	TickerID int
+	Lat      float64
+	Lon      float64
 }

@@ -22,7 +22,7 @@ import (
 // @Router       /init [get]
 func (h *handler) GetInit(c *gin.Context) {
 	settings := response.Settings{
-		RefreshInterval: h.storage.GetRefreshIntervalSetting().Value.(float64),
+		RefreshInterval: h.storage.GetRefreshIntervalSettings().RefreshInterval,
 	}
 	domain, err := helper.GetDomain(c)
 	if err != nil {
@@ -32,7 +32,7 @@ func (h *handler) GetInit(c *gin.Context) {
 
 	ticker, err := h.storage.FindTickerByDomain(domain)
 	if err != nil || !ticker.Active {
-		settings.InactiveSettings = h.storage.GetInactiveSetting().Value
+		settings.InactiveSettings = h.storage.GetInactiveSettings()
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))
 		return
 	}

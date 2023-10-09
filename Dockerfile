@@ -24,3 +24,4 @@ COPY ticker /ticker
 USER ticker:ticker
 
 ENTRYPOINT ["/ticker"]
+CMD [ "run" ]

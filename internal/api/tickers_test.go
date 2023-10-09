@@ -24,7 +24,7 @@ func init() {
 func TestGetTickersForbidden(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -39,7 +39,7 @@ func TestGetTickersStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickers").Return([]storage.Ticker{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -54,8 +54,8 @@ func TestGetTickersStorageError(t *testing.T) {
 func TestGetTickers(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []int{1}})
-	s := &storage.MockTickerStorage{}
+	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []storage.Ticker{{ID: 2}}})
+	s := &storage.MockStorage{}
 	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
@@ -70,7 +70,7 @@ func TestGetTickers(t *testing.T) {
 func TestGetTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -85,7 +85,7 @@ func TestGetTicker(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -99,7 +99,7 @@ func TestGetTicker(t *testing.T) {
 func TestGetTickerUsersTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -114,7 +114,7 @@ func TestGetTickerUsers(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
 	h := handler{
 		storage: s,
@@ -131,7 +131,7 @@ func TestPostTickerFormError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", nil)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -149,7 +149,7 @@ func TestPostTickerStorageError(t *testing.T) {
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -168,7 +168,7 @@ func TestPostTicker(t *testing.T) {
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -183,7 +183,7 @@ func TestPostTicker(t *testing.T) {
 func TestPutTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -200,7 +200,7 @@ func TestPutTickerFormError(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", nil)
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -218,7 +218,7 @@ func TestPutTickerStorageError(t *testing.T) {
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -237,7 +237,7 @@ func TestPutTicker(t *testing.T) {
 	body := `{"domain":"localhost","title":"title","description":"description"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -252,7 +252,7 @@ func TestPutTicker(t *testing.T) {
 func TestPutTickerUsersNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -269,7 +269,7 @@ func TestPutTickerUsersFormError(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", nil)
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -287,8 +287,29 @@ func TestPutTickerUsersStorageError(t *testing.T) {
 	body := `{"users":[1,2,3]}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
-	s.On("AddUsersToTicker", mock.Anything, mock.Anything).Return(errors.New("storage error"))
+	s := &storage.MockStorage{}
+	s.On("FindUsersByIDs", mock.Anything).Return(nil, errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.PutTickerUsers(c)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestPutTickerUsersStorageError2(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	body := `{"users":[1,2,3]}`
+	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
+	c.Request.Header.Add("Content-Type", "application/json")
+	s := &storage.MockStorage{}
+	s.On("FindUsersByIDs", mock.Anything).Return([]storage.User{}, nil)
+	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
+	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -306,9 +327,10 @@ func TestPutTickerUsers(t *testing.T) {
 	body := `{"users":[1,2,3]}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
-	s.On("AddUsersToTicker", mock.Anything, mock.Anything).Return(nil)
+	s := &storage.MockStorage{}
+	s.On("FindUsersByIDs", mock.Anything).Return([]storage.User{}, nil)
 	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
+	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -322,7 +344,7 @@ func TestPutTickerUsers(t *testing.T) {
 func TestPutTickerTelegramTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -339,7 +361,7 @@ func TestPutTickerTelegramFormError(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", nil)
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -357,7 +379,7 @@ func TestPutTickerTelegramStorageError(t *testing.T) {
 	body := `{"active":true,"channel_name":"@channel_name"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -376,7 +398,7 @@ func TestPutTickerTelegram(t *testing.T) {
 	body := `{"active":true,"channel_name":"@channel_name"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -391,7 +413,7 @@ func TestPutTickerTelegram(t *testing.T) {
 func TestDeleteTickerTelegramTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -406,7 +428,7 @@ func TestDeleteTickerTelegramStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -422,7 +444,7 @@ func TestDeleteTickerTelegram(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -437,7 +459,7 @@ func TestDeleteTickerTelegram(t *testing.T) {
 func TestPutTickerMastodonTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -454,7 +476,7 @@ func TestPutTickerMastodonFormError(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", nil)
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -472,7 +494,7 @@ func TestPutTickerMastodonConnectError(t *testing.T) {
 	body := `{"active":true,"server":"http://localhost","secret":"secret","token":"token","access_token":"access_token"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -497,7 +519,7 @@ func TestPutTickerMastodonStorageError(t *testing.T) {
 	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -522,7 +544,7 @@ func TestPutTickerMastodon(t *testing.T) {
 	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -537,7 +559,7 @@ func TestPutTickerMastodon(t *testing.T) {
 func TestDeleteTickerMastodonTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -552,7 +574,7 @@ func TestDeleteTickerMastodonStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -568,7 +590,7 @@ func TestDeleteTickerMastodon(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -583,7 +605,7 @@ func TestDeleteTickerMastodon(t *testing.T) {
 func TestDeleteTickerTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -598,7 +620,7 @@ func TestDeleteTickerStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(errors.New("storage error"))
 	s.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
@@ -615,7 +637,7 @@ func TestDeleteTicker(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(nil)
 	s.On("DeleteTicker", mock.Anything).Return(nil)
 	h := handler{
@@ -631,7 +653,7 @@ func TestDeleteTicker(t *testing.T) {
 func TestDeleteTickerUserTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -646,7 +668,7 @@ func TestDeleteTickerUserMissingUserParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -662,7 +684,7 @@ func TestDeleteTickerUserUserNotFound(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.AddParam("userID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -679,9 +701,9 @@ func TestDeleteTickerUserStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.AddParam("userID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
-	s.On("RemoveTickerFromUser", mock.Anything, mock.Anything).Return(errors.New("storage error"))
+	s.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -697,9 +719,9 @@ func TestDeleteTickerUser(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	c.AddParam("userID", "1")
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, nil)
-	s.On("RemoveTickerFromUser", mock.Anything, mock.Anything).Return(nil)
+	s.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(nil)
 	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
 	h := handler{
 		storage: s,
@@ -714,7 +736,7 @@ func TestDeleteTickerUser(t *testing.T) {
 func TestResetTickerUserTickerNotFound(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -729,7 +751,7 @@ func TestResetTickerStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(errors.New("storage error"))
 	s.On("DeleteUploadsByTicker", mock.Anything).Return(errors.New("storage error"))
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
@@ -747,7 +769,7 @@ func TestResetTicker(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(nil)
 	s.On("DeleteUploadsByTicker", mock.Anything).Return(nil)
 	s.On("SaveTicker", mock.Anything).Return(nil)

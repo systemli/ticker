@@ -1,6 +1,6 @@
 package util
 
-//Contains returns true when s is in slice.
+// Contains returns true when s is in slice.
 func Contains(slice []int, s int) bool {
 	for _, value := range slice {
 		if value == s {
@@ -10,7 +10,7 @@ func Contains(slice []int, s int) bool {
 	return false
 }
 
-//Append appends the integer when it not already in the slice.
+// Append appends the integer when it not already in the slice.
 func Append(slice []int, s int) []int {
 	if Contains(slice, s) {
 		return slice
@@ -19,7 +19,7 @@ func Append(slice []int, s int) []int {
 	return append(slice, s)
 }
 
-//Remove element from slice.
+// Remove element from slice.
 func Remove(slice []int, s int) []int {
 	for i := range slice {
 		if slice[i] == s {
@@ -30,7 +30,7 @@ func Remove(slice []int, s int) []int {
 	return slice
 }
 
-//ContainsString returns true when s in slice.
+// ContainsString returns true when s in slice.
 func ContainsString(list []string, s string) bool {
 	for _, b := range list {
 		if b == s {

@@ -35,9 +35,9 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 
 	return Message{
 		ID:             message.ID,
-		CreationDate:   message.CreationDate,
+		CreationDate:   message.CreatedAt,
 		Text:           message.Text,
-		Ticker:         message.Ticker,
+		Ticker:         message.TickerID,
 		TelegramURL:    message.TelegramURL(),
 		MastodonURL:    message.MastodonURL(),
 		GeoInformation: string(m),

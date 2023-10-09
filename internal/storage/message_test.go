@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/mattn/go-mastodon"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +40,7 @@ func TestMastodonURL(t *testing.T) {
 	assert.Empty(t, message.MastodonURL())
 
 	url := "https://mastodon.social/web/@systemli/1"
-	message.Mastodon = mastodon.Status{
+	message.Mastodon = MastodonMeta{
 		ID:  "1",
 		URL: url,
 	}

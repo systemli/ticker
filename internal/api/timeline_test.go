@@ -22,7 +22,7 @@ func TestGetTimelineMissingDomain(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -40,7 +40,7 @@ func TestGetTimelineTickerNotFound(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 	c.Request.Header.Add("Origin", "https://demoticker.org")
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
@@ -57,7 +57,7 @@ func TestGetTimelineTickerInactive(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{Active: false})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 
 	h := handler{
 		storage: s,
@@ -73,7 +73,7 @@ func TestGetTimelineMessageFetchError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{Active: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 
 	h := handler{
@@ -91,7 +91,7 @@ func TestGetTimeline(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 
 	h := handler{

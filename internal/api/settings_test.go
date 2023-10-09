@@ -24,7 +24,7 @@ func TestGetSettingWithoutParam(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -32,7 +32,7 @@ func TestGetSettingWithoutParam(t *testing.T) {
 
 	h.GetSetting(c)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestGetSettingInactiveSetting(t *testing.T) {
@@ -40,8 +40,8 @@ func TestGetSettingInactiveSetting(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.AddParam("name", storage.SettingInactiveName)
-	s := &storage.MockTickerStorage{}
-	s.On("GetInactiveSetting").Return(storage.Setting{})
+	s := &storage.MockStorage{}
+	s.On("GetInactiveSettings").Return(storage.InactiveSettings{})
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -57,8 +57,8 @@ func TestGetSettingRefreshIntervalSetting(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	c.AddParam("name", storage.SettingRefreshInterval)
-	s := &storage.MockTickerStorage{}
-	s.On("GetRefreshIntervalSetting").Return(storage.Setting{})
+	s := &storage.MockStorage{}
+	s.On("GetRefreshIntervalSettings").Return(storage.RefreshIntervalSettings{})
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -76,7 +76,7 @@ func TestPutInactiveSettingsMissingBody(t *testing.T) {
 	body := `broken_json`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -91,13 +91,13 @@ func TestPutInactiveSettingsStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	setting := storage.DefaultInactiveSetting()
-	body, _ := json.Marshal(setting.Value)
+	setting := storage.DefaultInactiveSettings()
+	body, _ := json.Marshal(setting)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
-	s := &storage.MockTickerStorage{}
-	s.On("SaveInactiveSetting", mock.Anything).Return(errors.New("storage error"))
+	s := &storage.MockStorage{}
+	s.On("SaveInactiveSettings", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -112,14 +112,14 @@ func TestPutInactiveSettings(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	setting := storage.DefaultInactiveSetting()
-	body, _ := json.Marshal(setting.Value)
+	setting := storage.DefaultInactiveSettings()
+	body, _ := json.Marshal(setting)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
-	s := &storage.MockTickerStorage{}
-	s.On("SaveInactiveSetting", mock.Anything).Return(nil)
-	s.On("GetInactiveSetting").Return(setting)
+	s := &storage.MockStorage{}
+	s.On("SaveInactiveSettings", mock.Anything).Return(nil)
+	s.On("GetInactiveSettings").Return(setting)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -137,7 +137,7 @@ func TestPutRefreshIntervalSettingsMissingBody(t *testing.T) {
 	body := `broken_json`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 
-	s := &storage.MockTickerStorage{}
+	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -156,8 +156,8 @@ func TestPutRefreshIntervalSettingsStorageError(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
-	s := &storage.MockTickerStorage{}
-	s.On("SaveRefreshInterval", mock.Anything).Return(errors.New("storage error"))
+	s := &storage.MockStorage{}
+	s.On("SaveRefreshIntervalSettings", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -172,14 +172,14 @@ func TestPutRefreshIntervalSettings(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	setting := storage.DefaultRefreshIntervalSetting()
+	setting := storage.DefaultRefreshIntervalSettings()
 	body := `{"refresh_interval": 10000}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
-	s := &storage.MockTickerStorage{}
-	s.On("SaveRefreshInterval", mock.Anything).Return(nil)
-	s.On("GetRefreshIntervalSetting").Return(setting)
+	s := &storage.MockStorage{}
+	s.On("SaveRefreshIntervalSettings", mock.Anything).Return(nil)
+	s.On("GetRefreshIntervalSettings").Return(setting)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/logger"
 )
 
 var (
@@ -16,6 +17,8 @@ var (
 
 	configPath string
 	cfg        config.Config
+
+	log = logrus.New()
 
 	rootCmd = &cobra.Command{
 		Use:   "ticker",
@@ -41,16 +44,7 @@ func initConfig() {
 		}
 	}
 
-	lvl, err := log.ParseLevel(cfg.LogLevel)
-	if err != nil {
-		panic(err)
-	}
-	if cfg.LogFormat == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	} else {
-		log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	}
-	log.SetLevel(lvl)
+	log = logger.NewLogrus(cfg.LogLevel, cfg.LogFormat)
 }
 
 func Execute() {

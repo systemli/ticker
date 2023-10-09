@@ -2,7 +2,6 @@ module github.com/systemli/ticker
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.9.1
-	github.com/asdine/storm v2.1.2+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/size v0.0.0-20220102055520-f75bacbc2df3
@@ -20,6 +19,10 @@ require (
 	github.com/swaggo/swag v1.16.2
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	golang.org/x/crypto v0.14.0
+	gorm.io/driver/mysql v1.5.1
+	gorm.io/driver/postgres v1.5.2
+	gorm.io/driver/sqlite v1.5.3
+	gorm.io/gorm v1.25.4
 )
 
 require (
@@ -42,6 +45,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -50,6 +54,11 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.3.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
@@ -57,6 +66,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -86,16 +96,11 @@ require (
 )
 
 require (
-	github.com/DataDog/zstd v1.4.0 // indirect
-	github.com/Sereal/Sereal v0.0.0-20190606082811-cf1bab6c7a3a // indirect
 	github.com/goccy/go-json v0.10.2
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/feeds v1.1.1
 	github.com/mattn/go-mastodon v0.0.6
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.28.0
-	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
-	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/image v0.5.0 // indirect
 )
 

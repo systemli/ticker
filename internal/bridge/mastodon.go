@@ -50,7 +50,11 @@ func (mb *MastodonBridge) Send(ticker storage.Ticker, message *storage.Message) 
 		return err
 	}
 
-	message.Mastodon = *status
+	message.Mastodon = storage.MastodonMeta{
+		ID:  string(status.ID),
+		URI: status.URI,
+		URL: status.URL,
+	}
 
 	return nil
 }
@@ -67,7 +71,7 @@ func (mb *MastodonBridge) Delete(ticker storage.Ticker, message *storage.Message
 	ctx := context.Background()
 	client := client(ticker)
 
-	return client.DeleteStatus(ctx, message.Mastodon.ID)
+	return client.DeleteStatus(ctx, mastodon.ID(message.Mastodon.ID))
 }
 
 func client(ticker storage.Ticker) *mastodon.Client {
