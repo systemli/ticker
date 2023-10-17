@@ -49,6 +49,7 @@ func initConfig() {
 
 func Execute() {
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(dbCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

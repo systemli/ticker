@@ -5,7 +5,6 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/mattn/go-mastodon"
 	"github.com/stretchr/testify/assert"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
@@ -34,7 +33,7 @@ func TestTickersResponse(t *testing.T) {
 		Mastodon: storage.TickerMastodon{
 			Active: true,
 			Server: "https://example.com",
-			User: mastodon.Account{
+			User: storage.MastodonUser{
 				Username:    "example",
 				DisplayName: "Example",
 				Avatar:      "https://example.com/avatar.png",

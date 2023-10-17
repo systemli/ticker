@@ -2,9 +2,6 @@ package storage
 
 import (
 	"time"
-
-	"github.com/mattn/go-mastodon"
-	"gorm.io/gorm"
 )
 
 type Ticker struct {
@@ -18,8 +15,8 @@ type Ticker struct {
 	Information TickerInformation
 	Telegram    TickerTelegram
 	Mastodon    TickerMastodon
-	Location    TickerLocation
-	Users       []User `gorm:"many2many:user_tickers;"`
+	Location    TickerLocation `gorm:"embedded"`
+	Users       []User         `gorm:"many2many:user_tickers;"`
 }
 
 func NewTicker() Ticker {
@@ -71,13 +68,19 @@ type TickerMastodon struct {
 	ID          int `gorm:"primaryKey"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	TickerID    int              `gorm:"index"`
-	Active      bool             `json:"active"`
-	Server      string           `json:"server"`
-	Token       string           `json:"token"`
-	Secret      string           `json:"secret"`
-	AccessToken string           `json:"access_token"`
-	User        mastodon.Account `gorm:"type:json"`
+	TickerID    int          `gorm:"index"`
+	Active      bool         `json:"active"`
+	Server      string       `json:"server"`
+	Token       string       `json:"token"`
+	Secret      string       `json:"secret"`
+	AccessToken string       `json:"access_token"`
+	User        MastodonUser `gorm:"embedded"`
+}
+
+type MastodonUser struct {
+	Username    string
+	DisplayName string
+	Avatar      string
 }
 
 func (m *TickerMastodon) Connected() bool {
@@ -90,13 +93,14 @@ func (m *TickerMastodon) Reset() {
 	m.Token = ""
 	m.Secret = ""
 	m.AccessToken = ""
-	m.User = mastodon.Account{}
+	m.User = MastodonUser{}
 }
 
 type TickerLocation struct {
-	gorm.Model
-	ID       int `gorm:"primaryKey"`
-	TickerID int
-	Lat      float64
-	Lon      float64
+	ID        int `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TickerID  int
+	Lat       float64
+	Lon       float64
 }
