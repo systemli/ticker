@@ -376,7 +376,7 @@ func TestPutTickerTelegramStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := `{"active":true,"channel_name":"@channel_name"}`
+	body := `{"active":true,"channelName":"@channel_name"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -395,7 +395,7 @@ func TestPutTickerTelegram(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := `{"active":true,"channel_name":"@channel_name"}`
+	body := `{"active":true,"channelName":"@channel_name"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -491,7 +491,7 @@ func TestPutTickerMastodonConnectError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := `{"active":true,"server":"http://localhost","secret":"secret","token":"token","access_token":"access_token"}`
+	body := `{"active":true,"server":"http://localhost","secret":"secret","token":"token","accessToken":"access_token"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -516,7 +516,7 @@ func TestPutTickerMastodonStorageError(t *testing.T) {
 	defer server.Close()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
+	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","accessToken":"access_toklen"}`, server.URL)
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -541,7 +541,7 @@ func TestPutTickerMastodon(t *testing.T) {
 	defer server.Close()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
-	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","access_token":"access_toklen"}`, server.URL)
+	body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","accessToken":"access_toklen"}`, server.URL)
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}

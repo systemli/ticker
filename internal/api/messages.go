@@ -49,7 +49,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 
 	var body struct {
 		Text           string                    `json:"text" binding:"required"`
-		GeoInformation geojson.FeatureCollection `json:"geo_information"`
+		GeoInformation geojson.FeatureCollection `json:"geoInformation"`
 		Attachments    []int                     `json:"attachments"`
 	}
 	err = c.Bind(&body)

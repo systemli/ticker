@@ -267,7 +267,7 @@ func TestPutUserStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -288,7 +288,7 @@ func TestPutUserStorageError2(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -309,7 +309,7 @@ func TestPutUser(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","is_super_admin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -393,7 +393,7 @@ func TestDeleteUser(t *testing.T) {
 func TestPutMeUnauthenticated(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	json := `{"password":"password1234","new_password":"password5678"}`
+	json := `{"password":"password1234","newPassword":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -410,7 +410,7 @@ func TestPutMeFormError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
-	json := `{"wrongparameter":"password1234","new_password":"password5678"}`
+	json := `{"wrongparameter":"password1234","newPassword":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -427,7 +427,7 @@ func TestPutMeWrongPassword(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
-	json := `{"password":"wrongpassword","new_password":"password5678"}`
+	json := `{"password":"wrongpassword","newPassword":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -444,7 +444,7 @@ func TestPutMeStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
-	json := `{"password":"password1234","new_password":"password5678"}`
+	json := `{"password":"password1234","newPassword":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -461,7 +461,7 @@ func TestPutMeOk(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, EncryptedPassword: "$2a$10$3rj/kzMI7gKPoBtJFG55tuzA.RQGYqbYQdM69LPyU.2YkGbkRu.T2"})
-	json := `{"password":"password1234","new_password":"password5678"}`
+	json := `{"password":"password1234","newPassword":"password5678"}`
 	c.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}

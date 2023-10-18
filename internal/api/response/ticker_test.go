@@ -55,7 +55,7 @@ func TestTickersResponse(t *testing.T) {
 
 	assert.Equal(t, 1, len(tickerResponse))
 	assert.Equal(t, ticker.ID, tickerResponse[0].ID)
-	assert.Equal(t, ticker.CreatedAt, tickerResponse[0].CreationDate)
+	assert.Equal(t, ticker.CreatedAt, tickerResponse[0].CreatedAt)
 	assert.Equal(t, ticker.Domain, tickerResponse[0].Domain)
 	assert.Equal(t, ticker.Title, tickerResponse[0].Title)
 	assert.Equal(t, ticker.Description, tickerResponse[0].Description)

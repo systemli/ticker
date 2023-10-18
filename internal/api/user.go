@@ -42,7 +42,7 @@ func (h *handler) PostUser(c *gin.Context) {
 	var body struct {
 		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
 		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
-		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
+		IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
 		Tickers      []int  `json:"tickers,omitempty"`
 	}
 
@@ -88,7 +88,7 @@ func (h *handler) PutUser(c *gin.Context) {
 	var body struct {
 		Email        string `json:"email,omitempty" validate:"email"`
 		Password     string `json:"password,omitempty" validate:"min=10"`
-		IsSuperAdmin bool   `json:"is_super_admin,omitempty"`
+		IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
 		Tickers      []int  `json:"tickers,omitempty"`
 	}
 
@@ -161,7 +161,7 @@ func (h *handler) PutMe(c *gin.Context) {
 
 	var body struct {
 		Password    string `json:"password" binding:"required"`
-		NewPassword string `json:"new_password" binding:"required" validate:"min=10"`
+		NewPassword string `json:"newPassword" binding:"required" validate:"min=10"`
 	}
 
 	err = c.Bind(&body)

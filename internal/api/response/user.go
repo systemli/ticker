@@ -8,16 +8,16 @@ import (
 
 type User struct {
 	ID           int       `json:"id"`
-	CreationDate time.Time `json:"creation_date"`
+	CreatedAt    time.Time `json:"createdAt"`
 	Email        string    `json:"email"`
 	Role         string    `json:"role"`
-	IsSuperAdmin bool      `json:"is_super_admin"`
+	IsSuperAdmin bool      `json:"isSuperAdmin"`
 }
 
 func UserResponse(user storage.User) User {
 	return User{
 		ID:           user.ID,
-		CreationDate: user.CreatedAt,
+		CreatedAt:    user.CreatedAt,
 		Email:        user.Email,
 		IsSuperAdmin: user.IsSuperAdmin,
 	}

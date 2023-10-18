@@ -12,9 +12,9 @@ type Timeline []TimelineEntry
 
 type TimelineEntry struct {
 	ID             int                 `json:"id"`
-	CreationDate   time.Time           `json:"creation_date"`
+	CreatedAt      time.Time           `json:"createdAt"`
 	Text           string              `json:"text"`
-	GeoInformation string              `json:"geo_information"`
+	GeoInformation string              `json:"geoInformation"`
 	Attachments    []MessageAttachment `json:"attachments"`
 }
 
@@ -36,7 +36,7 @@ func TimelineResponse(messages []storage.Message, config config.Config) []Timeli
 
 		timeline = append(timeline, TimelineEntry{
 			ID:             message.ID,
-			CreationDate:   message.CreatedAt,
+			CreatedAt:      message.CreatedAt,
 			Text:           message.Text,
 			GeoInformation: string(m),
 			Attachments:    attachments,

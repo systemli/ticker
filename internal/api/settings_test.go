@@ -152,7 +152,7 @@ func TestPutRefreshIntervalSettingsStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-	body := `{"refresh_interval": 10000}`
+	body := `{"refreshInterval": 10000}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
@@ -173,7 +173,7 @@ func TestPutRefreshIntervalSettings(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	setting := storage.DefaultRefreshIntervalSettings()
-	body := `{"refresh_interval": 10000}`
+	body := `{"refreshInterval": 10000}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(body))
 	c.Request.Header.Add("Content-Type", "application/json")
 
