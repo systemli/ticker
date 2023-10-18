@@ -10,12 +10,12 @@ import (
 
 type Message struct {
 	ID             int                 `json:"id"`
-	CreationDate   time.Time           `json:"creation_date"`
+	CreatedAt      time.Time           `json:"createdAt"`
 	Text           string              `json:"text"`
 	Ticker         int                 `json:"ticker"`
-	TelegramURL    string              `json:"telegram_url,omitempty"`
-	MastodonURL    string              `json:"mastodon_url,omitempty"`
-	GeoInformation string              `json:"geo_information"`
+	TelegramURL    string              `json:"telegramUrl,omitempty"`
+	MastodonURL    string              `json:"mastodonUrl,omitempty"`
+	GeoInformation string              `json:"geoInformation"`
 	Attachments    []MessageAttachment `json:"attachments"`
 }
 
@@ -35,7 +35,7 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 
 	return Message{
 		ID:             message.ID,
-		CreationDate:   message.CreatedAt,
+		CreatedAt:      message.CreatedAt,
 		Text:           message.Text,
 		Ticker:         message.TickerID,
 		TelegramURL:    message.TelegramURL(),

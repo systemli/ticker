@@ -50,9 +50,9 @@ type TickerTelegram struct {
 	ID          int `gorm:"primaryKey"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	TickerID    int    `gorm:"index"`
-	Active      bool   `json:"active"`
-	ChannelName string `json:"channel_name"`
+	TickerID    int `gorm:"index"`
+	Active      bool
+	ChannelName string
 }
 
 func (tg *TickerTelegram) Reset() {
@@ -68,12 +68,12 @@ type TickerMastodon struct {
 	ID          int `gorm:"primaryKey"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	TickerID    int          `gorm:"index"`
-	Active      bool         `json:"active"`
-	Server      string       `json:"server"`
-	Token       string       `json:"token"`
-	Secret      string       `json:"secret"`
-	AccessToken string       `json:"access_token"`
+	TickerID    int `gorm:"index"`
+	Active      bool
+	Server      string
+	Token       string
+	Secret      string
+	AccessToken string
 	User        MastodonUser `gorm:"embedded"`
 }
 

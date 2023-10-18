@@ -25,7 +25,7 @@ type Setting struct {
 
 type InactiveSettings struct {
 	Headline    string `json:"headline" binding:"required"`
-	SubHeadline string `json:"sub_headline" binding:"required"`
+	SubHeadline string `json:"subHeadline" binding:"required"`
 	Description string `json:"description" binding:"required"`
 	Author      string `json:"author" binding:"required"`
 	Email       string `json:"email" binding:"required"`
@@ -34,7 +34,7 @@ type InactiveSettings struct {
 }
 
 type RefreshIntervalSettings struct {
-	RefreshInterval int `json:"refresh_interval" binding:"required"`
+	RefreshInterval int `json:"refreshInterval" binding:"required"`
 }
 
 func DefaultRefreshIntervalSettings() RefreshIntervalSettings {

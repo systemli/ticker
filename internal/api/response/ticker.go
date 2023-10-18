@@ -8,16 +8,16 @@ import (
 )
 
 type Ticker struct {
-	ID           int         `json:"id"`
-	CreationDate time.Time   `json:"creation_date"`
-	Domain       string      `json:"domain"`
-	Title        string      `json:"title"`
-	Description  string      `json:"description"`
-	Active       bool        `json:"active"`
-	Information  Information `json:"information"`
-	Telegram     Telegram    `json:"telegram"`
-	Mastodon     Mastodon    `json:"mastodon"`
-	Location     Location    `json:"location"`
+	ID          int         `json:"id"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	Domain      string      `json:"domain"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	Active      bool        `json:"active"`
+	Information Information `json:"information"`
+	Telegram    Telegram    `json:"telegram"`
+	Mastodon    Mastodon    `json:"mastodon"`
+	Location    Location    `json:"location"`
 }
 
 type Information struct {
@@ -32,8 +32,8 @@ type Information struct {
 type Telegram struct {
 	Active      bool   `json:"active"`
 	Connected   bool   `json:"connected"`
-	BotUsername string `json:"bot_username"`
-	ChannelName string `json:"channel_name"`
+	BotUsername string `json:"botUsername"`
+	ChannelName string `json:"channelName"`
 }
 
 type Mastodon struct {
@@ -41,9 +41,9 @@ type Mastodon struct {
 	Connected   bool   `json:"connected"`
 	Name        string `json:"name"`
 	Server      string `json:"server"`
-	ScreenName  string `json:"screen_name"`
+	ScreenName  string `json:"screenName"`
 	Description string `json:"description"`
-	ImageURL    string `json:"image_url"`
+	ImageURL    string `json:"imageUrl"`
 }
 
 type Location struct {
@@ -53,12 +53,12 @@ type Location struct {
 
 func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 	return Ticker{
-		ID:           t.ID,
-		CreationDate: t.CreatedAt,
-		Domain:       t.Domain,
-		Title:        t.Title,
-		Description:  t.Description,
-		Active:       t.Active,
+		ID:          t.ID,
+		CreatedAt:   t.CreatedAt,
+		Domain:      t.Domain,
+		Title:       t.Title,
+		Description: t.Description,
+		Active:      t.Active,
 		Information: Information{
 			Author:   t.Information.Author,
 			URL:      t.Information.URL,

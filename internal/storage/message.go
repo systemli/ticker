@@ -29,9 +29,9 @@ type TelegramMeta struct {
 }
 
 type MastodonMeta struct {
-	ID  string `json:"id"`
-	URI string `json:"uri"`
-	URL string `json:"url"`
+	ID  string
+	URI string
+	URL string
 }
 
 type Attachment struct {

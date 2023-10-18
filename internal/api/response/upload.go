@@ -8,20 +8,20 @@ import (
 )
 
 type Upload struct {
-	ID           int       `json:"id"`
-	UUID         string    `json:"uuid"`
-	CreationDate time.Time `json:"creation_date"`
-	URL          string    `json:"url"`
-	ContentType  string    `json:"content_type"`
+	ID          int       `json:"id"`
+	UUID        string    `json:"uuid"`
+	CreatedAt   time.Time `json:"createdAt"`
+	URL         string    `json:"url"`
+	ContentType string    `json:"contentType"`
 }
 
 func UploadResponse(upload storage.Upload, config config.Config) Upload {
 	return Upload{
-		ID:           upload.ID,
-		UUID:         upload.UUID,
-		CreationDate: upload.CreatedAt,
-		URL:          upload.URL(config.UploadURL),
-		ContentType:  upload.ContentType,
+		ID:          upload.ID,
+		UUID:        upload.UUID,
+		CreatedAt:   upload.CreatedAt,
+		URL:         upload.URL(config.UploadURL),
+		ContentType: upload.ContentType,
 	}
 }
 

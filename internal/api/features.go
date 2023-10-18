@@ -12,7 +12,7 @@ type FeaturesResponse map[string]bool
 
 func NewFeaturesResponse(config config.Config) FeaturesResponse {
 	return FeaturesResponse{
-		"telegram_enabled": config.TelegramEnabled(),
+		"telegramEnabled": config.TelegramEnabled(),
 	}
 }
 
