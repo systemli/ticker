@@ -37,6 +37,6 @@ func (h *handler) GetInit(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config), "settings": settings}
+	data := map[string]interface{}{"ticker": response.InitTickerResponse(ticker), "settings": settings}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
