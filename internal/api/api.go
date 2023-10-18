@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,11 @@ import (
 	"github.com/systemli/ticker/internal/api/middleware/me"
 	"github.com/systemli/ticker/internal/api/middleware/message"
 	"github.com/systemli/ticker/internal/api/middleware/prometheus"
+	"github.com/systemli/ticker/internal/api/middleware/response_cache"
 	"github.com/systemli/ticker/internal/api/middleware/ticker"
 	"github.com/systemli/ticker/internal/api/middleware/user"
 	"github.com/systemli/ticker/internal/bridge"
+	"github.com/systemli/ticker/internal/cache"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -47,6 +50,10 @@ func API(config config.Config, storage storage.Storage, log *logrus.Logger) *gin
 		storage: storage,
 		bridges: bridge.RegisterBridges(config, storage),
 	}
+
+	// TOOD: Make this configurable via config file
+	cacheTtl := 30 * time.Second
+	inMemoryCache := cache.NewCache(5 * time.Minute)
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -107,9 +114,9 @@ func API(config config.Config, storage storage.Storage, log *logrus.Logger) *gin
 	{
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
 
-		public.GET(`/init`, handler.GetInit)
-		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(storage), handler.GetTimeline)
-		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(storage), handler.GetFeed)
+		public.GET(`/init`, response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetInit))
+		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(storage), response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetTimeline))
+		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(storage), response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetFeed))
 	}
 
 	r.GET(`/media/:fileName`, handler.GetMedia)
