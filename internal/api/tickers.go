@@ -205,7 +205,11 @@ func (h *handler) PutTickerMastodon(c *gin.Context) {
 		ticker.Mastodon.Secret = body.Secret
 		ticker.Mastodon.Token = body.Token
 		ticker.Mastodon.AccessToken = body.AccessToken
-		ticker.Mastodon.User = *account
+		ticker.Mastodon.User = storage.MastodonUser{
+			Username:    account.Username,
+			Avatar:      account.Avatar,
+			DisplayName: account.DisplayName,
+		}
 	}
 
 	ticker.Mastodon.Active = body.Active

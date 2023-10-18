@@ -204,6 +204,23 @@ var _ = Describe("SqlStorage", func() {
 		})
 	})
 
+	Describe("AddTickerUser", func() {
+		It("adds the user to the ticker", func() {
+			ticker := NewTicker()
+			err := storage.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+			err = storage.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = storage.AddTickerUser(&ticker, &user)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker.Users).To(HaveLen(1))
+		})
+	})
+
 	Describe("FindTickers", func() {
 		It("returns all tickers", func() {
 			tickers, err := storage.FindTickers()

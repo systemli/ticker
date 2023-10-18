@@ -12,12 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/systemli/ticker/internal/api"
 	"github.com/systemli/ticker/internal/config"
-	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 var (
@@ -44,37 +39,12 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			var dialector gorm.Dialector
-			switch cfg.Database.Type {
-			case "sqlite":
-				dialector = sqlite.Open(cfg.Database.DSN)
-			case "mysql":
-				dialector = mysql.Open(cfg.Database.DSN)
-			case "postgres":
-				dialector = postgres.Open(cfg.Database.DSN)
-			default:
-				log.Fatalf("unknown database type %s", cfg.Database.Type)
-			}
-
-			db, err := gorm.Open(dialector, &gorm.Config{
-				Logger: logger.NewGormLogger(log),
-			})
+			db, err := storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
 			if err != nil {
 				log.WithError(err).Fatal("could not connect to database")
 			}
 			store := storage.NewSqlStorage(db, cfg.UploadPath)
-			err = db.AutoMigrate(
-				&storage.Attachment{},
-				&storage.Message{},
-				&storage.Setting{},
-				&storage.Ticker{},
-				&storage.TickerInformation{},
-				&storage.TickerMastodon{},
-				&storage.TickerTelegram{},
-				&storage.Upload{},
-				&storage.User{},
-			)
-			if err != nil {
+			if err := storage.MigrateDB(db); err != nil {
 				log.WithError(err).Fatal("could not migrate database")
 			}
 

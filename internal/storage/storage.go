@@ -17,6 +17,7 @@ type Storage interface {
 	SaveUser(user *User) error
 	DeleteUser(user User) error
 	DeleteTickerUser(ticker *Ticker, user *User) error
+	AddTickerUser(ticker *Ticker, user *User) error
 	FindTickers() ([]Ticker, error)
 	FindTickersByIDs(ids []int) ([]Ticker, error)
 	FindTickerByDomain(domain string) (Ticker, error)

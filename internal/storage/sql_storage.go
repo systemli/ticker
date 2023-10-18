@@ -78,6 +78,12 @@ func (s *SqlStorage) DeleteTickerUser(ticker *Ticker, user *User) error {
 	return err
 }
 
+func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
+	err := s.db.Model(ticker).Association("Users").Append(user)
+
+	return err
+}
+
 func (s *SqlStorage) FindTickers() ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
 	err := s.db.Find(&tickers).Error
