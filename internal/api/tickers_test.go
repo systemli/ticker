@@ -762,7 +762,26 @@ func TestResetTickerStorageError(t *testing.T) {
 
 	h.ResetTicker(c)
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestResetTickerStorageError2(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("ticker", storage.Ticker{})
+	s := &storage.MockStorage{}
+	s.On("DeleteMessages", mock.Anything).Return(errors.New("storage error"))
+	s.On("DeleteUploadsByTicker", mock.Anything).Return(errors.New("storage error"))
+	s.On("SaveTicker", mock.Anything).Return(nil)
+	s.On("DeleteTickerUsers", mock.Anything).Return(errors.New("storage error"))
+	h := handler{
+		storage: s,
+		config:  config.NewConfig(),
+	}
+
+	h.ResetTicker(c)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestResetTicker(t *testing.T) {
@@ -773,6 +792,7 @@ func TestResetTicker(t *testing.T) {
 	s.On("DeleteMessages", mock.Anything).Return(nil)
 	s.On("DeleteUploadsByTicker", mock.Anything).Return(nil)
 	s.On("SaveTicker", mock.Anything).Return(nil)
+	s.On("DeleteTickerUsers", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),

@@ -309,7 +309,13 @@ func (h *handler) ResetTicker(c *gin.Context) {
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	err = h.storage.DeleteTickerUsers(&ticker)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 

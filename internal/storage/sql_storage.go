@@ -72,6 +72,12 @@ func (s *SqlStorage) DeleteUser(user User) error {
 	return s.db.Delete(&user).Error
 }
 
+func (s *SqlStorage) DeleteTickerUsers(ticker *Ticker) error {
+	err := s.db.Model(ticker).Association("Users").Clear()
+
+	return err
+}
+
 func (s *SqlStorage) DeleteTickerUser(ticker *Ticker, user *User) error {
 	err := s.db.Model(ticker).Association("Users").Delete(user)
 
