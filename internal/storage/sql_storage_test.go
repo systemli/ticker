@@ -19,7 +19,7 @@ func TestSqlStorage(t *testing.T) {
 }
 
 var _ = Describe("SqlStorage", func() {
-	db, err := gorm.Open(sqlite.Open("ticker.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("file:testdatabase?mode=memory&cache=shared"), &gorm.Config{})
 	Expect(err).ToNot(HaveOccurred())
 
 	var storage = NewSqlStorage(db, "/uploads")
