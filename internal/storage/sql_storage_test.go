@@ -178,6 +178,35 @@ var _ = Describe("SqlStorage", func() {
 		})
 	})
 
+	Describe("DeleteTickerUsers", func() {
+		It("deletes the users from the ticker", func() {
+			ticker := NewTicker()
+			err := storage.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+			err = storage.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker.Users = append(ticker.Users, user)
+			err = storage.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			var count int64
+			err = db.Model(&User{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(1)))
+
+			err = storage.DeleteTickerUsers(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker.Users).To(BeEmpty())
+
+			count = db.Model(ticker).Association("Users").Count()
+			Expect(count).To(Equal(int64(0)))
+		})
+	})
+
 	Describe("DeleteTickerUser", func() {
 		It("deletes the user from the ticker", func() {
 			ticker := NewTicker()
