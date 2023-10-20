@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/storage"
 )
 
 // GetInit returns the basic settings for the ticker.
@@ -30,7 +31,7 @@ func (h *handler) GetInit(c *gin.Context) {
 		return
 	}
 
-	ticker, err := h.storage.FindTickerByDomain(domain)
+	ticker, err := h.storage.FindTickerByDomain(domain, storage.WithInformation())
 	if err != nil || !ticker.Active {
 		settings.InactiveSettings = h.storage.GetInactiveSettings()
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))

@@ -21,7 +21,7 @@ func TestGetInit(t *testing.T) {
 	ticker.Active = true
 	s := &storage.MockStorage{}
 	s.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
-	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
+	s.On("FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything).Return(ticker, nil)
 
 	h := handler{
 		storage: s,
@@ -60,7 +60,7 @@ func TestGetInitInactiveTicker(t *testing.T) {
 	s := &storage.MockStorage{}
 	s.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
 	s.On("GetInactiveSettings").Return(storage.DefaultInactiveSettings())
-	s.On("FindTickerByDomain", mock.AnythingOfType("string")).Return(ticker, nil)
+	s.On("FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything).Return(ticker, nil)
 
 	h := handler{
 		storage: s,
