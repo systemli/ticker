@@ -6,6 +6,7 @@ import (
 
 	"github.com/systemli/ticker/internal/api/pagination"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SqlStorage struct {
@@ -92,14 +93,14 @@ func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
 
 func (s *SqlStorage) FindTickers() ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
-	err := s.db.Find(&tickers).Error
+	err := s.db.Preload(clause.Associations).Find(&tickers).Error
 
 	return tickers, err
 }
 
 func (s *SqlStorage) FindTickersByIDs(ids []int) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
-	err := s.db.Find(&tickers, ids).Error
+	err := s.db.Preload(clause.Associations).Find(&tickers, ids).Error
 
 	return tickers, err
 }
@@ -107,7 +108,7 @@ func (s *SqlStorage) FindTickersByIDs(ids []int) ([]Ticker, error) {
 func (s *SqlStorage) FindTickerByDomain(domain string) (Ticker, error) {
 	var ticker Ticker
 
-	err := s.db.First(&ticker, "domain = ?", domain).Error
+	err := s.db.Preload(clause.Associations).First(&ticker, "domain = ?", domain).Error
 
 	return ticker, err
 }
@@ -115,7 +116,7 @@ func (s *SqlStorage) FindTickerByDomain(domain string) (Ticker, error) {
 func (s *SqlStorage) FindTickerByID(id int) (Ticker, error) {
 	var ticker Ticker
 
-	err := s.db.First(&ticker, id).Error
+	err := s.db.Preload(clause.Associations).First(&ticker, id).Error
 
 	return ticker, err
 }
@@ -189,21 +190,21 @@ func (s *SqlStorage) DeleteUploadsByTicker(ticker Ticker) error {
 func (s *SqlStorage) FindMessage(tickerID, messageID int) (Message, error) {
 	var message Message
 
-	err := s.db.First(&message, "ticker_id = ? AND id = ?", tickerID, messageID).Error
+	err := s.db.Preload(clause.Associations).First(&message, "ticker_id = ? AND id = ?", tickerID, messageID).Error
 
 	return message, err
 }
 
 func (s *SqlStorage) FindMessagesByTicker(ticker Ticker) ([]Message, error) {
 	messages := make([]Message, 0)
-	err := s.db.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Find(&messages).Error
+	err := s.db.Preload(clause.Associations).Model(&Message{}).Where("ticker_id = ?", ticker.ID).Find(&messages).Error
 
 	return messages, err
 }
 
 func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
 	messages := make([]Message, 0)
-	query := s.db.Where("ticker_id = ?", ticker.ID)
+	query := s.db.Preload(clause.Associations).Where("ticker_id = ?", ticker.ID)
 
 	if pagination.GetBefore() > 0 {
 		query = query.Where("id < ?", pagination.GetBefore())
