@@ -96,7 +96,7 @@ func CachePage(cache *cache.Cache, expires time.Duration, handle gin.HandlerFunc
 			v := value.(responseCache)
 			for k, values := range v.Header {
 				for _, value := range values {
-					c.Writer.Header().Add(k, value)
+					c.Writer.Header().Set(k, value)
 				}
 			}
 			c.Writer.WriteHeader(v.Status)
