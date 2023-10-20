@@ -34,7 +34,7 @@ func TestPrefetchMessageStorageError(t *testing.T) {
 	c.AddParam("messageID", "1")
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
+	s.On("FindMessage", mock.Anything, mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
 	mw := PrefetchMessage(s)
 
 	mw(c)
@@ -49,7 +49,7 @@ func TestPrefetchMessage(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
 	message := storage.Message{ID: 1}
-	s.On("FindMessage", mock.Anything, mock.Anything).Return(message, nil)
+	s.On("FindMessage", mock.Anything, mock.Anything, mock.Anything).Return(message, nil)
 	mw := PrefetchMessage(s)
 
 	mw(c)

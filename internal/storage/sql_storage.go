@@ -91,32 +91,36 @@ func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
 	return err
 }
 
-func (s *SqlStorage) FindTickers() ([]Ticker, error) {
+func (s *SqlStorage) FindTickers(opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
-	err := s.db.Preload(clause.Associations).Find(&tickers).Error
+	db := s.prepareDb(opts...)
+	err := db.Find(&tickers).Error
 
 	return tickers, err
 }
 
-func (s *SqlStorage) FindTickersByIDs(ids []int) ([]Ticker, error) {
+func (s *SqlStorage) FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
-	err := s.db.Preload(clause.Associations).Find(&tickers, ids).Error
+	db := s.prepareDb(opts...)
+	err := db.Find(&tickers, ids).Error
 
 	return tickers, err
 }
 
-func (s *SqlStorage) FindTickerByDomain(domain string) (Ticker, error) {
+func (s *SqlStorage) FindTickerByDomain(domain string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
 	var ticker Ticker
+	db := s.prepareDb(opts...)
 
-	err := s.db.Preload(clause.Associations).First(&ticker, "domain = ?", domain).Error
+	err := db.First(&ticker, "domain = ?", domain).Error
 
 	return ticker, err
 }
 
-func (s *SqlStorage) FindTickerByID(id int) (Ticker, error) {
+func (s *SqlStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
 	var ticker Ticker
+	db := s.prepareDb(opts...)
 
-	err := s.db.Preload(clause.Associations).First(&ticker, id).Error
+	err := db.First(&ticker, id).Error
 
 	return ticker, err
 }
@@ -191,24 +195,28 @@ func (s *SqlStorage) DeleteUploadsByTicker(ticker Ticker) error {
 	return nil
 }
 
-func (s *SqlStorage) FindMessage(tickerID, messageID int) (Message, error) {
+func (s *SqlStorage) FindMessage(tickerID, messageID int, opts ...func(*gorm.DB) *gorm.DB) (Message, error) {
 	var message Message
+	db := s.prepareDb(opts...)
 
-	err := s.db.Preload(clause.Associations).First(&message, "ticker_id = ? AND id = ?", tickerID, messageID).Error
+	err := db.First(&message, "ticker_id = ? AND id = ?", tickerID, messageID).Error
 
 	return message, err
 }
 
-func (s *SqlStorage) FindMessagesByTicker(ticker Ticker) ([]Message, error) {
+func (s *SqlStorage) FindMessagesByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error) {
 	messages := make([]Message, 0)
-	err := s.db.Preload(clause.Associations).Model(&Message{}).Where("ticker_id = ?", ticker.ID).Find(&messages).Error
+	db := s.prepareDb(opts...)
+
+	err := db.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Find(&messages).Error
 
 	return messages, err
 }
 
-func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination) ([]Message, error) {
+func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error) {
 	messages := make([]Message, 0)
-	query := s.db.Preload(clause.Associations).Where("ticker_id = ?", ticker.ID)
+	db := s.prepareDb(opts...)
+	query := db.Where("ticker_id = ?", ticker.ID)
 
 	if pagination.GetBefore() > 0 {
 		query = query.Where("id < ?", pagination.GetBefore())
@@ -296,4 +304,33 @@ func (s *SqlStorage) SaveRefreshIntervalSettings(refreshInterval RefreshInterval
 	setting.Value = string(value)
 
 	return s.db.Save(&setting).Error
+}
+
+func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
+	db := s.db
+	for _, opt := range opts {
+		db = opt(db)
+	}
+
+	return db
+}
+
+// WithPreload is a helper function to preload all associations.
+func WithPreload() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload(clause.Associations)
+	}
+}
+
+// WithAttachments is a helper function to preload the attachments association.
+func WithAttachments() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Attachments")
+	}
+}
+
+func WithInformation() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Information")
+	}
 }

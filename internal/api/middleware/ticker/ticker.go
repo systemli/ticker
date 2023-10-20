@@ -9,9 +9,10 @@ import (
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
 	"github.com/systemli/ticker/internal/util"
+	"gorm.io/gorm"
 )
 
-func PrefetchTicker(s storage.Storage) gin.HandlerFunc {
+func PrefetchTicker(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := helper.Me(c)
 		tickerID, err := strconv.Atoi(c.Param("tickerID"))
@@ -31,7 +32,7 @@ func PrefetchTicker(s storage.Storage) gin.HandlerFunc {
 			}
 		}
 
-		ticker, err := s.FindTickerByID(tickerID)
+		ticker, err := s.FindTickerByID(tickerID, opts...)
 
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
@@ -42,7 +43,7 @@ func PrefetchTicker(s storage.Storage) gin.HandlerFunc {
 	}
 }
 
-func PrefetchTickerFromRequest(s storage.Storage) gin.HandlerFunc {
+func PrefetchTickerFromRequest(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		domain, err := helper.GetDomain(c)
 		if err != nil {
@@ -50,7 +51,7 @@ func PrefetchTickerFromRequest(s storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		ticker, err := s.FindTickerByDomain(domain)
+		ticker, err := s.FindTickerByDomain(domain, opts...)
 		if err != nil {
 			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 			return

@@ -20,7 +20,7 @@ func PrefetchMessage(s storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		message, err := s.FindMessage(ticker.ID, messageID)
+		message, err := s.FindMessage(ticker.ID, messageID, storage.WithAttachments())
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.MessageNotFound))
 			return

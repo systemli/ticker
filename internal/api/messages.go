@@ -19,7 +19,7 @@ func (h *handler) GetMessages(c *gin.Context) {
 	}
 
 	pagination := pagination.NewPagination(c)
-	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
+	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination, storage.WithAttachments())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return

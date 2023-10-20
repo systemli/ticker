@@ -8,7 +8,7 @@ type Ticker struct {
 	ID          int `gorm:"primaryKey"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Domain      string `gorm:"unique"`
+	Domain      string `gorm:"unique,index"`
 	Title       string
 	Description string
 	Active      bool

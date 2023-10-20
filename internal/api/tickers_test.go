@@ -40,7 +40,7 @@ func TestGetTickersStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockStorage{}
-	s.On("FindTickers").Return([]storage.Ticker{}, errors.New("storage error"))
+	s.On("FindTickers", mock.Anything).Return([]storage.Ticker{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -56,7 +56,7 @@ func TestGetTickers(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []storage.Ticker{{ID: 2}}})
 	s := &storage.MockStorage{}
-	s.On("FindTickersByIDs", mock.Anything).Return([]storage.Ticker{}, nil)
+	s.On("FindTickersByIDs", mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -115,7 +115,7 @@ func TestGetTickerUsers(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
-	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
+	s.On("FindUsersByTicker", mock.Anything, mock.Anything).Return([]storage.User{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
