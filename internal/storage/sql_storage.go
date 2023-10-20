@@ -122,7 +122,11 @@ func (s *SqlStorage) FindTickerByID(id int) (Ticker, error) {
 }
 
 func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
-	return s.db.Save(ticker).Error
+	if ticker.ID == 0 {
+		return s.db.Create(ticker).Error
+	}
+
+	return s.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(ticker).Error
 }
 
 func (s *SqlStorage) DeleteTicker(ticker Ticker) error {
