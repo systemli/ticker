@@ -51,8 +51,6 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 		bridges: bridge.RegisterBridges(config, store),
 	}
 
-	// TOOD: Make this configurable via config file
-	cacheTtl := 30 * time.Second
 	inMemoryCache := cache.NewCache(5 * time.Minute)
 
 	gin.SetMode(gin.ReleaseMode)
@@ -114,9 +112,9 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 	{
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
 
-		public.GET(`/init`, response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetInit))
-		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetTimeline))
-		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, cacheTtl, handler.GetFeed))
+		public.GET(`/init`, response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetInit))
+		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
+		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
 	}
 
 	r.GET(`/media/:fileName`, handler.GetMedia)
