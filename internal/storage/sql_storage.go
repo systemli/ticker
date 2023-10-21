@@ -10,27 +10,27 @@ import (
 )
 
 type SqlStorage struct {
-	db         *gorm.DB
+	DB         *gorm.DB
 	uploadPath string
 }
 
 func NewSqlStorage(db *gorm.DB, uploadPath string) *SqlStorage {
 	return &SqlStorage{
-		db:         db,
+		DB:         db,
 		uploadPath: uploadPath,
 	}
 }
 
 func (s *SqlStorage) CountUser() (int, error) {
 	var count int64
-	err := s.db.Model(&User{}).Count(&count).Error
+	err := s.DB.Model(&User{}).Count(&count).Error
 
 	return int(count), err
 }
 
 func (s *SqlStorage) FindUsers() ([]User, error) {
 	users := make([]User, 0)
-	err := s.db.Find(&users).Error
+	err := s.DB.Find(&users).Error
 
 	return users, err
 }
@@ -38,21 +38,21 @@ func (s *SqlStorage) FindUsers() ([]User, error) {
 func (s *SqlStorage) FindUserByID(id int) (User, error) {
 	var user User
 
-	err := s.db.First(&user, id).Error
+	err := s.DB.First(&user, id).Error
 
 	return user, err
 }
 
 func (s *SqlStorage) FindUsersByIDs(ids []int) ([]User, error) {
 	users := make([]User, 0)
-	err := s.db.Find(&users, ids).Error
+	err := s.DB.Find(&users, ids).Error
 
 	return users, err
 }
 
 func (s *SqlStorage) FindUsersByTicker(ticker Ticker) ([]User, error) {
 	users := make([]User, 0)
-	err := s.db.Model(&ticker).Association("Users").Find(&users)
+	err := s.DB.Model(&ticker).Association("Users").Find(&users)
 
 	return users, err
 }
@@ -60,33 +60,33 @@ func (s *SqlStorage) FindUsersByTicker(ticker Ticker) ([]User, error) {
 func (s *SqlStorage) FindUserByEmail(email string) (User, error) {
 	var user User
 
-	err := s.db.First(&user, "email = ?", email).Error
+	err := s.DB.First(&user, "email = ?", email).Error
 
 	return user, err
 }
 
 func (s *SqlStorage) SaveUser(user *User) error {
-	return s.db.Save(user).Error
+	return s.DB.Save(user).Error
 }
 
 func (s *SqlStorage) DeleteUser(user User) error {
-	return s.db.Delete(&user).Error
+	return s.DB.Delete(&user).Error
 }
 
 func (s *SqlStorage) DeleteTickerUsers(ticker *Ticker) error {
-	err := s.db.Model(ticker).Association("Users").Clear()
+	err := s.DB.Model(ticker).Association("Users").Clear()
 
 	return err
 }
 
 func (s *SqlStorage) DeleteTickerUser(ticker *Ticker, user *User) error {
-	err := s.db.Model(ticker).Association("Users").Delete(user)
+	err := s.DB.Model(ticker).Association("Users").Delete(user)
 
 	return err
 }
 
 func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
-	err := s.db.Model(ticker).Association("Users").Append(user)
+	err := s.DB.Model(ticker).Association("Users").Append(user)
 
 	return err
 }
@@ -127,27 +127,27 @@ func (s *SqlStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ti
 
 func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
 	if ticker.ID == 0 {
-		return s.db.Create(ticker).Error
+		return s.DB.Create(ticker).Error
 	}
 
-	return s.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(ticker).Error
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(ticker).Error
 }
 
 func (s *SqlStorage) DeleteTicker(ticker Ticker) error {
-	return s.db.Delete(&ticker).Error
+	return s.DB.Delete(&ticker).Error
 }
 
 func (s *SqlStorage) FindUploadByUUID(uuid string) (Upload, error) {
 	var upload Upload
 
-	err := s.db.First(&upload, "uuid = ?", uuid).Error
+	err := s.DB.First(&upload, "uuid = ?", uuid).Error
 
 	return upload, err
 }
 
 func (s *SqlStorage) FindUploadsByIDs(ids []int) ([]Upload, error) {
 	uploads := make([]Upload, 0)
-	err := s.db.Find(&uploads, ids).Error
+	err := s.DB.Find(&uploads, ids).Error
 
 	return uploads, err
 }
@@ -157,7 +157,7 @@ func (s *SqlStorage) UploadPath() string {
 }
 
 func (s *SqlStorage) SaveUpload(upload *Upload) error {
-	return s.db.Save(upload).Error
+	return s.DB.Save(upload).Error
 }
 
 func (s *SqlStorage) DeleteUpload(upload Upload) error {
@@ -167,7 +167,7 @@ func (s *SqlStorage) DeleteUpload(upload Upload) error {
 		log.WithError(err).WithField("upload", upload).Error("failed to delete upload file")
 	}
 
-	if err = s.db.Delete(&upload).Error; err != nil {
+	if err = s.DB.Delete(&upload).Error; err != nil {
 		log.WithError(err).WithField("upload", upload).Error("failed to delete upload from database")
 	}
 
@@ -184,7 +184,7 @@ func (s *SqlStorage) DeleteUploads(uploads []Upload) {
 
 func (s *SqlStorage) DeleteUploadsByTicker(ticker Ticker) error {
 	uploads := make([]Upload, 0)
-	s.db.Model(&Upload{}).Where("ticker_id = ?", ticker.ID).Find(&uploads)
+	s.DB.Model(&Upload{}).Where("ticker_id = ?", ticker.ID).Find(&uploads)
 
 	for _, upload := range uploads {
 		if err := s.DeleteUpload(upload); err != nil {
@@ -229,12 +229,12 @@ func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination
 }
 
 func (s *SqlStorage) SaveMessage(message *Message) error {
-	return s.db.Save(message).Error
+	return s.DB.Save(message).Error
 }
 
 func (s *SqlStorage) DeleteMessage(message Message) error {
 	var err error
-	err = s.db.Delete(&message).Error
+	err = s.DB.Delete(&message).Error
 	if err != nil {
 		return err
 	}
@@ -248,26 +248,26 @@ func (s *SqlStorage) DeleteMessage(message Message) error {
 
 func (s *SqlStorage) DeleteMessages(ticker Ticker) error {
 	var msgIds []int
-	err := s.db.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Pluck("id", &msgIds).Error
+	err := s.DB.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Pluck("id", &msgIds).Error
 	if err != nil {
 		return err
 	}
 
-	err = s.db.Where("message_id IN ?", msgIds).Delete(&Attachment{}).Error
+	err = s.DB.Where("message_id IN ?", msgIds).Delete(&Attachment{}).Error
 	if err != nil {
 		return err
 	}
 
-	return s.db.Where("ticker_id = ?", ticker.ID).Delete(&Message{}).Error
+	return s.DB.Where("ticker_id = ?", ticker.ID).Delete(&Message{}).Error
 }
 
 func (s *SqlStorage) DeleteAttachmentsByMessage(message Message) error {
-	return s.db.Where("message_id = ?", message.ID).Delete(&Attachment{}).Error
+	return s.DB.Where("message_id = ?", message.ID).Delete(&Attachment{}).Error
 }
 
 func (s *SqlStorage) GetInactiveSettings() InactiveSettings {
 	var setting Setting
-	err := s.db.First(&setting, "name = ?", SettingInactiveName).Error
+	err := s.DB.First(&setting, "name = ?", SettingInactiveName).Error
 	if err != nil {
 		return DefaultInactiveSettings()
 	}
@@ -283,7 +283,7 @@ func (s *SqlStorage) GetInactiveSettings() InactiveSettings {
 
 func (s *SqlStorage) GetRefreshIntervalSettings() RefreshIntervalSettings {
 	var setting Setting
-	err := s.db.First(&setting, "name = ?", SettingRefreshInterval).Error
+	err := s.DB.First(&setting, "name = ?", SettingRefreshInterval).Error
 	if err != nil {
 		return DefaultRefreshIntervalSettings()
 	}
@@ -299,7 +299,7 @@ func (s *SqlStorage) GetRefreshIntervalSettings() RefreshIntervalSettings {
 
 func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) error {
 	var setting Setting
-	err := s.db.First(&setting, "name = ?", SettingInactiveName).Error
+	err := s.DB.First(&setting, "name = ?", SettingInactiveName).Error
 	if err != nil {
 		setting = Setting{Name: SettingInactiveName}
 	}
@@ -310,12 +310,12 @@ func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) err
 	}
 	setting.Value = string(value)
 
-	return s.db.Save(&setting).Error
+	return s.DB.Save(&setting).Error
 }
 
 func (s *SqlStorage) SaveRefreshIntervalSettings(refreshInterval RefreshIntervalSettings) error {
 	var setting Setting
-	err := s.db.First(&setting, "name = ?", SettingRefreshInterval).Error
+	err := s.DB.First(&setting, "name = ?", SettingRefreshInterval).Error
 	if err != nil {
 		setting = Setting{Name: SettingRefreshInterval}
 	}
@@ -326,11 +326,11 @@ func (s *SqlStorage) SaveRefreshIntervalSettings(refreshInterval RefreshInterval
 	}
 	setting.Value = string(value)
 
-	return s.db.Save(&setting).Error
+	return s.DB.Save(&setting).Error
 }
 
 func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
-	db := s.db
+	db := s.DB
 	for _, opt := range opts {
 		db = opt(db)
 	}

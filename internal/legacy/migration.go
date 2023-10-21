@@ -7,11 +7,11 @@ import (
 )
 
 type Migration struct {
-	oldStorage LegacyStorage
-	newStorage storage.Storage
+	oldStorage *LegacyStorage
+	newStorage *storage.SqlStorage
 }
 
-func NewMigration(oldStorage LegacyStorage, newStorage storage.Storage) *Migration {
+func NewMigration(oldStorage *LegacyStorage, newStorage *storage.SqlStorage) *Migration {
 	return &Migration{
 		oldStorage: oldStorage,
 		newStorage: newStorage,
@@ -69,8 +69,8 @@ func (m *Migration) Do() error {
 			},
 		}
 
-		if err := m.newStorage.SaveTicker(&ticker); err != nil {
-			log.WithError(err).WithField("tickr_id", ticker.ID).Error("Unable to save ticker")
+		if err := m.newStorage.DB.Create(&ticker).Error; err != nil {
+			log.WithError(err).WithField("ticker_id", ticker.ID).Error("Unable to save ticker")
 		}
 
 		messages, err := m.oldStorage.FindMessageByTickerID(oldTicker.ID)
