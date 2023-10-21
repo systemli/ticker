@@ -51,6 +51,20 @@ func (_m *MockStorage) CountUser() (int, error) {
 	return r0, r1
 }
 
+// DeleteAttachmentsByMessage provides a mock function with given fields: message
+func (_m *MockStorage) DeleteAttachmentsByMessage(message Message) error {
+	ret := _m.Called(message)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(Message) error); ok {
+		r0 = rf(message)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteMessage provides a mock function with given fields: message
 func (_m *MockStorage) DeleteMessage(message Message) error {
 	ret := _m.Called(message)

@@ -708,6 +708,32 @@ var _ = Describe("SqlStorage", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(int64(0)))
 		})
+
+		It("deletes the message with attachments", func() {
+			message := NewMessage()
+			message.Attachments = []Attachment{
+				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
+			}
+
+			err = store.SaveMessage(&message)
+			Expect(err).ToNot(HaveOccurred())
+
+			var count int64
+			err = db.Model(&Message{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(1)))
+
+			err = store.DeleteMessage(message)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = db.Model(&Message{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(0)))
+
+			err = db.Model(&Attachment{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(0)))
+		})
 	})
 
 	Describe("DeleteMessages", func() {
@@ -718,6 +744,9 @@ var _ = Describe("SqlStorage", func() {
 
 			message := NewMessage()
 			message.TickerID = ticker.ID
+			message.Attachments = []Attachment{
+				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
+			}
 			err = store.SaveMessage(&message)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -730,6 +759,10 @@ var _ = Describe("SqlStorage", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			err = db.Model(&Message{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(0)))
+
+			err = db.Model(&Attachment{}).Count(&count).Error
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(int64(0)))
 		})

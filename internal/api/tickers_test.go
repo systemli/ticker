@@ -622,6 +622,7 @@ func TestDeleteTickerStorageError(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(errors.New("storage error"))
+	s.On("DeleteUploadsByTicker", mock.Anything).Return(errors.New("storage error"))
 	s.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
@@ -639,6 +640,7 @@ func TestDeleteTicker(t *testing.T) {
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
 	s.On("DeleteMessages", mock.Anything).Return(nil)
+	s.On("DeleteUploadsByTicker", mock.Anything).Return(nil)
 	s.On("DeleteTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
