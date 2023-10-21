@@ -346,28 +346,39 @@ var _ = Describe("SqlStorage", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(ticker).To(BeZero())
 
-			err = db.Create(&Ticker{Domain: "systemli.org"}).Error
+			ticker = Ticker{
+				Domain: "systemli.org",
+				Information: TickerInformation{
+					Author: "Author",
+				},
+			}
+			err = db.Create(&ticker).Error
 			Expect(err).ToNot(HaveOccurred())
 
 			ticker, err = store.FindTickerByDomain("systemli.org")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ticker).ToNot(BeZero())
+			Expect(ticker.Information.Author).To(Equal("Author"))
 		})
 
-		It("returns the ticker with the given domain and preload information", func() {
-			err = db.Create(&Ticker{
+		It("returns the ticker for the given domain with preload all associations", func() {
+			ticker = Ticker{
 				Domain: "systemli.org",
-				Information: TickerInformation{
-					Author: "Author",
+				Mastodon: TickerMastodon{
+					Active: true,
 				},
-			}).Error
+				Telegram: TickerTelegram{
+					Active: true,
+				},
+			}
+			err = db.Create(&ticker).Error
 			Expect(err).ToNot(HaveOccurred())
 
-			ticker, err := store.FindTickerByDomain("systemli.org", WithInformation())
+			ticker, err = store.FindTickerByDomain("systemli.org", WithPreload())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(ticker).ToNot(BeZero())
-
-			Expect(ticker.Information.Author).To(Equal("Author"))
+			Expect(ticker.Mastodon.Active).To(BeTrue())
+			Expect(ticker.Telegram.Active).To(BeTrue())
 		})
 	})
 
