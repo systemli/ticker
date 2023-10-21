@@ -9,8 +9,8 @@ type LegacyStorage struct {
 	db *storm.DB
 }
 
-func NewLegacyStorage(db *storm.DB) LegacyStorage {
-	return LegacyStorage{db: db}
+func NewLegacyStorage(db *storm.DB) *LegacyStorage {
+	return &LegacyStorage{db: db}
 }
 
 func (s *LegacyStorage) FindTickers() ([]Ticker, error) {
