@@ -12,7 +12,7 @@ type Ticker struct {
 	Title       string
 	Description string
 	Active      bool
-	Information TickerInformation
+	Information TickerInformation `gorm:"embedded"`
 	Telegram    TickerTelegram
 	Mastodon    TickerMastodon
 	Location    TickerLocation `gorm:"embedded"`
@@ -34,16 +34,12 @@ func (t *Ticker) Reset() {
 }
 
 type TickerInformation struct {
-	ID        int `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	TickerID  int
-	Author    string
-	URL       string
-	Email     string
-	Twitter   string
-	Facebook  string
-	Telegram  string
+	Author   string
+	URL      string
+	Email    string
+	Twitter  string
+	Facebook string
+	Telegram string
 }
 
 type TickerTelegram struct {
