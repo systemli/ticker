@@ -74,7 +74,7 @@ func TestGetTimelineMessageFetchError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{Active: true})
 	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
+	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 
 	h := handler{
 		storage: s,
@@ -92,7 +92,7 @@ func TestGetTimeline(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("ticker", storage.Ticker{})
 	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
+	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 
 	h := handler{
 		storage: s,

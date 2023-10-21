@@ -37,7 +37,7 @@ func (h *handler) GetTimeline(c *gin.Context) {
 	messages := make([]storage.Message, 0)
 	if ticker.Active {
 		pagination := pagination.NewPagination(c)
-		messages, err = h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
+		messages, err = h.storage.FindMessagesByTickerAndPagination(ticker, *pagination, storage.WithAttachments())
 		if err != nil {
 			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))
 			return
