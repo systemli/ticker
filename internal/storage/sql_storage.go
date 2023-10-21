@@ -233,13 +233,36 @@ func (s *SqlStorage) SaveMessage(message *Message) error {
 }
 
 func (s *SqlStorage) DeleteMessage(message Message) error {
-	return s.db.Delete(&message).Error
+	var err error
+	err = s.db.Delete(&message).Error
+	if err != nil {
+		return err
+	}
+
+	if len(message.Attachments) > 0 {
+		err = s.DeleteAttachmentsByMessage(message)
+	}
+
+	return err
 }
 
 func (s *SqlStorage) DeleteMessages(ticker Ticker) error {
-	err := s.db.Where("ticker_id = ?", ticker.ID).Delete(&Message{}).Error
+	var msgIds []int
+	err := s.db.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Pluck("id", &msgIds).Error
+	if err != nil {
+		return err
+	}
 
-	return err
+	err = s.db.Where("message_id IN ?", msgIds).Delete(&Attachment{}).Error
+	if err != nil {
+		return err
+	}
+
+	return s.db.Where("ticker_id = ?", ticker.ID).Delete(&Message{}).Error
+}
+
+func (s *SqlStorage) DeleteAttachmentsByMessage(message Message) error {
+	return s.db.Where("message_id = ?", message.ID).Delete(&Attachment{}).Error
 }
 
 func (s *SqlStorage) GetInactiveSettings() InactiveSettings {

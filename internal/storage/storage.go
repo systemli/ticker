@@ -27,6 +27,8 @@ type Storage interface {
 	SaveTicker(ticker *Ticker) error
 	DeleteTicker(ticker Ticker) error
 	SaveUpload(upload *Upload) error
+	FindUploadByUUID(uuid string) (Upload, error)
+	FindUploadsByIDs(ids []int) ([]Upload, error)
 	DeleteUpload(upload Upload) error
 	DeleteUploads(uploads []Upload)
 	DeleteUploadsByTicker(ticker Ticker) error
@@ -36,11 +38,10 @@ type Storage interface {
 	SaveMessage(message *Message) error
 	DeleteMessage(message Message) error
 	DeleteMessages(ticker Ticker) error
+	DeleteAttachmentsByMessage(message Message) error
 	GetInactiveSettings() InactiveSettings
 	GetRefreshIntervalSettings() RefreshIntervalSettings
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error
 	SaveRefreshIntervalSettings(refreshInterval RefreshIntervalSettings) error
-	FindUploadByUUID(uuid string) (Upload, error)
-	FindUploadsByIDs(ids []int) ([]Upload, error)
 	UploadPath() string
 }

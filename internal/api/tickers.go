@@ -252,6 +252,10 @@ func (h *handler) DeleteTicker(c *gin.Context) {
 	if err != nil {
 		log.WithError(err).Error("failed to delete message for ticker")
 	}
+	err = h.storage.DeleteUploadsByTicker(ticker)
+	if err != nil {
+		log.WithError(err).Error("failed to delete uploads for ticker")
+	}
 	err = h.storage.DeleteTicker(ticker)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.StorageError))
