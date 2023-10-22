@@ -11,16 +11,16 @@ import (
 type Timeline []TimelineEntry
 
 type TimelineEntry struct {
-	ID             int                 `json:"id"`
-	CreatedAt      time.Time           `json:"createdAt"`
-	Text           string              `json:"text"`
-	GeoInformation string              `json:"geoInformation"`
-	Attachments    []MessageAttachment `json:"attachments"`
+	ID             int          `json:"id"`
+	CreatedAt      time.Time    `json:"createdAt"`
+	Text           string       `json:"text"`
+	GeoInformation string       `json:"geoInformation"`
+	Attachments    []Attachment `json:"attachments"`
 }
 
 type Attachment struct {
 	URL         string `json:"url"`
-	ContentType string `json:"content_type"`
+	ContentType string `json:"contentType"`
 }
 
 func TimelineResponse(messages []storage.Message, config config.Config) []TimelineEntry {
@@ -28,10 +28,10 @@ func TimelineResponse(messages []storage.Message, config config.Config) []Timeli
 	for _, message := range messages {
 		m, _ := message.GeoInformation.MarshalJSON()
 
-		var attachments []MessageAttachment
+		var attachments []Attachment
 		for _, attachment := range message.Attachments {
 			name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-			attachments = append(attachments, MessageAttachment{URL: MediaURL(config.UploadURL, name), ContentType: attachment.ContentType})
+			attachments = append(attachments, Attachment{URL: MediaURL(config.UploadURL, name), ContentType: attachment.ContentType})
 		}
 
 		timeline = append(timeline, TimelineEntry{

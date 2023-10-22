@@ -21,7 +21,7 @@ type Message struct {
 
 type MessageAttachment struct {
 	URL         string `json:"url"`
-	ContentType string `json:"content_type"`
+	ContentType string `json:"contentType"`
 }
 
 func MessageResponse(message storage.Message, config config.Config) Message {
