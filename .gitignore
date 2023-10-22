@@ -1,7 +1,4 @@
 config.yml
-docs/docs.go
-docs/swagger.json
-docs/swagger.yaml
 dist/
 *.db
 site/
