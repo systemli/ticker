@@ -23,7 +23,7 @@ This repository contains the API for the [Systemli Ticker Project](https://www.s
 
 3. Check the API
 
-        curl http://localhost:8080/v1/health
+        curl http://localhost:8080/healthz
 
 ## Testing
 
