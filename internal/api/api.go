@@ -30,20 +30,6 @@ type handler struct {
 	bridges bridge.Bridges
 }
 
-// @title         Ticker API
-// @version       1.0
-// @description   Service to distribute short messages in support of events, demonstrations, or other time-sensitive events.
-
-// @contact.name  Systemli Admin Team
-// @contact.url   https://www.systemli.org/en/contact/
-// @contact.email admin@systemli.org
-
-// @license.name  GPLv3
-// @license.url   https://www.gnu.org/licenses/gpl-3.0.html
-
-// @host          localhost:8080
-// @BasePath      /v1
-
 func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.Engine {
 	handler := handler{
 		config:  config,
