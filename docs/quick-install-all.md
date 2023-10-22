@@ -16,27 +16,30 @@ Results may differ on other releases or distributions!
 - Public IPv4
 - Public IPv6 (Please!)
 
-### Getting Go:
-_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
+### Getting Go
 
-
+_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_
 
 Instead use:
  [golang.org install guide](https://golang.org/doc/install)
 
-
 Please be also aware, that it's best practice to build your version of "ticker" not on the production machine. In order to keep the hurdle as low as possible, we will build the app on the system we're going to run it.
 To enhance security maybe you want to remove `go` afterwards.
-### Getting NodeJS:
-_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
+
+### Getting NodeJS
+
+_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_
 
 Instead use:
  [nodesource/distributions](https://github.com/nodesource/distributions/blob/master/README.md#debinstall)
 
 ## Install ticker
-### Build from source:
+
+### Build from source
+
 _As mentioned above, this isn't best practice._
 __You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
+
 1. `cd /var/www/`
 The directory where we gonna install all the things
 2. `git clone https://github.com/systemli/ticker`
@@ -47,19 +50,19 @@ Go into the just cloned repository
 Build the application
 5. Go to "Configuration, Service and Stuff"
 
-### Downloading a release from GitHub:
+### Downloading a release from GitHub
 
-1. Go to https://github.com/systemli/ticker/releases
+1. Go to <https://github.com/systemli/ticker/releases>
 4. Pick the latest release and download it via `wget https://github.com/systemli/ticker/releases/download/<version>/ticker-<version>-<architecture>`
 5. `mv ticker-<version>-<architecture> /var/www/ticker/ticker`
 6. `chmod +x /var/www/ticker/ticker`
 7. Go to "Configuration, Service and Stuff"
 
-
 ### Configuration, Service and Stuff
 
 1. `vim config.yml`
 Fill your config file with the following content:
+
 ```yaml
 # listen binds ticker to specific address and port
 listen: "localhost:8080"
@@ -67,8 +70,10 @@ listen: "localhost:8080"
 log_level: "error"
 # initiator is the email for the first admin user (see password in logs)
 initiator: "<your e-mail>"
-# database is the path to the bolt file
-database: "ticker.db"
+# configuration for the database
+database:
+    type: "sqlite" # postgres, mysql, sqlite
+    dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "<your special little secret> (make it LOOOONG!)"
 # listen port for prometheus metrics exporter
@@ -78,16 +83,16 @@ upload_path: "uploads"
 # base url for uploaded assets
 upload_url: "https://api.domain.tld"
 ```
+
 2. Create a systemd Task (see [docs/ticker-api.service](assets/ticker-api.service) for reference)
 2. `systemctl enable ticker-api.service`
 3. `systemctl start ticker-api.service`
 4. If you enter `systemctl status ticker-api.service` you'll see the generated admin password. __Please change it immediately!__
 5. __Done. \o/__ You now have a fully functional ticker API.
 
-
 ## Exposing
-`vim /etc/nginx/sites-available/ticker-api`
 
+`vim /etc/nginx/sites-available/ticker-api`
 
 ```nginx.conf
 server {
@@ -109,10 +114,12 @@ Create a symlink to enable this config:
 Now run `nginx -t` to check if the config is correct.
 
 If your output looks like this:
+
 ```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx --redirect -d api.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
@@ -135,9 +142,11 @@ Go into the just cloned repository
 Install the dependencies
 5. `vim .env`
 Fill your .env file with the following content:
+
 ```.env
 REACT_APP_API_URL=https://api.domain.tld/v1
 ```
+
 _Change `api.domain.tld` to the URL you chose at ticker API server creation_
 
 7. `yarn build`
@@ -146,8 +155,8 @@ Build the application
 Sets the owner for the freshly created dist repository to your nginx user
 
 ### Exposing
-`vim /etc/nginx/sites-available/ticker-admin`
 
+`vim /etc/nginx/sites-available/ticker-admin`
 
 ```nginx.conf
 server {
@@ -169,10 +178,12 @@ Create a symlink to enable this config:
 Now run `nginx -t` to check if the config is correct.
 
 If your output looks like this:
+
 ```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx --redirect -d admin.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
@@ -184,7 +195,6 @@ It should generate a certificate after answering a few questions like a email ad
 done. This domain is now serving a ticker frontend. :)
 
 **You need to create the ticker in ticker-admin in order to see something!**
-
 
 ## Install ticker-frontend
 
@@ -200,9 +210,11 @@ Checkout this branch. _Hopefully, this won't be necessary in the future, but rig
 Install the dependencies
 5. `vim .env`
 Fill your .env file with the following content:
+
 ```.env
 REACT_APP_API_URL=https://api.domain.tld/v1
 ```
+
 _Change `api.domain.tld` to the URL you chose at ticker API server creation_
 
 7. `yarn build`
@@ -211,6 +223,7 @@ Build the application
 Sets the owner for the freshly created dist repository to your nginx user
 
 ### Exposing
+
 `vim /etc/nginx/sites-available/ticker-frontend`
 
 _The following config is for a single domain only! For wildcard configs, just replace the `sub.domain.tld` with a `*.domain.tld`. You need to validate your domain via DNS challenge or use another provider then Let's Encrypt!_
@@ -235,10 +248,12 @@ Create a symlink to enable this config:
 Now run `nginx -t` to check if the config is correct.
 
 If your output looks like this:
+
 ```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx --redirect -d sub.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
