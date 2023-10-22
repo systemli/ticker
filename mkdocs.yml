@@ -6,6 +6,7 @@ nav:
   - Home: index.md
   - Configuration: configuration.md
   - API: api.md
+  - Migration: migration.md
   - Quick Install Guide: quick-install.md
 
 theme:
