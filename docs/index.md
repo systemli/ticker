@@ -13,7 +13,7 @@ This repository contains the API for the [Systemli Ticker Project](https://www.s
 
 1. Clone the project
 
-        git clone <https://github.com/systemli/ticker.git>
+        git clone https://github.com/systemli/ticker.git
 
 2. Start the project
 
