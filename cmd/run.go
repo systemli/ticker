@@ -20,10 +20,7 @@ var (
 		Use:   "run",
 		Short: "Run the ticker",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Infof("starting ticker api on %s", cfg.Listen)
-			if GitCommit != "" && GitVersion != "" {
-				log.Infof("build info: %s (commit: %s)", GitVersion, GitCommit)
-			}
+			log.Infof("starting ticker (version: %s, commit: %s) on %s", version, commit, cfg.Listen)
 
 			go func() {
 				http.Handle("/metrics", promhttp.Handler())
