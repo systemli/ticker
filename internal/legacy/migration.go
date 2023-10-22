@@ -83,8 +83,8 @@ func (m *Migration) Do() error {
 			attachments := make([]storage.Attachment, 0)
 			for _, oldAttachment := range oldMessage.Attachments {
 				attachment := storage.Attachment{
-					CreatedAt:   time.Now(),
-					UpdatedAt:   time.Now(),
+					CreatedAt:   oldMessage.CreationDate,
+					UpdatedAt:   oldMessage.CreationDate,
 					MessageID:   oldMessage.ID,
 					UUID:        oldAttachment.UUID,
 					Extension:   oldAttachment.Extension,
@@ -172,6 +172,42 @@ func (m *Migration) Do() error {
 		if err := m.newStorage.DB.Create(&upload).Error; err != nil {
 			log.WithError(err).WithField("upload_id", upload.ID).Error("Unable to save upload")
 			continue
+		}
+	}
+
+	refreshIntervalSetting, err := m.oldStorage.FindSetting("refresh_interval")
+	if err != nil {
+		log.WithError(err).Warn("Unable to find refresh_interval setting")
+	} else {
+		var value int
+		switch refreshIntervalSetting.Value.(type) {
+		case float64:
+			value = int(refreshIntervalSetting.Value.(float64))
+		case int:
+			value = refreshIntervalSetting.Value.(int)
+		}
+		err = m.newStorage.SaveRefreshIntervalSettings(storage.RefreshIntervalSettings{
+			RefreshInterval: value,
+		})
+		if err != nil {
+			log.WithError(err).Error("Unable to save refresh_interval setting")
+		}
+	}
+
+	inactiveSettings, err := m.oldStorage.FindSetting("inactive_settings")
+	if err != nil {
+		log.WithError(err).Warn("Unable to find inactive_settings setting")
+	} else {
+		err = m.newStorage.SaveInactiveSettings(storage.InactiveSettings{
+			Headline:    inactiveSettings.Value.(map[string]interface{})["headline"].(string),
+			SubHeadline: inactiveSettings.Value.(map[string]interface{})["sub_headline"].(string),
+			Description: inactiveSettings.Value.(map[string]interface{})["description"].(string),
+			Author:      inactiveSettings.Value.(map[string]interface{})["author"].(string),
+			Email:       inactiveSettings.Value.(map[string]interface{})["email"].(string),
+			Twitter:     inactiveSettings.Value.(map[string]interface{})["twitter"].(string),
+		})
+		if err != nil {
+			log.WithError(err).Error("Unable to save inactive_settings setting")
 		}
 	}
 

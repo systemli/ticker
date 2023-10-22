@@ -52,3 +52,13 @@ func (s *LegacyStorage) FindMessageByTickerID(id int) ([]Message, error) {
 
 	return messages, err
 }
+
+func (s *LegacyStorage) FindSetting(name string) (Setting, error) {
+	var setting Setting
+	err := s.db.One("Name", name, &setting)
+	if err != nil && err.Error() == "not found" {
+		return setting, err
+	}
+
+	return setting, nil
+}
