@@ -13,7 +13,7 @@ type User struct {
 	Email             string `storm:"unique"`
 	EncryptedPassword string
 	IsSuperAdmin      bool
-	Tickers           []Ticker `gorm:"many2many:user_tickers;"`
+	Tickers           []Ticker `gorm:"many2many:ticker_users;"`
 }
 
 func NewUser(email, password string) (User, error) {

@@ -62,10 +62,8 @@ func (m *Migration) Do() error {
 				},
 			},
 			Location: storage.TickerLocation{
-				CreatedAt: oldTicker.CreationDate,
-				UpdatedAt: time.Now(),
-				Lat:       oldTicker.Location.Lat,
-				Lon:       oldTicker.Location.Lon,
+				Lat: oldTicker.Location.Lat,
+				Lon: oldTicker.Location.Lon,
 			},
 		}
 

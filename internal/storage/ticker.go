@@ -13,10 +13,10 @@ type Ticker struct {
 	Description string
 	Active      bool
 	Information TickerInformation `gorm:"embedded"`
+	Location    TickerLocation    `gorm:"embedded"`
 	Telegram    TickerTelegram
 	Mastodon    TickerMastodon
-	Location    TickerLocation `gorm:"embedded"`
-	Users       []User         `gorm:"many2many:user_tickers;"`
+	Users       []User `gorm:"many2many:ticker_users;"`
 }
 
 func NewTicker() Ticker {
@@ -93,10 +93,6 @@ func (m *TickerMastodon) Reset() {
 }
 
 type TickerLocation struct {
-	ID        int `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	TickerID  int
-	Lat       float64
-	Lon       float64
+	Lat float64
+	Lon float64
 }
