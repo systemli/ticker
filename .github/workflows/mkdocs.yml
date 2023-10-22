@@ -18,21 +18,6 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Cache Go Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Generate swagger files
-        run: |
-          go install github.com/swaggo/swag/cmd/swag@latest
-          swag init -g internal/api/api.go
-
       - name: Deploy Documentation
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
