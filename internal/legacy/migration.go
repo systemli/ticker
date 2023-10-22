@@ -111,7 +111,7 @@ func (m *Migration) Do() error {
 				},
 			}
 
-			if err := m.newStorage.SaveMessage(&message); err != nil {
+			if err := m.newStorage.DB.Create(&message).Error; err != nil {
 				log.WithError(err).WithField("message_id", message.ID).Error("Unable to save message")
 				continue
 			}
@@ -134,7 +134,7 @@ func (m *Migration) Do() error {
 			IsSuperAdmin:      oldUser.IsSuperAdmin,
 		}
 
-		if err := m.newStorage.SaveUser(&user); err != nil {
+		if err := m.newStorage.DB.Create(&user).Error; err != nil {
 			log.WithError(err).WithField("user_id", user.ID).Error("Unable to save user")
 			continue
 		}
@@ -169,7 +169,7 @@ func (m *Migration) Do() error {
 			ContentType: oldUpload.ContentType,
 		}
 
-		if err := m.newStorage.SaveUpload(&upload); err != nil {
+		if err := m.newStorage.DB.Create(&upload).Error; err != nil {
 			log.WithError(err).WithField("upload_id", upload.ID).Error("Unable to save upload")
 			continue
 		}
