@@ -12,9 +12,6 @@ import (
 )
 
 var (
-	GitCommit  string
-	GitVersion string
-
 	configPath string
 	cfg        config.Config
 
@@ -50,6 +47,7 @@ func initConfig() {
 func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(dbCmd)
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

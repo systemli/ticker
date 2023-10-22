@@ -12,12 +12,11 @@ builds:
       - "6"
       - "7"
     ldflags:
-      - "-s -w"
-      - "-X main.GitCommit={{ .Commit }}"
-      - "-X main.GitVersion={{ .Version }}"
+      - -s -w
+      - -X github.com/systemli/ticker/cmd.version={{.Version}}
+      - -X github.com/systemli/ticker/cmd.commit={{.Commit}}
 dockers:
-  -
-    goos: linux
+  - goos: linux
     goarch: amd64
     image_templates:
       - "systemli/ticker:{{ .Tag }}"
@@ -25,7 +24,7 @@ dockers:
       - "systemli/ticker:{{ .Major }}.{{ .Minor }}"
       - "systemli/ticker:latest"
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
