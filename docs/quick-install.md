@@ -6,7 +6,7 @@ We're assuming, that the ticker api will be available under the `api.domain.tld`
 
 __This should be considered a QUICK INSTALL GUIDE! Some best practices may differ.__
 
-## Requirements:
+## Requirements
 
 - `nginx`
 - certificate (`certbot` & `python3-certbot-nginx` to use free Let's Encrypt Certs)
@@ -15,9 +15,9 @@ __This should be considered a QUICK INSTALL GUIDE! Some best practices may diffe
 - Public IPv4
 - Public IPv6 (Please!)
 
-### Getting Go:
+### Getting Go
 
-_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_ 
+_Don't use the shipped version of your system, if you're working on a Debian based OS (Ubuntu, etc)_
 
 Instead use:
  [golang.org install guide](https://golang.org/doc/install)
@@ -27,7 +27,7 @@ To enhance security maybe you want to remove `go` afterwards.
 
 ## Installation
 
-### Build from source:
+### Build from source
 
 _As mentioned above, this isn't best practice._
 __You can also build it from source on your dedicated build server, your own pc at home, etc. Then just scp it over to the production Server afterwards.__
@@ -42,9 +42,9 @@ Go into the just cloned repository
 Build the application
 5. Go to "Configuration, Service and Stuff"
 
-### Downloading a release from GitHub:
+### Downloading a release from GitHub
 
-1. Go to https://github.com/systemli/ticker/releases
+1. Go to <https://github.com/systemli/ticker/releases>
 4. Pick the latest release and download it via `wget https://github.com/systemli/ticker/releases/download/<version>/ticker-<version>-<architecture>`
 5. `mv ticker-<version>-<architecture> /var/www/ticker/ticker`
 6. `chmod +x /var/www/ticker/ticker`
@@ -54,6 +54,7 @@ Build the application
 
 1. `vim config.yml`
 Fill your config file with the following content:
+
 ```yaml
 # listen binds ticker to specific address and port
 listen: "localhost:8080"
@@ -61,8 +62,10 @@ listen: "localhost:8080"
 log_level: "error"
 # initiator is the email for the first admin user (see password in logs)
 initiator: "<your e-mail>"
-# database is the path to the bolt file
-database: "ticker.db"
+# configuration for the database
+database:
+    type: "sqlite" # postgres, mysql, sqlite
+    dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "<your special little secret> (make it LOOOONG!)"
 # listen port for prometheus metrics exporter
@@ -72,6 +75,7 @@ upload_path: "uploads"
 # base url for uploaded assets
 upload_url: "https://api.domain.tld"
 ```
+
 2. Create a systemd Task (see [docs/ticker-api.service](assets/ticker-api.service) for reference)
 2. `systemctl enable ticker-api.service`
 3. `systemctl start ticker-api.service`
@@ -102,6 +106,7 @@ server {
 ```
 
 _This is an example config for using TLS/SSL without certbot:_
+
 ```ticker-api.secure.nginx.conf
 server {
     server_name api.domain.tld;
@@ -144,10 +149,12 @@ Create a symlink to enable this config:
 Now run `nginx -t` to check if the config is correct.
 
 If your output looks like this:
+
 ```
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
+
 then you can proceed. Otherwise: look for the error or ask someone to help.
 
 Run `certbot --nginx --redirect -d api.domain.tld` to get a free SSL certificate. _Please keep in mind, that you need to point the `A` & `AAAA` Records to your machine!_
