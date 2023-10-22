@@ -1,4 +1,5 @@
 ---
 tasks:
-  - init: go get && go test ./... && go build ./...
+  - before: cp config.yml.dist config.yml
+    init: go mod download
     command: go run . run
