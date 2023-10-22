@@ -9,8 +9,10 @@ log_level: "error"
 log_format: "json"
 # initiator is the email for the first admin user (see password in logs)
 initiator: "admin@systemli.org"
-# database is the path to the bolt file
-database: "ticker.db"
+# configuration for the database
+database:
+    type: "sqlite" # postgres, mysql, sqlite
+    dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
@@ -18,7 +20,7 @@ telegram_bot_token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files
-upload_path: "/path/to/uploads"
+upload_path: "uploads"
 # base url for uploaded assets
 upload_url: "http://localhost:8080"
 ```
@@ -30,12 +32,15 @@ upload_url: "http://localhost:8080"
 
 The following env vars can be used:
 
-* TICKER_DATABASE
-* TICKER_LISTEN
-* TICKER_LOG_LEVEL
-* TICKER_INITIATOR
-* TICKER_SECRET
-* TICKER_TELEGRAM_BOT_TOKEN
-* TICKER_METRICS_LISTEN
-* TICKER_UPLOAD_PATH
-* TICKER_UPLOAD_URL
+* `TICKER_LISTEN`
+* `TICKER_LOG_FORMAT`
+* `TICKER_LOG_LEVEL`
+* `TICKER_DATABASE_TYPE`
+* `TICKER_DATABASE_DSN`
+* `TICKER_LOG_LEVEL`
+* `TICKER_INITIATOR`
+* `TICKER_SECRET`
+* `TICKER_TELEGRAM_BOT_TOKEN`
+* `TICKER_METRICS_LISTEN`
+* `TICKER_UPLOAD_PATH`
+* `TICKER_UPLOAD_URL`

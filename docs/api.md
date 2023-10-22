@@ -1,6 +1,7 @@
 # API Specification
 
-!!! important
-    The Specification is work in progress at the moment. Inaccuracies or errors are possible.
+!!! Information
+
+    The API Specification only contains the public endpoints at the moment.
 
 !!swagger swagger.yaml!!

@@ -2,8 +2,7 @@
 
 **Service to distribute short messages in support of events, demonstrations, or other time-sensitive events.**
 
-This repository contains the API and storage for
-the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
+This repository contains the API for the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 
 !!! note "Requirements"
 
@@ -12,20 +11,19 @@ the [Systemli Ticker Project](https://www.systemli.org/en/service/ticker.html).
 
 ## First run
 
-- make sure you have pulled the repository
+1. Clone the project
 
-    ```shell
-    git clone git@github.com:systemli/ticker.git
-    ```
+        git clone <https://github.com/systemli/ticker.git>
 
-- start the ticker
+2. Start the project
 
-    ```shell
-    cp config.yml.dist config.yml
-    go run . run
-    ```
+        cd ticker
+        cp config.yml.dist config.yml
+        go run . run
 
-Now you have a running ticker API!
+3. Check the API
+
+        curl http://localhost:8080/v1/health
 
 ## Testing
 
