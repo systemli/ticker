@@ -15,7 +15,6 @@ type Config struct {
 	Listen           string   `mapstructure:"listen"`
 	LogLevel         string   `mapstructure:"log_level"`
 	LogFormat        string   `mapstructure:"log_format"`
-	Initiator        string   `mapstructure:"initiator"`
 	Secret           string   `mapstructure:"secret"`
 	Database         Database `mapstructure:"database"`
 	TelegramBotToken string   `mapstructure:"telegram_bot_token"`
@@ -39,7 +38,6 @@ func NewConfig() Config {
 		Listen:        ":8080",
 		LogLevel:      "debug",
 		LogFormat:     "json",
-		Initiator:     "admin@systemli.org",
 		Secret:        secret,
 		Database:      Database{Type: "sqlite", DSN: "ticker.db"},
 		MetricsListen: ":8181",
@@ -63,7 +61,6 @@ func LoadConfig(path string) Config {
 	viper.SetDefault("listen", c.Listen)
 	viper.SetDefault("log_level", c.LogLevel)
 	viper.SetDefault("log_format", c.LogFormat)
-	viper.SetDefault("initiator", c.Initiator)
 	viper.SetDefault("secret", c.Secret)
 	viper.SetDefault("database", c.Database)
 	viper.SetDefault("metrics_listen", c.MetricsListen)

@@ -8,11 +8,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sethvargo/go-password/password"
 	"github.com/spf13/cobra"
 	"github.com/systemli/ticker/internal/api"
-	"github.com/systemli/ticker/internal/config"
-	"github.com/systemli/ticker/internal/storage"
 )
 
 var (
@@ -36,22 +33,11 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			db, err := storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
-			if err != nil {
-				log.WithError(err).Fatal("could not connect to database")
-			}
-			store := storage.NewSqlStorage(db, cfg.UploadPath)
-			if err := storage.MigrateDB(db); err != nil {
-				log.WithError(err).Fatal("could not migrate database")
-			}
-
 			router := api.API(cfg, store, log)
 			server := &http.Server{
 				Addr:    cfg.Listen,
 				Handler: router,
 			}
-
-			firstRun(store, cfg)
 
 			go func() {
 				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -75,30 +61,3 @@ var (
 		},
 	}
 )
-
-func firstRun(store storage.Storage, config config.Config) {
-	count, err := store.CountUser()
-	if err != nil {
-		log.Fatal("error using database")
-	}
-
-	if count == 0 {
-		pw, err := password.Generate(24, 3, 3, false, false)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		user, err := storage.NewUser(config.Initiator, pw)
-		user.IsSuperAdmin = true
-		if err != nil {
-			log.Fatal("could not create first user")
-		}
-
-		err = store.SaveUser(&user)
-		if err != nil {
-			log.Fatal("could not persist first user")
-		}
-
-		log.WithField("email", user.Email).WithField("password", pw).Info("admin user created (change password now!)")
-	}
-}

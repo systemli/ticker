@@ -7,8 +7,6 @@ listen: "localhost:8080"
 log_level: "error"
 # log_format sets log format for logrus (default: json)
 log_format: "json"
-# initiator is the email for the first admin user (see password in logs)
-initiator: "admin@systemli.org"
 # configuration for the database
 database:
     type: "sqlite" # postgres, mysql, sqlite
