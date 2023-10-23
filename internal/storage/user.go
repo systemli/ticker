@@ -10,7 +10,7 @@ type User struct {
 	ID                int `gorm:"primaryKey"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
-	Email             string `storm:"unique"`
+	Email             string `gorm:"uniqueIndex;not null"`
 	EncryptedPassword string
 	IsSuperAdmin      bool
 	Tickers           []Ticker `gorm:"many2many:ticker_users;"`

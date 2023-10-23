@@ -25,6 +25,10 @@ This repository contains the API for the [Systemli Ticker Project](https://www.s
 
         curl http://localhost:8080/healthz
 
+4. Create a user
+
+        go run . user create --email <email-address> --password <password> --super-admin
+
 ## Testing
 
 ```shell

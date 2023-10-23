@@ -9,11 +9,15 @@ import (
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/logger"
+	"github.com/systemli/ticker/internal/storage"
+	"gorm.io/gorm"
 )
 
 var (
 	configPath string
 	cfg        config.Config
+	db         *gorm.DB
+	store      *storage.SqlStorage
 
 	log = logrus.New()
 
@@ -42,11 +46,22 @@ func initConfig() {
 	}
 
 	log = logger.NewLogrus(cfg.LogLevel, cfg.LogFormat)
+
+	var err error
+	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
+	if err != nil {
+		log.WithError(err).Fatal("could not connect to database")
+	}
+	store = storage.NewSqlStorage(db, cfg.UploadPath)
+	if err := storage.MigrateDB(db); err != nil {
+		log.WithError(err).Fatal("could not migrate database")
+	}
 }
 
 func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(dbCmd)
+	rootCmd.AddCommand(userCmd)
 	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
