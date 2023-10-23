@@ -21,13 +21,6 @@ func NewSqlStorage(db *gorm.DB, uploadPath string) *SqlStorage {
 	}
 }
 
-func (s *SqlStorage) CountUser() (int, error) {
-	var count int64
-	err := s.DB.Model(&User{}).Count(&count).Error
-
-	return int(count), err
-}
-
 func (s *SqlStorage) FindUsers() ([]User, error) {
 	users := make([]User, 0)
 	err := s.DB.Find(&users).Error

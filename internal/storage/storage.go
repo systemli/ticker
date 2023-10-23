@@ -9,7 +9,6 @@ import (
 var log = logrus.WithField("package", "storage")
 
 type Storage interface {
-	CountUser() (int, error)
 	FindUsers() ([]User, error)
 	FindUserByID(id int) (User, error)
 	FindUsersByIDs(ids []int) ([]User, error)

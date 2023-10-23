@@ -27,30 +27,6 @@ func (_m *MockStorage) AddTickerUser(ticker *Ticker, user *User) error {
 	return r0
 }
 
-// CountUser provides a mock function with given fields:
-func (_m *MockStorage) CountUser() (int, error) {
-	ret := _m.Called()
-
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (int, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() int); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteAttachmentsByMessage provides a mock function with given fields: message
 func (_m *MockStorage) DeleteAttachmentsByMessage(message Message) error {
 	ret := _m.Called(message)

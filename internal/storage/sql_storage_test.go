@@ -46,16 +46,6 @@ var _ = Describe("SqlStorage", func() {
 		db.Exec("DELETE FROM uploads")
 	})
 
-	Describe("CountUser", func() {
-		It("returns the number of users", func() {
-			Expect(store.CountUser()).To(Equal(0))
-
-			err := db.Create(&User{}).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(store.CountUser()).To(Equal(1))
-		})
-	})
-
 	Describe("FindUsers", func() {
 		It("returns all users", func() {
 			users, err := store.FindUsers()
