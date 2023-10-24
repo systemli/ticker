@@ -269,7 +269,11 @@ func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination
 }
 
 func (s *SqlStorage) SaveMessage(message *Message) error {
-	return s.DB.Save(message).Error
+	if message.ID == 0 {
+		return s.DB.Create(message).Error
+	}
+
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(message).Error
 }
 
 func (s *SqlStorage) DeleteMessage(message Message) error {
