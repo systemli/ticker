@@ -28,26 +28,13 @@ func TestPrefetchTickerParamMissing(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPrefetchTickerNoPermission(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.AddParam("tickerID", "1")
-	c.Set("me", storage.User{IsSuperAdmin: false, Tickers: []storage.Ticker{{ID: 2}}})
-	s := &storage.MockStorage{}
-	mw := PrefetchTicker(s)
-
-	mw(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
 func TestPrefetchTickerStorageError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("tickerID", "1")
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("storage error"))
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything, mock.Anything).Return(storage.Ticker{}, errors.New("storage error"))
 	mw := PrefetchTicker(s)
 
 	mw(c)
@@ -62,7 +49,7 @@ func TestPrefetchTicker(t *testing.T) {
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockStorage{}
 	ticker := storage.Ticker{ID: 1}
-	s.On("FindTickerByID", mock.Anything).Return(ticker, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything, mock.Anything).Return(ticker, nil)
 	mw := PrefetchTicker(s)
 
 	mw(c)

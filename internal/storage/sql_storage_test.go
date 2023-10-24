@@ -361,6 +361,82 @@ var _ = Describe("SqlStorage", func() {
 		})
 	})
 
+	Describe("FindTickersByUser", func() {
+		var user = User{
+			Email:        "user@systemli.org",
+			IsSuperAdmin: false,
+		}
+		var admin User = User{
+			Email:        "admin@systemli.org",
+			IsSuperAdmin: true,
+		}
+		var ticker Ticker = Ticker{
+			Users: []User{user},
+		}
+
+		BeforeEach(func() {
+			Expect(db.Create(&user).Error).ToNot(HaveOccurred())
+			Expect(db.Create(&admin).Error).ToNot(HaveOccurred())
+			Expect(db.Create(&ticker).Error).ToNot(HaveOccurred())
+		})
+
+		It("returns all tickers for admins", func() {
+			tickers, err := store.FindTickersByUser(admin)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tickers).To(HaveLen(1))
+		})
+
+		It("returns all tickers for users", func() {
+			tickers, err := store.FindTickersByUser(user)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tickers).To(HaveLen(1))
+		})
+
+		It("returns no tickers for users", func() {
+			tickers, err := store.FindTickersByUser(User{ID: 2})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(tickers).To(BeEmpty())
+		})
+	})
+
+	Describe("FindTickerByUserAndID", func() {
+		var user = User{
+			Email:        "user@systemli.org",
+			IsSuperAdmin: false,
+		}
+		var admin = User{
+			Email:        "admin@systemli.org",
+			IsSuperAdmin: true,
+		}
+		var ticker = Ticker{
+			Users: []User{user},
+		}
+
+		BeforeEach(func() {
+			Expect(db.Create(&user).Error).ToNot(HaveOccurred())
+			Expect(db.Create(&admin).Error).ToNot(HaveOccurred())
+			Expect(db.Create(&ticker).Error).ToNot(HaveOccurred())
+		})
+
+		It("returns the ticker for admins", func() {
+			ticker, err := store.FindTickerByUserAndID(admin, ticker.ID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker).ToNot(BeZero())
+		})
+
+		It("returns the ticker for users", func() {
+			ticker, err := store.FindTickerByUserAndID(user, ticker.ID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker).ToNot(BeZero())
+		})
+
+		It("returns no ticker for users", func() {
+			ticker, err := store.FindTickerByUserAndID(User{ID: 2}, ticker.ID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker).To(BeZero())
+		})
+	})
+
 	Describe("FindTickersByIDs", func() {
 		It("returns the tickers with the given ids", func() {
 			tickers, err := store.FindTickersByIDs([]int{1, 2})

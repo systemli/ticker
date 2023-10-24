@@ -8,7 +8,6 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
-	"github.com/systemli/ticker/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -21,19 +20,7 @@ func PrefetchTicker(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.Hand
 			return
 		}
 
-		if !user.IsSuperAdmin {
-			var tickerIDs []int
-			for _, t := range user.Tickers {
-				tickerIDs = append(tickerIDs, t.ID)
-			}
-			if !util.Contains(tickerIDs, tickerID) {
-				c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-				return
-			}
-		}
-
-		ticker, err := s.FindTickerByID(tickerID, opts...)
-
+		ticker, err := s.FindTickerByUserAndID(user, tickerID, opts...)
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.TickerNotFound))
 			return
