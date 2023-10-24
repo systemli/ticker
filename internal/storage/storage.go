@@ -9,11 +9,11 @@ import (
 var log = logrus.WithField("package", "storage")
 
 type Storage interface {
-	FindUsers() ([]User, error)
-	FindUserByID(id int) (User, error)
-	FindUsersByIDs(ids []int) ([]User, error)
-	FindUserByEmail(email string) (User, error)
-	FindUsersByTicker(ticker Ticker) ([]User, error)
+	FindUsers(opts ...func(*gorm.DB) *gorm.DB) ([]User, error)
+	FindUserByID(id int, opts ...func(*gorm.DB) *gorm.DB) (User, error)
+	FindUsersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]User, error)
+	FindUserByEmail(email string, opts ...func(*gorm.DB) *gorm.DB) (User, error)
+	FindUsersByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]User, error)
 	SaveUser(user *User) error
 	DeleteUser(user User) error
 	DeleteTickerUsers(ticker *Ticker) error

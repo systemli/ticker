@@ -11,7 +11,7 @@ import (
 
 func (h *handler) GetUsers(c *gin.Context) {
 	//TODO: Discuss need of Pagination
-	users, err := h.storage.FindUsers()
+	users, err := h.storage.FindUsers(storage.WithTickers())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
@@ -86,10 +86,10 @@ func (h *handler) PutUser(c *gin.Context) {
 	}
 
 	var body struct {
-		Email        string `json:"email,omitempty" validate:"email"`
-		Password     string `json:"password,omitempty" validate:"min=10"`
-		IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
-		Tickers      []int  `json:"tickers,omitempty"`
+		Email        string           `json:"email,omitempty" validate:"email"`
+		Password     string           `json:"password,omitempty" validate:"min=10"`
+		IsSuperAdmin bool             `json:"isSuperAdmin,omitempty"`
+		Tickers      []storage.Ticker `json:"tickers,omitempty"`
 	}
 
 	err = c.Bind(&body)
@@ -104,20 +104,11 @@ func (h *handler) PutUser(c *gin.Context) {
 	if body.Password != "" {
 		user.UpdatePassword(body.Password)
 	}
+	user.Tickers = body.Tickers
 
 	// You only can set/unset other users SuperAdmin property
 	if me.ID != user.ID {
 		user.IsSuperAdmin = body.IsSuperAdmin
-	}
-
-	if body.Tickers != nil {
-		tickers, err := h.storage.FindTickersByIDs(body.Tickers)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
-			return
-		}
-
-		user.Tickers = tickers
 	}
 
 	err = h.storage.SaveUser(&user)

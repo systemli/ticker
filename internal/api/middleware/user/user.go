@@ -17,7 +17,7 @@ func PrefetchUser(s storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		user, err := s.FindUserByID(userID)
+		user, err := s.FindUserByID(userID, storage.WithTickers())
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UserNotFound))
 			return

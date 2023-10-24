@@ -21,45 +21,58 @@ func NewSqlStorage(db *gorm.DB, uploadPath string) *SqlStorage {
 	}
 }
 
-func (s *SqlStorage) FindUsers() ([]User, error) {
+func (s *SqlStorage) FindUsers(opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
 	users := make([]User, 0)
-	err := s.DB.Find(&users).Error
+	db := s.prepareDb(opts...)
+	err := db.Find(&users).Error
 
 	return users, err
 }
 
-func (s *SqlStorage) FindUserByID(id int) (User, error) {
+func (s *SqlStorage) FindUserByID(id int, opts ...func(*gorm.DB) *gorm.DB) (User, error) {
 	var user User
-
-	err := s.DB.First(&user, id).Error
+	db := s.prepareDb(opts...)
+	err := db.First(&user, id).Error
 
 	return user, err
 }
 
-func (s *SqlStorage) FindUsersByIDs(ids []int) ([]User, error) {
+func (s *SqlStorage) FindUsersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
 	users := make([]User, 0)
-	err := s.DB.Find(&users, ids).Error
+	db := s.prepareDb(opts...)
+	err := db.Find(&users, ids).Error
 
 	return users, err
 }
 
-func (s *SqlStorage) FindUsersByTicker(ticker Ticker) ([]User, error) {
+func (s *SqlStorage) FindUsersByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
 	users := make([]User, 0)
-	err := s.DB.Model(&ticker).Association("Users").Find(&users)
+	db := s.prepareDb(opts...)
+	err := db.Model(&ticker).Association("Users").Find(&users)
 
 	return users, err
 }
 
-func (s *SqlStorage) FindUserByEmail(email string) (User, error) {
+func (s *SqlStorage) FindUserByEmail(email string, opts ...func(*gorm.DB) *gorm.DB) (User, error) {
 	var user User
-
-	err := s.DB.First(&user, "email = ?", email).Error
+	db := s.prepareDb(opts...)
+	err := db.First(&user, "email = ?", email).Error
 
 	return user, err
 }
 
 func (s *SqlStorage) SaveUser(user *User) error {
-	return s.DB.Save(user).Error
+	if user.ID == 0 {
+		return s.DB.Create(user).Error
+	}
+
+	// Replace all Tickers associations
+	err := s.DB.Model(user).Association("Tickers").Replace(user.Tickers)
+	if err != nil {
+		log.WithError(err).WithField("user_id", user.ID).Error("failed to replace user tickers")
+	}
+
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(user).Error
 }
 
 func (s *SqlStorage) DeleteUser(user User) error {
@@ -342,5 +355,12 @@ func WithPreload() func(*gorm.DB) *gorm.DB {
 func WithAttachments() func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Preload("Attachments")
+	}
+}
+
+// WithTickers is a helper function to preload the tickers association.
+func WithTickers() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Preload("Tickers")
 	}
 }
