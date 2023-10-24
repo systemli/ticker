@@ -23,7 +23,7 @@ func TestGetUsersStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockStorage{}
-	s.On("FindUsers").Return([]storage.User{}, errors.New("storage error"))
+	s.On("FindUsers", mock.Anything).Return([]storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -39,7 +39,7 @@ func TestGetUsers(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{IsSuperAdmin: true})
 	s := &storage.MockStorage{}
-	s.On("FindUsers").Return([]storage.User{}, nil)
+	s.On("FindUsers", mock.Anything).Return([]storage.User{}, nil)
 
 	h := handler{
 		storage: s,
@@ -89,7 +89,7 @@ func TestGetUserStorageError(t *testing.T) {
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 
 	s := &storage.MockStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
+	s.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -267,7 +267,7 @@ func TestPutUserStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[{"id":1}]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -288,7 +288,7 @@ func TestPutUserStorageError2(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[{"id":1}]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}
@@ -309,7 +309,7 @@ func TestPutUser(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
 	c.Set("user", storage.User{})
-	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[1]}`
+	json := `{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[{"id":1}]}`
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(json))
 	c.Request.Header.Add("Content-Type", "application/json")
 	s := &storage.MockStorage{}

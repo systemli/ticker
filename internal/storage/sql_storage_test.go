@@ -59,6 +59,22 @@ var _ = Describe("SqlStorage", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(users).To(HaveLen(1))
 		})
+
+		It("returns all users with preloaded tickers", func() {
+			var ticker Ticker
+			err = db.Create(&ticker).Error
+			Expect(err).ToNot(HaveOccurred())
+
+			err = db.Create(&User{
+				Tickers: []Ticker{ticker},
+			}).Error
+			Expect(err).ToNot(HaveOccurred())
+
+			users, err := store.FindUsers(WithTickers())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(users).To(HaveLen(1))
+			Expect(users[0].Tickers).To(HaveLen(1))
+		})
 	})
 
 	Describe("FindUserByID", func() {
@@ -143,6 +159,81 @@ var _ = Describe("SqlStorage", func() {
 			err = db.Model(&User{}).Count(&count).Error
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(int64(1)))
+		})
+
+		It("persists the user with tickers", func() {
+			ticker := &Ticker{
+				Title:  "Title",
+				Domain: "systemli.org",
+			}
+			err = store.SaveTicker(ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+			user.Tickers = append(user.Tickers, *ticker)
+
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err = store.FindUserByID(user.ID, WithTickers())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.Tickers).To(HaveLen(1))
+		})
+
+		It("updates existing user", func() {
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user.Email = "new@systemli.org"
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err = store.FindUserByID(user.ID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.Email).To(Equal("new@systemli.org"))
+
+			ticker := &Ticker{
+				Title:  "Title",
+				Domain: "systemli.org",
+			}
+			err = store.SaveTicker(ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			user.Tickers = append(user.Tickers, *ticker)
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err = store.FindUserByID(user.ID, WithTickers())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.Tickers).To(HaveLen(1))
+		})
+
+		It("updates existing user with less tickers", func() {
+			ticker := &Ticker{
+				Title:  "Title",
+				Domain: "systemli.org",
+			}
+			err = store.SaveTicker(ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+
+			user.Tickers = append(user.Tickers, *ticker)
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user.Tickers = []Ticker{}
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			user, err = store.FindUserByID(user.ID, WithTickers())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.Tickers).To(BeEmpty())
 		})
 	})
 

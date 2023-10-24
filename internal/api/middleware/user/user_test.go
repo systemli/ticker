@@ -32,7 +32,7 @@ func TestPrefetchUserStorageError(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.AddParam("userID", "1")
 	s := &storage.MockStorage{}
-	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("storage error"))
+	s.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("storage error"))
 	mw := PrefetchUser(s)
 
 	mw(c)
@@ -46,7 +46,7 @@ func TestPrefetchUser(t *testing.T) {
 	c.AddParam("userID", "1")
 	s := &storage.MockStorage{}
 	user := storage.User{ID: 1}
-	s.On("FindUserByID", mock.Anything).Return(user, nil)
+	s.On("FindUserByID", mock.Anything, mock.Anything).Return(user, nil)
 	mw := PrefetchUser(s)
 
 	mw(c)
