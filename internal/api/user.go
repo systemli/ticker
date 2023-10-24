@@ -40,10 +40,10 @@ func (h *handler) GetUser(c *gin.Context) {
 
 func (h *handler) PostUser(c *gin.Context) {
 	var body struct {
-		Email        string `json:"email,omitempty" binding:"required" validate:"email"`
-		Password     string `json:"password,omitempty" binding:"required" validate:"min=10"`
-		IsSuperAdmin bool   `json:"isSuperAdmin,omitempty"`
-		Tickers      []int  `json:"tickers,omitempty"`
+		Email        string           `json:"email,omitempty" binding:"required" validate:"email"`
+		Password     string           `json:"password,omitempty" binding:"required" validate:"min=10"`
+		IsSuperAdmin bool             `json:"isSuperAdmin,omitempty"`
+		Tickers      []storage.Ticker `json:"tickers,omitempty"`
 	}
 
 	err := c.Bind(&body)
@@ -57,15 +57,8 @@ func (h *handler) PostUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
-
-	tickers, err := h.storage.FindTickersByIDs(body.Tickers)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
 	user.IsSuperAdmin = body.IsSuperAdmin
-	user.Tickers = tickers
+	user.Tickers = body.Tickers
 
 	err = h.storage.SaveUser(&user)
 	if err != nil {
