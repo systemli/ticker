@@ -18,12 +18,7 @@ func (h *handler) GetTickers(c *gin.Context) {
 		return
 	}
 
-	var tickers []storage.Ticker
-	if me.IsSuperAdmin {
-		tickers, err = h.storage.FindTickers()
-	} else {
-		tickers = me.Tickers
-	}
+	tickers, err := h.storage.FindTickersByUser(me)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return

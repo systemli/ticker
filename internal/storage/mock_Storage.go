@@ -317,6 +317,37 @@ func (_m *MockStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (
 	return r0, r1
 }
 
+// FindTickerByUserAndID provides a mock function with given fields: user, id, opts
+func (_m *MockStorage) FindTickerByUserAndID(user User, id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, user, id)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 Ticker
+	var r1 error
+	if rf, ok := ret.Get(0).(func(User, int, ...func(*gorm.DB) *gorm.DB) (Ticker, error)); ok {
+		return rf(user, id, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(User, int, ...func(*gorm.DB) *gorm.DB) Ticker); ok {
+		r0 = rf(user, id, opts...)
+	} else {
+		r0 = ret.Get(0).(Ticker)
+	}
+
+	if rf, ok := ret.Get(1).(func(User, int, ...func(*gorm.DB) *gorm.DB) error); ok {
+		r1 = rf(user, id, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindTickers provides a mock function with given fields: opts
 func (_m *MockStorage) FindTickers(opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
 	_va := make([]interface{}, len(opts))
@@ -375,6 +406,39 @@ func (_m *MockStorage) FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.
 
 	if rf, ok := ret.Get(1).(func([]int, ...func(*gorm.DB) *gorm.DB) error); ok {
 		r1 = rf(ids, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindTickersByUser provides a mock function with given fields: user, opts
+func (_m *MockStorage) FindTickersByUser(user User, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, user)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 []Ticker
+	var r1 error
+	if rf, ok := ret.Get(0).(func(User, ...func(*gorm.DB) *gorm.DB) ([]Ticker, error)); ok {
+		return rf(user, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(User, ...func(*gorm.DB) *gorm.DB) []Ticker); ok {
+		r0 = rf(user, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Ticker)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(User, ...func(*gorm.DB) *gorm.DB) error); ok {
+		r1 = rf(user, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}

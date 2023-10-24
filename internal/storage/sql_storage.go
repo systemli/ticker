@@ -105,6 +105,34 @@ func (s *SqlStorage) FindTickers(opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, err
 	return tickers, err
 }
 
+func (s *SqlStorage) FindTickersByUser(user User, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
+	tickers := make([]Ticker, 0)
+	db := s.prepareDb(opts...)
+
+	var err error
+	if user.IsSuperAdmin {
+		err = db.Find(&tickers).Error
+	} else {
+		err = db.Model(&user).Association("Tickers").Find(&tickers)
+	}
+
+	return tickers, err
+}
+
+func (s *SqlStorage) FindTickerByUserAndID(user User, id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+	db := s.prepareDb(opts...)
+
+	var ticker Ticker
+	var err error
+	if user.IsSuperAdmin {
+		err = db.First(&ticker, id).Error
+	} else {
+		err = db.Model(&user).Association("Tickers").Find(&ticker, id)
+	}
+
+	return ticker, err
+}
+
 func (s *SqlStorage) FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
 	db := s.prepareDb(opts...)
