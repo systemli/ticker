@@ -872,16 +872,54 @@ var _ = Describe("SqlStorage", func() {
 
 	Describe("SaveMessage", func() {
 		It("persists the message", func() {
-			message := NewMessage()
-
-			err = store.SaveMessage(&message)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(store.SaveMessage(&Message{})).ToNot(HaveOccurred())
 
 			var count int64
 			err = db.Model(&Message{}).Count(&count).Error
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(int64(1)))
 		})
+
+		It("persists the message with attachments", func() {
+			message := &Message{}
+			message.Attachments = []Attachment{
+				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
+			}
+
+			err = store.SaveMessage(message)
+			Expect(err).ToNot(HaveOccurred())
+
+			var count int64
+			err = db.Model(&Message{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(1)))
+
+			err = db.Model(&Attachment{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(1)))
+		})
+
+		It("updates the message with attachments", func() {
+			message := &Message{}
+			Expect(store.SaveMessage(message)).ToNot(HaveOccurred())
+			Expect(message.Attachments).To(BeEmpty())
+
+			message.Attachments = []Attachment{
+				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
+			}
+
+			Expect(store.SaveMessage(message)).ToNot(HaveOccurred())
+
+			var count int64
+			err = db.Model(&Message{}).Count(&count).Error
+
+			Expect(err).ToNot(HaveOccurred())
+
+			err = db.Model(&Attachment{}).Count(&count).Error
+			Expect(err).ToNot(HaveOccurred())
+			Expect(count).To(Equal(int64(1)))
+		})
+
 	})
 
 	Describe("DeleteMessage", func() {
