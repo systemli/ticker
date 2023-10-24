@@ -41,21 +41,10 @@ func (h *handler) PostUpload(c *gin.Context) {
 		return
 	}
 
-	ticker, err := h.storage.FindTickerByID(tickerID)
+	ticker, err := h.storage.FindTickerByUserAndID(me, tickerID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
-	}
-
-	if !me.IsSuperAdmin {
-		tickerIDs := make([]int, 0, len(me.Tickers))
-		for _, t := range me.Tickers {
-			tickerIDs = append(tickerIDs, t.ID)
-		}
-		if !util.Contains(tickerIDs, tickerID) {
-			c.JSON(http.StatusForbidden, response.ErrorResponse(response.CodeInsufficientPermissions, response.InsufficientPermissions))
-			return
-		}
 	}
 
 	files := form.File["files"]

@@ -104,7 +104,7 @@ func TestPostUploadTickerNotFound(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -113,28 +113,6 @@ func TestPostUploadTickerNotFound(t *testing.T) {
 	h.PostUpload(c)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostUploadWrongPermission(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: false})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
-	h := handler{
-		storage: s,
-		config:  config.NewConfig(),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
 func TestPostUploadMissingFiles(t *testing.T) {
@@ -148,7 +126,7 @@ func TestPostUploadMissingFiles(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
 		config:  config.NewConfig(),
@@ -180,7 +158,7 @@ func TestPostUpload(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -213,7 +191,7 @@ func TestPostUploadGIF(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -247,7 +225,7 @@ func TestPostUploadTooMuchFiles(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
@@ -280,7 +258,7 @@ func TestPostUploadForbiddenFileType(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
 	s := &storage.MockStorage{}
-	s.On("FindTickerByID", mock.Anything).Return(storage.Ticker{}, nil)
+	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
