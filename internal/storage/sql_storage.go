@@ -136,6 +136,12 @@ func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
 		return s.DB.Create(ticker).Error
 	}
 
+	// Replace all Users associations
+	err := s.DB.Model(ticker).Association("Users").Replace(ticker.Users)
+	if err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to replace ticker users")
+	}
+
 	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(ticker).Error
 }
 

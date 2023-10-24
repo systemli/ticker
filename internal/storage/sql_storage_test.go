@@ -475,6 +475,44 @@ var _ = Describe("SqlStorage", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(int64(1)))
 		})
+
+		It("persists the ticker with users", func() {
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker := NewTicker()
+			ticker.Users = append(ticker.Users, user)
+
+			err = store.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker, err = store.FindTickerByID(ticker.ID, WithPreload())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker.Users).To(HaveLen(1))
+		})
+
+		It("removes users from ticker", func() {
+			user, err := NewUser("user@systemli.org", "password")
+			Expect(err).ToNot(HaveOccurred())
+			err = store.SaveUser(&user)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker := NewTicker()
+			ticker.Users = append(ticker.Users, user)
+
+			err = store.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker.Users = []User{}
+			err = store.SaveTicker(&ticker)
+			Expect(err).ToNot(HaveOccurred())
+
+			ticker, err = store.FindTickerByID(ticker.ID, WithPreload())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(ticker.Users).To(BeEmpty())
+		})
 	})
 
 	Describe("DeleteTicker", func() {

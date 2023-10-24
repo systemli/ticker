@@ -101,7 +101,7 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 	}
 
 	var body struct {
-		Users []int `json:"users" binding:"required"`
+		Users []storage.User `json:"users" binding:"required"`
 	}
 
 	err = c.Bind(&body)
@@ -110,13 +110,7 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 		return
 	}
 
-	newUsers, err := h.storage.FindUsersByIDs(body.Users)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
-	ticker.Users = append(ticker.Users, newUsers...)
+	ticker.Users = body.Users
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
