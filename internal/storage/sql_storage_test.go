@@ -19,6 +19,7 @@ func TestSqlStorage(t *testing.T) {
 }
 
 var _ = Describe("SqlStorage", func() {
+	log.Logger.SetOutput(GinkgoWriter)
 	db, err := gorm.Open(sqlite.Open("file:testdatabase?mode=memory&cache=shared"), &gorm.Config{})
 	Expect(err).ToNot(HaveOccurred())
 

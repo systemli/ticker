@@ -4,43 +4,96 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestLoadConfigWithoutPath(t *testing.T) {
-	err := os.Setenv("TICKER_LISTEN", ":7070")
-	if err != nil {
-		t.Fail()
+func TestConfig(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Config Suite")
+}
+
+var _ = Describe("Config", func() {
+	log.Logger.SetOutput(GinkgoWriter)
+
+	var envs map[string]string = map[string]string{
+		"TICKER_LISTEN":             ":7070",
+		"TICKER_LOG_LEVEL":          "trace",
+		"TICKER_LOG_FORMAT":         "text",
+		"TICKER_SECRET":             "secret",
+		"TICKER_DATABASE_TYPE":      "mysql",
+		"TICKER_DATABASE_DSN":       "user:password@tcp(localhost:3306)/ticker?charset=utf8mb4&parseTime=True&loc=Local",
+		"TICKER_METRICS_LISTEN":     ":9191",
+		"TICKER_UPLOAD_PATH":        "/data/uploads",
+		"TICKER_UPLOAD_URL":         "https://example.com",
+		"TICKER_TELEGRAM_BOT_TOKEN": "token",
 	}
 
-	c := LoadConfig("")
-	assert.Equal(t, ":7070", c.Listen)
+	Describe("LoadConfig", func() {
+		BeforeEach(func() {
+			for key := range envs {
+				os.Unsetenv(key)
+			}
+		})
 
-	err = os.Unsetenv("TICKER_LISTEN")
-	if err != nil {
-		t.Fail()
-	}
-}
+		Context("when path is empty", func() {
+			It("loads config with default values", func() {
+				c := LoadConfig("")
+				Expect(c.Listen).To(Equal(":8080"))
+				Expect(c.LogLevel).To(Equal("debug"))
+				Expect(c.LogFormat).To(Equal("json"))
+				Expect(c.Secret).ToNot(BeEmpty())
+				Expect(c.DatabaseType).To(Equal("sqlite"))
+				Expect(c.DatabaseDSN).To(Equal("ticker.db"))
+				Expect(c.MetricsListen).To(Equal(":8181"))
+				Expect(c.UploadPath).To(Equal("uploads"))
+				Expect(c.UploadURL).To(Equal("http://localhost:8080"))
+				Expect(c.TelegramBotToken).To(BeEmpty())
+				Expect(c.TelegramEnabled()).To(BeFalse())
+			})
 
-func TestLoadConfigWithPath(t *testing.T) {
-	c := LoadConfig("../../config.yml")
-	assert.Equal(t, ":8080", c.Listen)
+			It("loads config from env", func() {
+				for key, value := range envs {
+					err := os.Setenv(key, value)
+					Expect(err).ToNot(HaveOccurred())
+				}
 
-	c = LoadConfig("config.yml")
-	assert.Equal(t, ":8080", c.Listen)
-}
+				c := LoadConfig("")
+				Expect(c.Listen).To(Equal(envs["TICKER_LISTEN"]))
+				Expect(c.LogLevel).To(Equal(envs["TICKER_LOG_LEVEL"]))
+				Expect(c.LogFormat).To(Equal(envs["TICKER_LOG_FORMAT"]))
+				Expect(c.Secret).To(Equal(envs["TICKER_SECRET"]))
+				Expect(c.DatabaseType).To(Equal(envs["TICKER_DATABASE_TYPE"]))
+				Expect(c.DatabaseDSN).To(Equal(envs["TICKER_DATABASE_DSN"]))
+				Expect(c.MetricsListen).To(Equal(envs["TICKER_METRICS_LISTEN"]))
+				Expect(c.UploadPath).To(Equal(envs["TICKER_UPLOAD_PATH"]))
+				Expect(c.UploadURL).To(Equal(envs["TICKER_UPLOAD_URL"]))
+				Expect(c.TelegramBotToken).To(Equal(envs["TICKER_TELEGRAM_BOT_TOKEN"]))
+				Expect(c.TelegramEnabled()).To(BeTrue())
+			})
+		})
 
-func TestLoadConfigWithFallback(t *testing.T) {
-	c := LoadConfig("/x/y/z")
-	assert.Equal(t, ":8080", c.Listen)
-}
+		Context("when path is not empty", func() {
+			Context("when path is absolute", func() {
+				It("loads config from file", func() {
+					c := LoadConfig("../../config.yml")
+					Expect(c.Listen).To(Equal(":8080"))
+				})
+			})
 
-func TestConfig_TelegramEnabled(t *testing.T) {
-	c := NewConfig()
+			Context("when path is relative", func() {
+				It("loads config from file", func() {
+					c := LoadConfig("config.yml")
+					Expect(c.Listen).To(Equal(":8080"))
+				})
+			})
+		})
 
-	assert.False(t, c.TelegramEnabled())
-
-	c.TelegramBotToken = "a"
-
-	assert.True(t, c.TelegramEnabled())
-}
+		Context("when path is invalid", func() {
+			It("loads config with default values", func() {
+				c := LoadConfig("/x/y/z")
+				Expect(c.Listen).To(Equal(":8080"))
+			})
+		})
+	})
+})

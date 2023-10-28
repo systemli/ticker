@@ -30,7 +30,7 @@ var (
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&configPath, "config", "config.yml", "path to config.yml")
+	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "path to config.yml")
 }
 
 func initConfig() {
@@ -48,7 +48,7 @@ func initConfig() {
 	log = logger.NewLogrus(cfg.LogLevel, cfg.LogFormat)
 
 	var err error
-	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
+	db, err = storage.OpenGormDB(cfg.DatabaseType, cfg.DatabaseDSN, log)
 	if err != nil {
 		log.WithError(err).Fatal("could not connect to database")
 	}
