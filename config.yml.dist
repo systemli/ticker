@@ -5,9 +5,8 @@ log_level: "error"
 # log_format sets log format for logrus (default: json)
 log_format: "json"
 # configuration for the database
-database:
-    type: "sqlite" # postgres, mysql, sqlite
-    dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
+database_type: "sqlite" # postgres, mysql, sqlite
+database_dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
