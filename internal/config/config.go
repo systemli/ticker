@@ -6,18 +6,21 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sethvargo/go-password/password"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
+var log = logrus.WithField("package", "config")
+
 type Config struct {
-	Listen           string   `mapstructure:"listen"`
-	LogLevel         string   `mapstructure:"log_level"`
-	LogFormat        string   `mapstructure:"log_format"`
-	Secret           string   `mapstructure:"secret"`
-	Database         Database `mapstructure:"database"`
-	TelegramBotToken string   `mapstructure:"telegram_bot_token"`
+	Listen           string `mapstructure:"listen"`
+	LogLevel         string `mapstructure:"log_level"`
+	LogFormat        string `mapstructure:"log_format"`
+	Secret           string `mapstructure:"secret"`
+	DatabaseType     string `mapstructure:"database_type"`
+	DatabaseDSN      string `mapstructure:"database_dsn"`
+	TelegramBotToken string `mapstructure:"telegram_bot_token"`
 	TelegramBotUser  tgbotapi.User
 	MetricsListen    string `mapstructure:"metrics_listen"`
 	UploadPath       string `mapstructure:"upload_path"`
@@ -25,21 +28,20 @@ type Config struct {
 	FileBackend      afero.Fs
 }
 
-type Database struct {
-	Type string `mapstructure:"type"`
-	DSN  string `mapstructure:"dsn"`
-}
-
 // NewConfig returns config with default values.
 func NewConfig() Config {
-	secret, _ := password.Generate(64, 12, 12, false, false)
+	secret, err := password.Generate(64, 12, 12, false, true)
+	if err != nil {
+		log.WithError(err).Error("Unable to generate secret")
+	}
 
 	return Config{
 		Listen:        ":8080",
 		LogLevel:      "debug",
 		LogFormat:     "json",
 		Secret:        secret,
-		Database:      Database{Type: "sqlite", DSN: "ticker.db"},
+		DatabaseType:  "sqlite",
+		DatabaseDSN:   "ticker.db",
 		MetricsListen: ":8181",
 		UploadPath:    "uploads",
 		UploadURL:     "http://localhost:8080",
@@ -62,7 +64,8 @@ func LoadConfig(path string) Config {
 	viper.SetDefault("log_level", c.LogLevel)
 	viper.SetDefault("log_format", c.LogFormat)
 	viper.SetDefault("secret", c.Secret)
-	viper.SetDefault("database", c.Database)
+	viper.SetDefault("database_type", c.DatabaseType)
+	viper.SetDefault("database_dsn", c.DatabaseDSN)
 	viper.SetDefault("metrics_listen", c.MetricsListen)
 	viper.SetDefault("telegram_bot_token", "")
 	viper.SetDefault("upload_path", c.UploadPath)
@@ -94,7 +97,7 @@ func LoadConfig(path string) Config {
 
 	err := viper.Unmarshal(&c)
 	if err != nil {
-		log.WithError(err).Panic("Unable to decode config into struct")
+		log.WithError(err).Error("Unable to decode config into struct")
 	}
 
 	return c
