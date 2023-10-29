@@ -26,7 +26,7 @@ func TestGetUsersStorageError(t *testing.T) {
 	s.On("FindUsers", mock.Anything).Return([]storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUsers(c)
@@ -43,7 +43,7 @@ func TestGetUsers(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUsers(c)
@@ -57,7 +57,7 @@ func TestGetUserMissingParam(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUser(c)
@@ -74,7 +74,7 @@ func TestGetUserInsufficentPermission(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUser(c)
@@ -92,7 +92,7 @@ func TestGetUserStorageError(t *testing.T) {
 	s.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUser(c)
@@ -109,7 +109,7 @@ func TestGetUserMissingPermission(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUser(c)
@@ -126,7 +126,7 @@ func TestGetUser(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetUser(c)
@@ -142,7 +142,7 @@ func TestPostUserMissingBody(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUser(c)
@@ -160,7 +160,7 @@ func TestPostUserTooLongPassword(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUser(c)
@@ -179,7 +179,7 @@ func TestPostUserStorageError(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUser(c)
@@ -198,7 +198,7 @@ func TestPostUser(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUser(c)
@@ -213,7 +213,7 @@ func TestPutUserNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutUser(c)
@@ -232,7 +232,7 @@ func TestPutUserMissingBody(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutUser(c)
@@ -253,7 +253,7 @@ func TestPutUserStorageError(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutUser(c)
@@ -274,7 +274,7 @@ func TestPutUserStorageError2(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutUser(c)
@@ -295,7 +295,7 @@ func TestPutUser(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutUser(c)
@@ -310,7 +310,7 @@ func TestDeleteUserMissingParam(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteUser(c)
@@ -326,7 +326,7 @@ func TestDeleteUserSelfUser(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteUser(c)
@@ -343,7 +343,7 @@ func TestDeleteUserStorageError(t *testing.T) {
 	s.On("DeleteUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteUser(c)
@@ -360,7 +360,7 @@ func TestDeleteUser(t *testing.T) {
 	s.On("DeleteUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteUser(c)
@@ -378,7 +378,7 @@ func TestPutMeUnauthenticated(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.PutMe(c)
 	assert.Equal(t, http.StatusForbidden, w.Code)
@@ -395,7 +395,7 @@ func TestPutMeFormError(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.PutMe(c)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -412,7 +412,7 @@ func TestPutMeWrongPassword(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.PutMe(c)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -429,7 +429,7 @@ func TestPutMeStorageError(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.PutMe(c)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -446,7 +446,7 @@ func TestPutMeOk(t *testing.T) {
 	s.On("SaveUser", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.PutMe(c)
 	assert.Equal(t, http.StatusOK, w.Code)

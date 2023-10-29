@@ -12,14 +12,14 @@ import (
 var (
 	u = storage.NewUpload("image.jpg", "image/jpg", 1)
 	c = config.Config{
-		UploadURL: "http://localhost:8080",
+		Upload: config.Upload{URL: "http://localhost:8080"},
 	}
 )
 
 func TestUploadResponse(t *testing.T) {
 	response := UploadResponse(u, c)
 
-	assert.Equal(t, fmt.Sprintf("%s/media/%s", c.UploadURL, u.FileName()), response.URL)
+	assert.Equal(t, fmt.Sprintf("%s/media/%s", c.Upload.URL, u.FileName()), response.URL)
 }
 
 func TestUploadsResponse(t *testing.T) {

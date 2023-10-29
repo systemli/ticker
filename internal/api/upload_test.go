@@ -27,7 +27,7 @@ func TestPostUploadForbidden(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -43,7 +43,7 @@ func TestPostUploadMultipartError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -64,7 +64,7 @@ func TestPostUploadMissingTickerValue(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -85,7 +85,7 @@ func TestPostUploadTickerValueWrong(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -107,7 +107,7 @@ func TestPostUploadTickerNotFound(t *testing.T) {
 	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -129,7 +129,7 @@ func TestPostUploadMissingFiles(t *testing.T) {
 	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -162,7 +162,7 @@ func TestPostUpload(t *testing.T) {
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -195,7 +195,7 @@ func TestPostUploadGIF(t *testing.T) {
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -229,7 +229,7 @@ func TestPostUploadTooMuchFiles(t *testing.T) {
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)
@@ -262,7 +262,7 @@ func TestPostUploadForbiddenFileType(t *testing.T) {
 	s.On("SaveUpload", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostUpload(c)

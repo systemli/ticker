@@ -25,7 +25,7 @@ func TestGetTimelineMissingDomain(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTimeline(c)
@@ -44,7 +44,7 @@ func TestGetTimelineTickerNotFound(t *testing.T) {
 	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTimeline(c)
@@ -61,7 +61,7 @@ func TestGetTimelineTickerInactive(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTimeline(c)
@@ -78,7 +78,7 @@ func TestGetTimelineMessageFetchError(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTimeline(c)
@@ -96,7 +96,7 @@ func TestGetTimeline(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTimeline(c)

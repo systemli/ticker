@@ -27,7 +27,7 @@ func TestGetSettingWithoutParam(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetSetting(c)
@@ -44,7 +44,7 @@ func TestGetSettingInactiveSetting(t *testing.T) {
 	s.On("GetInactiveSettings").Return(storage.InactiveSettings{})
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetSetting(c)
@@ -61,7 +61,7 @@ func TestGetSettingRefreshIntervalSetting(t *testing.T) {
 	s.On("GetRefreshIntervalSettings").Return(storage.RefreshIntervalSettings{})
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetSetting(c)
@@ -79,7 +79,7 @@ func TestPutInactiveSettingsMissingBody(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutInactiveSettings(c)
@@ -100,7 +100,7 @@ func TestPutInactiveSettingsStorageError(t *testing.T) {
 	s.On("SaveInactiveSettings", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutInactiveSettings(c)
@@ -122,7 +122,7 @@ func TestPutInactiveSettings(t *testing.T) {
 	s.On("GetInactiveSettings").Return(setting)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutInactiveSettings(c)
@@ -140,7 +140,7 @@ func TestPutRefreshIntervalSettingsMissingBody(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutRefreshInterval(c)
@@ -160,7 +160,7 @@ func TestPutRefreshIntervalSettingsStorageError(t *testing.T) {
 	s.On("SaveRefreshIntervalSettings", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutRefreshInterval(c)
@@ -182,7 +182,7 @@ func TestPutRefreshIntervalSettings(t *testing.T) {
 	s.On("GetRefreshIntervalSettings").Return(setting)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutRefreshInterval(c)

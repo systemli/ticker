@@ -21,8 +21,7 @@ type Config struct {
 	Database      Database `yaml:"database"`
 	Telegram      Telegram `yaml:"telegram"`
 	MetricsListen string   `yaml:"metrics_listen"`
-	UploadPath    string   `yaml:"upload_path"`
-	UploadURL     string   `yaml:"upload_url"`
+	Upload        Upload   `yaml:"upload"`
 	FileBackend   afero.Fs
 }
 
@@ -36,8 +35,12 @@ type Telegram struct {
 	User  tgbotapi.User
 }
 
-// NewConfig returns config with default values.
-func NewConfig() Config {
+type Upload struct {
+	Path string `yaml:"path"`
+	URL  string `yaml:"url"`
+}
+
+func defaultConfig() Config {
 	secret, _ := password.Generate(64, 12, 12, false, true)
 
 	return Config{
@@ -47,9 +50,11 @@ func NewConfig() Config {
 		Secret:        secret,
 		Database:      Database{Type: "sqlite", DSN: "ticker.db"},
 		MetricsListen: ":8181",
-		UploadPath:    "uploads",
-		UploadURL:     "http://localhost:8080",
-		FileBackend:   afero.NewOsFs(),
+		Upload: Upload{
+			Path: "uploads",
+			URL:  "http://localhost:8080",
+		},
+		FileBackend: afero.NewOsFs(),
 	}
 }
 
@@ -60,7 +65,7 @@ func (t *Telegram) Enabled() bool {
 
 // LoadConfig loads config from file.
 func LoadConfig(path string) Config {
-	c := NewConfig()
+	c := defaultConfig()
 	c.FileBackend = afero.NewOsFs()
 
 	if path != "" {
@@ -95,10 +100,10 @@ func LoadConfig(path string) Config {
 		c.MetricsListen = os.Getenv("TICKER_METRICS_LISTEN")
 	}
 	if os.Getenv("TICKER_UPLOAD_PATH") != "" {
-		c.UploadPath = os.Getenv("TICKER_UPLOAD_PATH")
+		c.Upload.Path = os.Getenv("TICKER_UPLOAD_PATH")
 	}
 	if os.Getenv("TICKER_UPLOAD_URL") != "" {
-		c.UploadURL = os.Getenv("TICKER_UPLOAD_URL")
+		c.Upload.URL = os.Getenv("TICKER_UPLOAD_URL")
 	}
 	if os.Getenv("TICKER_TELEGRAM_TOKEN") != "" {
 		c.Telegram.Token = os.Getenv("TICKER_TELEGRAM_TOKEN")

@@ -24,7 +24,7 @@ func TestGetFeedTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetFeed(c)
@@ -42,7 +42,7 @@ func TestGetFeedMessageFetchError(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetFeed(c)
@@ -73,7 +73,7 @@ func TestGetFeed(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetFeed(c)

@@ -85,7 +85,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 		}
 
 		if u.ContentType == "image/gif" {
-			err = c.SaveUploadedFile(fileHeader, u.FullPath(h.config.UploadPath))
+			err = c.SaveUploadedFile(fileHeader, u.FullPath(h.config.Upload.Path))
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.FormError))
 				return
@@ -98,7 +98,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 				return
 			}
 
-			err = util.SaveImage(image, u.FullPath(h.config.UploadPath))
+			err = util.SaveImage(image, u.FullPath(h.config.Upload.Path))
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.FormError))
 				return
@@ -112,7 +112,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 }
 
 func preparePath(upload storage.Upload, config config.Config) error {
-	path := upload.FullPath(config.UploadPath)
+	path := upload.FullPath(config.Upload.Path)
 	fs := config.FileBackend
 	return fs.MkdirAll(filepath.Dir(path), 0750)
 }

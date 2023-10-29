@@ -60,8 +60,6 @@ Fill your config file with the following content:
 listen: "localhost:8080"
 # log_level sets log level for logrus
 log_level: "error"
-# initiator is the email for the first admin user (see password in logs)
-initiator: "<your e-mail>"
 # configuration for the database
 database:
     type: "sqlite" # postgres, mysql, sqlite
@@ -70,10 +68,11 @@ database:
 secret: "<your special little secret> (make it LOOOONG!)"
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
-# path where to store the uploaded files
-upload_path: "uploads"
-# base url for uploaded assets
-upload_url: "https://api.domain.tld"
+upload:
+    # path where to store the uploaded files
+    path: "uploads"
+    # base url for uploaded assets
+    url: "https://api.domain.tld"
 ```
 
 2. Create a systemd Task (see [docs/ticker-api.service](assets/ticker-api.service) for reference)

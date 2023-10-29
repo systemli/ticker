@@ -37,7 +37,7 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 				continue
 			}
 
-			media := tgbotapi.FilePath(upload.FullPath(tb.config.UploadPath))
+			media := tgbotapi.FilePath(upload.FullPath(tb.config.Upload.Path))
 			if upload.ContentType == "image/gif" {
 				photo := tgbotapi.NewInputMediaDocument(media)
 				if i == 0 {

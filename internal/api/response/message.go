@@ -30,7 +30,7 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 
 	for _, attachment := range message.Attachments {
 		name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-		attachments = append(attachments, MessageAttachment{URL: MediaURL(config.UploadURL, name), ContentType: attachment.ContentType})
+		attachments = append(attachments, MessageAttachment{URL: MediaURL(config.Upload.URL, name), ContentType: attachment.ContentType})
 	}
 
 	return Message{

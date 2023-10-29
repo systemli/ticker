@@ -26,7 +26,7 @@ func TestGetMessagesTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessages(c)
@@ -42,7 +42,7 @@ func TestGetMessagesStorageError(t *testing.T) {
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessages(c)
@@ -58,7 +58,7 @@ func TestGetMessagesEmptyResult(t *testing.T) {
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessages(c)
@@ -74,7 +74,7 @@ func TestGetMessages(t *testing.T) {
 	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessages(c)
@@ -88,7 +88,7 @@ func TestGetMessageNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessage(c)
@@ -103,7 +103,7 @@ func TestGetMessage(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMessage(c)
@@ -117,7 +117,7 @@ func TestPostMessageTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostMessage(c)
@@ -133,7 +133,7 @@ func TestPostMessageFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostMessage(c)
@@ -153,7 +153,7 @@ func TestPostMessageUploadsNotFound(t *testing.T) {
 	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostMessage(c)
@@ -176,7 +176,7 @@ func TestPostMessageStorageError(t *testing.T) {
 	b.On("Send", mock.Anything, mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 		bridges: bridge.Bridges{"mock": b},
 	}
 
@@ -199,7 +199,7 @@ func TestPostMessage(t *testing.T) {
 	b.On("Send", mock.Anything, mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 		bridges: bridge.Bridges{"mock": b},
 	}
 
@@ -214,7 +214,7 @@ func TestDeleteMessageTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteMessage(c)
@@ -229,7 +229,7 @@ func TestDeleteMessageMessageNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteMessage(c)
@@ -248,7 +248,7 @@ func TestDeleteMessageStorageError(t *testing.T) {
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 		bridges: bridge.Bridges{"mock": b},
 	}
 
@@ -268,7 +268,7 @@ func TestDeleteMessage(t *testing.T) {
 	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 		bridges: bridge.Bridges{"mock": b},
 	}
 

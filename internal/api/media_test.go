@@ -29,7 +29,7 @@ func TestGetMedia(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetMedia(c)
@@ -47,7 +47,7 @@ func TestGetMediaNotFound(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 	h.GetMedia(c)
 
