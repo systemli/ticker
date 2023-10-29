@@ -46,8 +46,10 @@ func TestTickersResponse(t *testing.T) {
 	}
 
 	config := config.Config{
-		TelegramBotUser: tgbotapi.User{
-			UserName: "ticker",
+		Telegram: config.Telegram{
+			User: tgbotapi.User{
+				UserName: "ticker",
+			},
 		},
 	}
 
@@ -68,7 +70,7 @@ func TestTickersResponse(t *testing.T) {
 	assert.Equal(t, ticker.Information.Telegram, tickerResponse[0].Information.Telegram)
 	assert.Equal(t, ticker.Telegram.Active, tickerResponse[0].Telegram.Active)
 	assert.Equal(t, ticker.Telegram.Connected(), tickerResponse[0].Telegram.Connected)
-	assert.Equal(t, config.TelegramBotUser.UserName, tickerResponse[0].Telegram.BotUsername)
+	assert.Equal(t, config.Telegram.User.UserName, tickerResponse[0].Telegram.BotUsername)
 	assert.Equal(t, ticker.Telegram.ChannelName, tickerResponse[0].Telegram.ChannelName)
 	assert.Equal(t, ticker.Mastodon.Active, tickerResponse[0].Mastodon.Active)
 	assert.Equal(t, ticker.Mastodon.Connected(), tickerResponse[0].Mastodon.Connected)

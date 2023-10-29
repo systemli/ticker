@@ -8,12 +8,14 @@ log_level: "error"
 # log_format sets log format for logrus (default: json)
 log_format: "json"
 # configuration for the database
-database_type: "sqlite" # postgres, mysql, sqlite
-database_dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
+database:
+  type: "sqlite" # postgres, mysql, sqlite
+  dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
-telegram_bot_token: ""
+telegram:
+  token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files
@@ -23,9 +25,7 @@ upload_url: "http://localhost:8080"
 ```
 
 !!! note
-    We use [viper](https://github.com/spf13/viper). That means you can use any of the supported file formats. Env variables
-    will overwrite existing config file values. Note that every env variable MUST be prefixed by: `TICKER_`.
-    E.g. `TICKER_LISTEN`.
+    All configuration options can be set via environment variables.
 
 The following env vars can be used:
 
@@ -37,7 +37,7 @@ The following env vars can be used:
 * `TICKER_LOG_LEVEL`
 * `TICKER_INITIATOR`
 * `TICKER_SECRET`
-* `TICKER_TELEGRAM_BOT_TOKEN`
+* `TICKER_TELEGRAM_TOKEN`
 * `TICKER_METRICS_LISTEN`
 * `TICKER_UPLOAD_PATH`
 * `TICKER_UPLOAD_URL`

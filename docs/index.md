@@ -18,7 +18,6 @@ This repository contains the API for the [Systemli Ticker Project](https://www.s
 2. Start the project
 
         cd ticker
-        cp config.yml.dist config.yml
         go run . run
 
 3. Check the API

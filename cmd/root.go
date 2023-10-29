@@ -36,19 +36,19 @@ func init() {
 func initConfig() {
 	cfg = config.LoadConfig(configPath)
 	//TODO: Improve startup routine
-	if cfg.TelegramEnabled() {
-		user, err := bridge.BotUser(cfg.TelegramBotToken)
+	if cfg.Telegram.Enabled() {
+		user, err := bridge.BotUser(cfg.Telegram.Token)
 		if err != nil {
 			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
 		} else {
-			cfg.TelegramBotUser = user
+			cfg.Telegram.User = user
 		}
 	}
 
 	log = logger.NewLogrus(cfg.LogLevel, cfg.LogFormat)
 
 	var err error
-	db, err = storage.OpenGormDB(cfg.DatabaseType, cfg.DatabaseDSN, log)
+	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
 	if err != nil {
 		log.WithError(err).Fatal("could not connect to database")
 	}

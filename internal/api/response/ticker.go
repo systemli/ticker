@@ -70,7 +70,7 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 		Telegram: Telegram{
 			Active:      t.Telegram.Active,
 			Connected:   t.Telegram.Connected(),
-			BotUsername: config.TelegramBotUser.UserName,
+			BotUsername: config.Telegram.User.UserName,
 			ChannelName: t.Telegram.ChannelName,
 		},
 		Mastodon: Mastodon{
