@@ -5,12 +5,14 @@ log_level: "error"
 # log_format sets log format for logrus (default: json)
 log_format: "json"
 # configuration for the database
-database_type: "sqlite" # postgres, mysql, sqlite
-database_dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
+database:
+  type: "sqlite" # postgres, mysql, sqlite
+  dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
-telegram_bot_token: ""
+telegram:
+  token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 # path where to store the uploaded files
