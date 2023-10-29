@@ -31,7 +31,7 @@ func (mb *MastodonBridge) Send(ticker storage.Ticker, message *storage.Message) 
 				continue
 			}
 
-			media, err := client.UploadMedia(ctx, upload.FullPath(mb.config.UploadPath))
+			media, err := client.UploadMedia(ctx, upload.FullPath(mb.config.Upload.Path))
 			if err != nil {
 				log.WithError(err).Error("unable to upload the attachment")
 				continue

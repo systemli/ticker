@@ -18,10 +18,11 @@ telegram:
   token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
-# path where to store the uploaded files
-upload_path: "uploads"
-# base url for uploaded assets
-upload_url: "http://localhost:8080"
+upload:
+  # path where to store the uploaded files
+  path: "uploads"
+  # base url for uploaded assets
+  url: "http://localhost:8080"
 ```
 
 !!! note

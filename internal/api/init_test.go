@@ -25,7 +25,7 @@ func TestGetInit(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetInit(c)
@@ -43,7 +43,7 @@ func TestGetInitInvalidDomain(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetInit(c)
@@ -64,7 +64,7 @@ func TestGetInitInactiveTicker(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetInit(c)

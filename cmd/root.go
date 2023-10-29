@@ -52,7 +52,7 @@ func initConfig() {
 	if err != nil {
 		log.WithError(err).Fatal("could not connect to database")
 	}
-	store = storage.NewSqlStorage(db, cfg.UploadPath)
+	store = storage.NewSqlStorage(db, cfg.Upload.Path)
 	if err := storage.MigrateDB(db); err != nil {
 		log.WithError(err).Fatal("could not migrate database")
 	}

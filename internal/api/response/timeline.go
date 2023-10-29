@@ -31,7 +31,7 @@ func TimelineResponse(messages []storage.Message, config config.Config) []Timeli
 		var attachments []Attachment
 		for _, attachment := range message.Attachments {
 			name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-			attachments = append(attachments, Attachment{URL: MediaURL(config.UploadURL, name), ContentType: attachment.ContentType})
+			attachments = append(attachments, Attachment{URL: MediaURL(config.Upload.URL, name), ContentType: attachment.ContentType})
 		}
 
 		timeline = append(timeline, TimelineEntry{

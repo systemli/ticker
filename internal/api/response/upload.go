@@ -20,7 +20,7 @@ func UploadResponse(upload storage.Upload, config config.Config) Upload {
 		ID:          upload.ID,
 		UUID:        upload.UUID,
 		CreatedAt:   upload.CreatedAt,
-		URL:         upload.URL(config.UploadURL),
+		URL:         upload.URL(config.Upload.URL),
 		ContentType: upload.ContentType,
 	}
 }

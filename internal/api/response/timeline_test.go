@@ -9,7 +9,7 @@ import (
 )
 
 func TestTimelineResponse(t *testing.T) {
-	config := config.Config{UploadURL: "https://upload.example.com"}
+	config := config.Config{Upload: config.Upload{URL: "https://upload.example.com"}}
 	message := storage.NewMessage()
 	message.Attachments = []storage.Attachment{{UUID: "uuid", Extension: "jpg"}}
 

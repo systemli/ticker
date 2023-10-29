@@ -28,7 +28,7 @@ func init() {
 }
 
 func TestHealthz(t *testing.T) {
-	c := config.NewConfig()
+	c := config.LoadConfig("")
 	s := &storage.MockStorage{}
 	r := API(c, s, l)
 
@@ -41,7 +41,7 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestLoginNotSuccessful(t *testing.T) {
-	c := config.NewConfig()
+	c := config.LoadConfig("")
 	s := &storage.MockStorage{}
 	user := storage.User{}
 	user.UpdatePassword("password")
@@ -64,7 +64,7 @@ func TestLoginNotSuccessful(t *testing.T) {
 }
 
 func TestLoginSuccessful(t *testing.T) {
-	c := config.NewConfig()
+	c := config.LoadConfig("")
 	s := &storage.MockStorage{}
 	user := storage.User{}
 	user.UpdatePassword("password")

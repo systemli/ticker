@@ -27,7 +27,7 @@ func TestGetTickersForbidden(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTickers(c)
@@ -43,7 +43,7 @@ func TestGetTickersStorageError(t *testing.T) {
 	s.On("FindTickersByUser", mock.Anything, mock.Anything).Return([]storage.Ticker{}, errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTickers(c)
@@ -59,7 +59,7 @@ func TestGetTickers(t *testing.T) {
 	s.On("FindTickersByUser", mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTickers(c)
@@ -73,7 +73,7 @@ func TestGetTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTicker(c)
@@ -88,7 +88,7 @@ func TestGetTicker(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTicker(c)
@@ -102,7 +102,7 @@ func TestGetTickerUsersTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTickerUsers(c)
@@ -118,7 +118,7 @@ func TestGetTickerUsers(t *testing.T) {
 	s.On("FindUsersByTicker", mock.Anything, mock.Anything).Return([]storage.User{}, nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetTickerUsers(c)
@@ -134,7 +134,7 @@ func TestPostTickerFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostTicker(c)
@@ -153,7 +153,7 @@ func TestPostTickerStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostTicker(c)
@@ -172,7 +172,7 @@ func TestPostTicker(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PostTicker(c)
@@ -186,7 +186,7 @@ func TestPutTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTicker(c)
@@ -203,7 +203,7 @@ func TestPutTickerFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTicker(c)
@@ -222,7 +222,7 @@ func TestPutTickerStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTicker(c)
@@ -241,7 +241,7 @@ func TestPutTicker(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTicker(c)
@@ -255,7 +255,7 @@ func TestPutTickerUsersNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerUsers(c)
@@ -272,7 +272,7 @@ func TestPutTickerUsersFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerUsers(c)
@@ -292,7 +292,7 @@ func TestPutTickerUsersStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerUsers(c)
@@ -313,7 +313,7 @@ func TestPutTickerUsers(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerUsers(c)
@@ -327,7 +327,7 @@ func TestPutTickerTelegramTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerTelegram(c)
@@ -344,7 +344,7 @@ func TestPutTickerTelegramFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerTelegram(c)
@@ -363,7 +363,7 @@ func TestPutTickerTelegramStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerTelegram(c)
@@ -382,7 +382,7 @@ func TestPutTickerTelegram(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerTelegram(c)
@@ -396,7 +396,7 @@ func TestDeleteTickerTelegramTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerTelegram(c)
@@ -412,7 +412,7 @@ func TestDeleteTickerTelegramStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerTelegram(c)
@@ -428,7 +428,7 @@ func TestDeleteTickerTelegram(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerTelegram(c)
@@ -442,7 +442,7 @@ func TestPutTickerMastodonTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerMastodon(c)
@@ -459,7 +459,7 @@ func TestPutTickerMastodonFormError(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerMastodon(c)
@@ -478,7 +478,7 @@ func TestPutTickerMastodonConnectError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerMastodon(c)
@@ -503,7 +503,7 @@ func TestPutTickerMastodonStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerMastodon(c)
@@ -528,7 +528,7 @@ func TestPutTickerMastodon(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.PutTickerMastodon(c)
@@ -542,7 +542,7 @@ func TestDeleteTickerMastodonTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerMastodon(c)
@@ -558,7 +558,7 @@ func TestDeleteTickerMastodonStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerMastodon(c)
@@ -574,7 +574,7 @@ func TestDeleteTickerMastodon(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerMastodon(c)
@@ -588,7 +588,7 @@ func TestDeleteTickerTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTicker(c)
@@ -606,7 +606,7 @@ func TestDeleteTickerStorageError(t *testing.T) {
 	s.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTicker(c)
@@ -624,7 +624,7 @@ func TestDeleteTicker(t *testing.T) {
 	s.On("DeleteTicker", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTicker(c)
@@ -638,7 +638,7 @@ func TestDeleteTickerUserTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerUser(c)
@@ -653,7 +653,7 @@ func TestDeleteTickerUserMissingUserParam(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerUser(c)
@@ -670,7 +670,7 @@ func TestDeleteTickerUserUserNotFound(t *testing.T) {
 	s.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerUser(c)
@@ -688,7 +688,7 @@ func TestDeleteTickerUserStorageError(t *testing.T) {
 	s.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerUser(c)
@@ -707,7 +707,7 @@ func TestDeleteTickerUser(t *testing.T) {
 	s.On("FindUsersByTicker", mock.Anything).Return([]storage.User{}, nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.DeleteTickerUser(c)
@@ -721,7 +721,7 @@ func TestResetTickerUserTickerNotFound(t *testing.T) {
 	s := &storage.MockStorage{}
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.ResetTicker(c)
@@ -739,7 +739,7 @@ func TestResetTickerStorageError(t *testing.T) {
 	s.On("SaveTicker", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.ResetTicker(c)
@@ -758,7 +758,7 @@ func TestResetTickerStorageError2(t *testing.T) {
 	s.On("DeleteTickerUsers", mock.Anything).Return(errors.New("storage error"))
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.ResetTicker(c)
@@ -777,7 +777,7 @@ func TestResetTicker(t *testing.T) {
 	s.On("DeleteTickerUsers", mock.Anything).Return(nil)
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.ResetTicker(c)

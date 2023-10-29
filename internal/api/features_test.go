@@ -22,7 +22,7 @@ func TestGetFeatures(t *testing.T) {
 
 	h := handler{
 		storage: s,
-		config:  config.NewConfig(),
+		config:  config.LoadConfig(""),
 	}
 
 	h.GetFeatures(c)
