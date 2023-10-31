@@ -8,271 +8,207 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/systemli/ticker/internal/bridge"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type MessagesTestSuite struct {
+	w     *httptest.ResponseRecorder
+	ctx   *gin.Context
+	store *storage.MockStorage
+	cfg   config.Config
+	suite.Suite
+}
+
+func (s *MessagesTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetMessagesTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.AddParam("tickerID", "1")
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *MessagesTestSuite) Run(name string, subtest func()) {
+	s.T().Run(name, func(t *testing.T) {
+		s.w = httptest.NewRecorder()
+		s.ctx, _ = gin.CreateTestContext(s.w)
+		s.store = &storage.MockStorage{}
+		s.cfg = config.LoadConfig("")
 
-	h.GetMessages(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
+		subtest()
+	})
 }
 
-func TestGetMessagesStorageError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *MessagesTestSuite) TestGetMessages() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.GetMessages(s.ctx)
 
-	h.GetMessages(c)
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	s.Run("when database returns error", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		s.store.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+		h := s.handler()
+		h.GetMessages(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when database returns messages", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		s.store.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
+		h := s.handler()
+		h.GetMessages(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestGetMessagesEmptyResult(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("not found"))
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *MessagesTestSuite) TestGetMessage() {
+	s.Run("when message not found", func() {
+		h := s.handler()
+		h.GetMessage(s.ctx)
 
-	h.GetMessages(c)
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	s.Run("when message found", func() {
+		message := storage.Message{ID: 1}
+		s.ctx.Set("message", message)
+		h := s.handler()
+		h.GetMessage(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestGetMessages(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *MessagesTestSuite) TestPostMessage() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.PostMessage(s.ctx)
 
-	h.GetMessages(c)
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	s.Run("when form is invalid", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+		h := s.handler()
+		h.PostMessage(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
+
+	s.Run("when upload not found", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		json := `{"text":"text","attachments":[1]}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, errors.New("storage error")).Once()
+		h := s.handler()
+		h.PostMessage(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
+
+	s.Run("when database returns error", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		json := `{"text":"text","attachments":[1]}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.ctx.AddParam("tickerID", "1")
+		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
+		s.store.On("SaveMessage", mock.Anything).Return(errors.New("storage error")).Once()
+		h := s.handler()
+		h.PostMessage(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
+
+	s.Run("when database returns message", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		json := `{"text":"text","attachments":[1]}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.ctx.AddParam("tickerID", "1")
+		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
+		s.store.On("SaveMessage", mock.Anything).Return(nil).Once()
+		h := s.handler()
+		h.PostMessage(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 }
 
-func TestGetMessageNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *MessagesTestSuite) TestDeleteMessage() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.DeleteMessage(s.ctx)
 
-	h.GetMessage(c)
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+	s.Run("when message not found", func() {
+		ticker := storage.Ticker{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		h := s.handler()
+		h.DeleteMessage(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
+
+	s.Run("when database returns error", func() {
+		ticker := storage.Ticker{ID: 1}
+		message := storage.Message{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		s.ctx.Set("message", message)
+		s.store.On("DeleteMessage", message).Return(errors.New("storage error")).Once()
+		h := s.handler()
+		h.DeleteMessage(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
+
+	s.Run("when database returns message", func() {
+		ticker := storage.Ticker{ID: 1}
+		message := storage.Message{ID: 1}
+		s.ctx.Set("ticker", ticker)
+		s.ctx.Set("message", message)
+		s.store.On("DeleteMessage", message).Return(nil).Once()
+		h := s.handler()
+		h.DeleteMessage(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(s.store.AssertExpectations(s.T()))
+	})
 }
 
-func TestGetMessage(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("message", storage.Message{})
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
+func (s *MessagesTestSuite) handler() handler {
+	return handler{
+		storage: s.store,
+		config:  s.cfg,
 	}
-
-	h.GetMessage(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestPostMessageTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestPostMessageFormError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostMessageUploadsNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	json := `{"text":"text","attachments":[1]}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	c.AddParam("tickerID", "1")
-	s := &storage.MockStorage{}
-	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, errors.New("storage error"))
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestPostMessageStorageError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	json := `{"text":"text","attachments":[1]}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	c.AddParam("tickerID", "1")
-	s := &storage.MockStorage{}
-	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
-	s.On("SaveMessage", mock.Anything).Return(errors.New("storage error"))
-	b := &bridge.MockBridge{}
-	b.On("Send", mock.Anything, mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-		bridges: bridge.Bridges{"mock": b},
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostMessage(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	json := `{"text":"text","attachments":[1]}`
-	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
-	c.Request.Header.Add("Content-Type", "application/json")
-	s := &storage.MockStorage{}
-	s.On("FindUploadsByIDs", mock.Anything).Return([]storage.Upload{}, nil)
-	s.On("SaveMessage", mock.Anything).Return(nil)
-	b := &bridge.MockBridge{}
-	b.On("Send", mock.Anything, mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-		bridges: bridge.Bridges{"mock": b},
-	}
-
-	h.PostMessage(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestDeleteMessageTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestDeleteMessageMessageNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestDeleteMessageStorageError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.Set("message", storage.Message{})
-	s := &storage.MockStorage{}
-	s.On("DeleteMessage", mock.Anything).Return(errors.New("storage error"))
-	b := &bridge.MockBridge{}
-	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-		bridges: bridge.Bridges{"mock": b},
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
-}
-
-func TestDeleteMessage(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	c.Set("message", storage.Message{})
-	s := &storage.MockStorage{}
-	s.On("DeleteMessage", mock.Anything).Return(nil)
-	b := &bridge.MockBridge{}
-	b.On("Delete", mock.Anything, mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-		bridges: bridge.Bridges{"mock": b},
-	}
-
-	h.DeleteMessage(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
+func TestMessagesTestSuite(t *testing.T) {
+	suite.Run(t, new(MessagesTestSuite))
 }

@@ -6,12 +6,31 @@ import (
 	"time"
 
 	"github.com/gorilla/feeds"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestFeed(t *testing.T) {
-	w := httptest.NewRecorder()
+type RendererTestSuite struct {
+	suite.Suite
+}
 
+func (s *RendererTestSuite) TestFormatFromString() {
+	s.Run("when format is atom", func() {
+		format := FormatFromString("atom")
+		s.Equal(AtomFormat, format)
+	})
+
+	s.Run("when format is rss", func() {
+		format := FormatFromString("rss")
+		s.Equal(RSSFormat, format)
+	})
+
+	s.Run("when format is empty", func() {
+		format := FormatFromString("")
+		s.Equal(RSSFormat, format)
+	})
+}
+
+func (s *RendererTestSuite) TestWriteFeed() {
 	feed := &feeds.Feed{
 		Title: "Title",
 		Author: &feeds.Author{
@@ -23,29 +42,30 @@ func TestFeed(t *testing.T) {
 		},
 		Created: time.Now(),
 	}
-	atom := Feed{Data: feed, Format: AtomFormat}
 
-	err := atom.Render(w)
-	assert.Nil(t, err)
+	s.Run("when format is atom", func() {
+		w := httptest.NewRecorder()
+		atom := Feed{Data: feed, Format: AtomFormat}
 
-	atom.WriteContentType(w)
-	assert.Equal(t, "application/xml; charset=utf-8", w.Header().Get("Content-Type"))
+		err := atom.Render(w)
+		s.NoError(err)
 
-	rss := Feed{Data: feed, Format: RSSFormat}
+		atom.WriteContentType(w)
+		s.Equal("application/xml; charset=utf-8", w.Header().Get("Content-Type"))
+	})
 
-	err = rss.Render(w)
-	assert.Nil(t, err)
+	s.Run("when format is rss", func() {
+		w := httptest.NewRecorder()
+		rss := Feed{Data: feed, Format: RSSFormat}
+
+		err := rss.Render(w)
+		s.NoError(err)
+
+		rss.WriteContentType(w)
+		s.Equal("application/xml; charset=utf-8", w.Header().Get("Content-Type"))
+	})
 }
 
-func TestFormatFromString(t *testing.T) {
-	var format Format
-
-	format = FormatFromString("atom")
-	assert.Equal(t, AtomFormat, format)
-
-	format = FormatFromString("rss")
-	assert.Equal(t, RSSFormat, format)
-
-	format = FormatFromString("")
-	assert.Equal(t, RSSFormat, format)
+func TestRendererTestSuite(t *testing.T) {
+	suite.Run(t, new(RendererTestSuite))
 }

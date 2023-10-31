@@ -6,28 +6,35 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type FeaturesTestSuite struct {
+	suite.Suite
+}
+
+func (s *FeaturesTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetFeatures(t *testing.T) {
+func (s *FeaturesTestSuite) TestGetFeatures() {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
+	store := &storage.MockStorage{}
 
 	h := handler{
-		storage: s,
+		storage: store,
 		config:  config.LoadConfig(""),
 	}
 
 	h.GetFeatures(c)
 
-	expected := `{"data":{"features":{"telegramEnabled":false}},"status":"success","error":{}}`
-	assert.Equal(t, expected, w.Body.String())
-	assert.Equal(t, http.StatusOK, w.Code)
+	s.Equal(http.StatusOK, w.Code)
+	s.Equal(`{"data":{"features":{"telegramEnabled":false}},"status":"success","error":{}}`, w.Body.String())
+}
+
+func TestFeaturesTestSuite(t *testing.T) {
+	suite.Run(t, new(FeaturesTestSuite))
 }

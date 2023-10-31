@@ -3,21 +3,32 @@ package response
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestSuccessResponse(t *testing.T) {
-	d := []string{"value1", "value2"}
-	r := SuccessResponse(map[string]interface{}{"user": d})
-
-	assert.Equal(t, StatusSuccess, r.Status)
-	assert.Equal(t, Data{"user": d}, r.Data)
-	assert.Equal(t, Error{}, r.Error)
+type ResponseTestSuite struct {
+	suite.Suite
 }
 
-func TestErrorResponse(t *testing.T) {
-	r := ErrorResponse(CodeDefault, InsufficientPermissions)
+func (s *ResponseTestSuite) TestResponse() {
+	s.Run("when status is success", func() {
+		d := []string{"value1", "value2"}
+		r := SuccessResponse(map[string]interface{}{"user": d})
 
-	assert.Equal(t, StatusError, r.Status)
-	assert.Equal(t, Error{Code: CodeDefault, Message: InsufficientPermissions}, r.Error)
+		s.Equal(StatusSuccess, r.Status)
+		s.Equal(Data(map[string]interface{}{"user": d}), r.Data)
+		s.Equal(Error{}, r.Error)
+	})
+
+	s.Run("when status is error", func() {
+		r := ErrorResponse(CodeDefault, InsufficientPermissions)
+
+		s.Equal(StatusError, r.Status)
+		s.Equal(Data(nil), r.Data)
+		s.Equal(Error{Code: CodeDefault, Message: InsufficientPermissions}, r.Error)
+	})
+}
+
+func TestResponseTestSuite(t *testing.T) {
+	suite.Run(t, new(ResponseTestSuite))
 }

@@ -7,52 +7,49 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestStorage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Auth Middleware Suite")
+type MeTestSuite struct {
+	suite.Suite
 }
 
-var _ = Describe("Me Middleware", func() {
-	When("id is not present", func() {
-		It("should return an error", func() {
-			mockStorage := &storage.MockStorage{}
-			mw := MeMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
+func (s *MeTestSuite) SetupTest() {
+	gin.SetMode(gin.TestMode)
+}
 
-			mw(c)
+func (s *MeTestSuite) TestMeMiddleware() {
+	s.Run("when id is not present", func() {
+		mockStorage := &storage.MockStorage{}
+		mw := MeMiddleware(mockStorage)
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
 
-			Expect(w.Code).To(Equal(http.StatusBadRequest))
-		})
+		mw(c)
+
+		s.Equal(http.StatusBadRequest, w.Code)
 	})
 
-	When("id is present", func() {
-		Context("user not found", func() {
+	s.Run("when id is present", func() {
+		s.Run("when user is not found", func() {
 			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 			mw := MeMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Set("id", float64(1))
 
 			mw(c)
 
-			Expect(w.Code).To(Equal(http.StatusBadRequest))
+			s.Equal(http.StatusBadRequest, w.Code)
 		})
 
-		Context("user found", func() {
+		s.Run("when user is found", func() {
 			mockStorage := &storage.MockStorage{}
 			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
 			mw := MeMiddleware(mockStorage)
-			gin.SetMode(gin.ReleaseMode)
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 			c.Set("id", float64(1))
@@ -60,8 +57,12 @@ var _ = Describe("Me Middleware", func() {
 			mw(c)
 
 			user, exists := c.Get("me")
-			Expect(exists).To(BeTrue())
-			Expect(user).To(BeAssignableToTypeOf(storage.User{}))
+			s.True(exists)
+			s.IsType(storage.User{}, user)
 		})
 	})
-})
+}
+
+func TestMeTestSuite(t *testing.T) {
+	suite.Run(t, new(MeTestSuite))
+}

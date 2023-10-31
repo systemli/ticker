@@ -4,72 +4,107 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestCache(t *testing.T) {
+type CacheTestSuite struct {
+	suite.Suite
+}
+
+func TestCacheTestSuite(t *testing.T) {
+	suite.Run(t, new(CacheTestSuite))
+}
+
+func (s *CacheTestSuite) TestCache() {
 	interval := 100 * time.Microsecond
 	c := NewCache(interval)
 	defer c.Close()
 
-	c.Set("foo", "bar", 0)
-	c.Set("baz", "qux", interval/2)
+	s.Run("Set", func() {
+		s.Run("adds value to cache", func() {
+			c.Set("foo", "bar", 0)
+			foo, found := c.Get("foo")
+			s.True(found)
+			s.Equal("bar", foo)
+		})
 
-	baz, found := c.Get("baz")
-	assert.True(t, found)
-	assert.Equal(t, "qux", baz)
+		s.Run("add value to cache with expiration", func() {
+			c.Set("foo", "bar", interval/2)
+			foo, found := c.Get("foo")
+			s.True(found)
+			s.Equal("bar", foo)
 
-	time.Sleep(interval / 2)
+			time.Sleep(interval)
 
-	_, found = c.Get("baz")
-	assert.False(t, found)
-
-	time.Sleep(interval)
-
-	_, found = c.Get("404")
-	assert.False(t, found)
-
-	foo, found := c.Get("foo")
-	assert.True(t, found)
-	assert.Equal(t, "bar", foo)
-}
-
-func TestDelete(t *testing.T) {
-	c := NewCache(time.Minute)
-	c.Set("foo", "bar", time.Hour)
-
-	_, found := c.Get("foo")
-	assert.True(t, found)
-
-	c.Delete("foo")
-
-	_, found = c.Get("foo")
-	assert.False(t, found)
-}
-
-func TestRange(t *testing.T) {
-	c := NewCache(time.Minute)
-	c.Set("foo", "bar", time.Hour)
-	c.Set("baz", "qux", time.Hour)
-
-	count := 0
-	c.Range(func(key, value interface{}) bool {
-		count++
-		return true
+			foo, found = c.Get("foo")
+			s.False(found)
+			s.Empty(foo)
+		})
 	})
-	assert.Equal(t, 2, count)
-}
 
-func TestRangeTimer(t *testing.T) {
-	c := NewCache(time.Minute)
-	c.Set("foo", "bar", time.Nanosecond)
-	c.Set("baz", "qux", time.Nanosecond)
+	s.Run("Get", func() {
+		s.Run("returns empty value if not found", func() {
+			foo, found := c.Get("foo")
+			s.False(found)
+			s.Empty(foo)
+		})
 
-	time.Sleep(time.Microsecond)
+		s.Run("returns empty value if expired", func() {
+			c.Set("foo", "bar", interval/2)
+			foo, found := c.Get("foo")
+			s.True(found)
+			s.Equal("bar", foo)
 
-	c.Range(func(key, value interface{}) bool {
-		assert.Fail(t, "should not be called")
-		return true
+			time.Sleep(interval)
+
+			foo, found = c.Get("foo")
+			s.False(found)
+			s.Empty(foo)
+		})
+	})
+
+	s.Run("Delete", func() {
+		s.Run("removes value from cache", func() {
+			c.Set("foo", "bar", 0)
+			foo, found := c.Get("foo")
+			s.True(found)
+			s.Equal("bar", foo)
+
+			c.Delete("foo")
+			foo, found = c.Get("foo")
+			s.False(found)
+			s.Empty(foo)
+		})
+	})
+
+	s.Run("Range", func() {
+		s.Run("iterates over all values in cache", func() {
+			c.Set("foo", "bar", 0)
+			c.Set("bar", "baz", 0)
+
+			count := 0
+			c.Range(func(key, value interface{}) bool {
+				count++
+				return true
+			})
+
+			s.Equal(2, count)
+		})
+
+		s.Run("iterates not over expired values", func() {
+			c.Set("foo", "bar", interval/2)
+			c.Set("bar", "baz", 0)
+
+			time.Sleep(interval)
+
+			count := 0
+			c.Range(func(key, value interface{}) bool {
+				count++
+				return true
+			})
+
+			s.Equal(1, count)
+		})
 	})
 }
 

@@ -10,143 +10,127 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func TestStorage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Auth Middleware Suite")
+type AuthTestSuite struct {
+	suite.Suite
 }
 
-var _ = Describe("Auth Middleware", func() {
+func (s *AuthTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
+}
 
-	When("Authenticator", func() {
-		Context("empty form is sent", func() {
-			mockStorage := &storage.MockStorage{}
+func (s *AuthTestSuite) TestAuthenticator() {
+	s.Run("when form is empty", func() {
+		mockStorage := &storage.MockStorage{}
+		authenticator := Authenticator(mockStorage)
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{}`))
 
-			authenticator := Authenticator(mockStorage)
-			c, _ := gin.CreateTestContext(httptest.NewRecorder())
-			c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{}`))
+		_, err := authenticator(c)
+		s.Error(err)
+		s.Equal("missing Username or Password", err.Error())
+	})
 
-			It("should return an error", func() {
-				_, err := authenticator(c)
-				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(errors.New("missing Username or Password")))
-			})
-		})
+	s.Run("when user is not found", func() {
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("FindUserByEmail", mock.Anything).Return(storage.User{}, errors.New("not found"))
 
-		Context("user not found", func() {
-			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByEmail", mock.Anything).Return(storage.User{}, errors.New("not found"))
+		authenticator := Authenticator(mockStorage)
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{"username": "user@systemli.org", "password": "password"}`))
+		c.Request.Header.Set("Content-Type", "application/json")
 
-			authenticator := Authenticator(mockStorage)
+		_, err := authenticator(c)
+		s.Error(err)
+		s.Equal("not found", err.Error())
+	})
+
+	s.Run("when user is found", func() {
+		user, err := storage.NewUser("user@systemli.org", "password")
+		s.NoError(err)
+
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		authenticator := Authenticator(mockStorage)
+
+		s.Run("with correct password", func() {
 			c, _ := gin.CreateTestContext(httptest.NewRecorder())
 			c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{"username": "user@systemli.org", "password": "password"}`))
 			c.Request.Header.Set("Content-Type", "application/json")
+			user, err := authenticator(c)
 
-			It("should return an error", func() {
-				_, err := authenticator(c)
-				Expect(err).NotTo(BeNil())
-				Expect(err).To(Equal(errors.New("not found")))
-			})
+			s.NoError(err)
+			s.Equal("user@systemli.org", user.(storage.User).Email)
 		})
 
-		Context("user is found", func() {
-			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
-			user := storage.User{
-				ID:                1,
-				Email:             "user@systemli.org",
-				EncryptedPassword: string(hashedPassword),
-				IsSuperAdmin:      false,
-			}
-			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.Run("with incorrect password", func() {
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{"username": "user@systemli.org", "password": "password1"}`))
+			c.Request.Header.Set("Content-Type", "application/json")
 
-			authenticator := Authenticator(mockStorage)
+			_, err := authenticator(c)
 
-			It("should return a user with correct password", func() {
-				c, _ := gin.CreateTestContext(httptest.NewRecorder())
-				c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{"username": "user@systemli.org", "password": "password"}`))
-				c.Request.Header.Set("Content-Type", "application/json")
-				user, err := authenticator(c)
-				Expect(err).To(BeNil())
-				Expect(user).To(BeAssignableToTypeOf(storage.User{}))
-			})
-
-			It("should return an error with incorrect password", func() {
-				c, _ := gin.CreateTestContext(httptest.NewRecorder())
-				c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{"username": "user@systemli.org", "password": "password1"}`))
-				c.Request.Header.Set("Content-Type", "application/json")
-
-				_, err := authenticator(c)
-				Expect(err).NotTo(BeNil())
-			})
+			s.Error(err)
+			s.Equal("authentication failed", err.Error())
 		})
 	})
+}
 
-	When("Authorizator", func() {
-		Context("storage returns no user", func() {
-			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("user not found"))
-			authorizator := Authorizator(mockStorage)
-			rr := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(rr)
+func (s *AuthTestSuite) TestAuthorizator() {
+	s.Run("when user is not found", func() {
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
+		authorizator := Authorizator(mockStorage)
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
 
-			It("should return false", func() {
-				found := authorizator(float64(1), c)
-				Expect(found).To(BeFalse())
-			})
-		})
-
-		Context("storage returns a user", func() {
-			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
-			authorizator := Authorizator(mockStorage)
-			rr := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(rr)
-
-			It("should return true", func() {
-				found := authorizator(float64(1), c)
-				Expect(found).To(BeTrue())
-			})
-		})
+		found := authorizator(float64(1), c)
+		s.False(found)
 	})
 
-	When("Unauthorized", func() {
-		It("should return a 403 with json payload", func() {
-			rr := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(rr)
-			c.Request = httptest.NewRequest(http.MethodGet, "/login", nil)
+	s.Run("when user is found", func() {
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
+		authorizator := Authorizator(mockStorage)
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
 
-			Unauthorized(c, 403, "unauthorized")
+		found := authorizator(float64(1), c)
+		s.True(found)
+	})
+}
 
-			err := json.Unmarshal(rr.Body.Bytes(), &response.Response{})
-			Expect(rr.Code).To(Equal(403))
-			Expect(err).To(BeNil())
-		})
+func (s *AuthTestSuite) TestUnauthorized() {
+	s.Run("returns a 403 with json payload", func() {
+		rr := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(rr)
+		c.Request = httptest.NewRequest(http.MethodGet, "/login", nil)
+
+		Unauthorized(c, 403, "unauthorized")
+
+		err := json.Unmarshal(rr.Body.Bytes(), &response.Response{})
+		s.NoError(err)
+		s.Equal(403, rr.Code)
+	})
+}
+
+func (s *AuthTestSuite) TestFillClaims() {
+	s.Run("when user is empty", func() {
+		claims := FillClaim("empty")
+		s.Equal(jwt.MapClaims{}, claims)
 	})
 
-	When("FillClaims", func() {
-		Context("invalid user is given", func() {
-			It("should return empty claims", func() {
-				claims := FillClaim("empty")
-				Expect(claims).To(Equal(jwt.MapClaims{}))
-			})
-		})
+	s.Run("when user is valid", func() {
+		user := storage.User{ID: 1, Email: "user@systemli.org", IsSuperAdmin: true}
+		claims := FillClaim(user)
 
-		Context("valid user is given", func() {
-			It("should return the claims", func() {
-				user := storage.User{ID: 1, Email: "user@systemli.org", IsSuperAdmin: true}
-				claims := FillClaim(user)
-
-				Expect(claims).To(Equal(jwt.MapClaims{"id": 1, "email": "user@systemli.org", "roles": []string{"user", "admin"}}))
-			})
-		})
+		s.Equal(jwt.MapClaims{"id": 1, "email": "user@systemli.org", "roles": []string{"user", "admin"}}, claims)
 	})
-})
+}
+
+func TestAuthTestSuite(t *testing.T) {
+	suite.Run(t, new(AuthTestSuite))
+}

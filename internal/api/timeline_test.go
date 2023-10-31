@@ -7,99 +7,78 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type TimelineTestSuite struct {
+	w     *httptest.ResponseRecorder
+	ctx   *gin.Context
+	store *storage.MockStorage
+	cfg   config.Config
+	suite.Suite
+}
+
+func (s *TimelineTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestGetTimelineMissingDomain(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *TimelineTestSuite) Run(name string, subtest func()) {
+	s.T().Run(name, func(t *testing.T) {
+		s.w = httptest.NewRecorder()
+		s.ctx, _ = gin.CreateTestContext(s.w)
+		s.store = &storage.MockStorage{}
+		s.cfg = config.LoadConfig("")
 
-	h.GetTimeline(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), response.TickerNotFound)
+		subtest()
+	})
 }
 
-func TestGetTimelineTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
-	c.Request.Header.Add("Origin", "https://demoticker.org")
+func (s *TimelineTestSuite) TestGetTimeline() {
+	s.Run("when ticker is missing", func() {
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+		h := s.handler()
+		h.GetTimeline(s.ctx)
 
-	s := &storage.MockStorage{}
-	s.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), response.TickerNotFound)
+		s.store.AssertExpectations(s.T())
+	})
 
-	h.GetTimeline(c)
+	s.Run("when storage returns an error", func() {
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+		s.ctx.Set("ticker", storage.Ticker{Active: true})
+		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+		h := s.handler()
+		h.GetTimeline(s.ctx)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), response.TickerNotFound)
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), response.MessageFetchError)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns messages", func() {
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
+		s.ctx.Set("ticker", storage.Ticker{Active: true})
+		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
+		h := s.handler()
+		h.GetTimeline(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestGetTimelineTickerInactive(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{Active: false})
-	s := &storage.MockStorage{}
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
+func (s *TimelineTestSuite) handler() handler {
+	return handler{
+		storage: s.store,
+		config:  s.cfg,
 	}
-
-	h.GetTimeline(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestGetTimelineMessageFetchError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{Active: true})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.GetTimeline(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), response.MessageFetchError)
-}
-
-func TestGetTimeline(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil)
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.GetTimeline(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
+func TestTimelineTestSuite(t *testing.T) {
+	suite.Run(t, new(TimelineTestSuite))
 }

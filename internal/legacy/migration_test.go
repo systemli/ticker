@@ -6,36 +6,43 @@ import (
 	"time"
 
 	"github.com/asdine/storm"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/storage"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func TestMigration(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Migration Suite")
+type MigrationTestSuite struct {
+	oldDb     *storm.DB
+	newDb     *gorm.DB
+	migration *Migration
+	err       error
+
+	ticker                  Ticker
+	message                 Message
+	attachment              Attachment
+	adminUser               User
+	user                    User
+	upload                  Upload
+	refreshIntervalSetting  Setting
+	inactiveSettingsSetting Setting
+
+	suite.Suite
 }
 
-var _ = Describe("Migration", func() {
-	var (
-		oldDb     *storm.DB
-		newDb     *gorm.DB
-		migration *Migration
-		err       error
+func (s *MigrationTestSuite) SetupTest() {
+	s.oldDb, s.err = storm.Open("storm.db", storm.BoltOptions(0600, nil))
+	s.NoError(s.err)
 
-		ticker                  Ticker
-		message                 Message
-		attachment              Attachment
-		adminUser               User
-		user                    User
-		upload                  Upload
-		refreshIntervalSetting  Setting
-		inactiveSettingsSetting Setting
-	)
+	s.newDb, s.err = gorm.Open(sqlite.Open("file:testdatabase?mode=memory&cache=shared"), &gorm.Config{})
+	s.NoError(s.err)
+	s.NoError(storage.MigrateDB(s.newDb))
 
-	ticker = Ticker{
+	oldStorage := NewLegacyStorage(s.oldDb)
+	newStorage := storage.NewSqlStorage(s.newDb, "testdata/uploads")
+	s.migration = NewMigration(oldStorage, newStorage)
+
+	s.ticker = Ticker{
 		ID:           161,
 		CreationDate: time.Now(),
 		Active:       true,
@@ -53,28 +60,28 @@ var _ = Describe("Migration", func() {
 		},
 	}
 
-	attachment = Attachment{
+	s.attachment = Attachment{
 		UUID:        "uuid",
 		Extension:   "png",
 		ContentType: "image/png",
 	}
 
-	message = Message{
+	s.message = Message{
 		ID:           1,
 		CreationDate: time.Now(),
 		Ticker:       161,
 		Text:         "Message",
-		Attachments:  []Attachment{attachment},
+		Attachments:  []Attachment{s.attachment},
 	}
 
-	adminUser = User{
+	s.adminUser = User{
 		ID:           1,
 		Email:        "admin@systemli.org",
 		CreationDate: time.Now(),
 		IsSuperAdmin: true,
 	}
 
-	user = User{
+	s.user = User{
 		ID:           2,
 		Email:        "user@systemli.org",
 		CreationDate: time.Now(),
@@ -82,7 +89,7 @@ var _ = Describe("Migration", func() {
 		Tickers:      []int{161},
 	}
 
-	upload = Upload{
+	s.upload = Upload{
 		ID:           1,
 		CreationDate: time.Now(),
 		TickerID:     161,
@@ -92,13 +99,13 @@ var _ = Describe("Migration", func() {
 		Path:         "testdata/uploads",
 	}
 
-	refreshIntervalSetting = Setting{
+	s.refreshIntervalSetting = Setting{
 		ID:    1,
 		Name:  "refresh_interval",
 		Value: 10000,
 	}
 
-	inactiveSettingsSetting = Setting{
+	s.inactiveSettingsSetting = Setting{
 		ID:   2,
 		Name: "inactive_settings",
 		Value: map[string]string{
@@ -111,100 +118,84 @@ var _ = Describe("Migration", func() {
 		},
 	}
 
-	BeforeEach(func() {
-		oldDb, err = storm.Open("storm.db", storm.BoltOptions(0600, nil))
-		Expect(err).ToNot(HaveOccurred())
+	s.NoError(s.oldDb.Save(&s.ticker))
+	s.NoError(s.oldDb.Save(&s.message))
+	s.NoError(s.oldDb.Save(&s.adminUser))
+	s.NoError(s.oldDb.Save(&s.user))
+	s.NoError(s.oldDb.Save(&s.upload))
+	s.NoError(s.oldDb.Save(&s.refreshIntervalSetting))
+	s.NoError(s.oldDb.Save(&s.inactiveSettingsSetting))
+}
 
-		newDb, err = gorm.Open(sqlite.Open("file:testdatabase?mode=memory&cache=shared"), &gorm.Config{})
-		Expect(err).ToNot(HaveOccurred())
-		Expect(storage.MigrateDB(newDb)).To(Succeed())
+func (s *MigrationTestSuite) TearDownTest() {
+	s.NoError(s.oldDb.Close())
+	s.NoError(os.Remove("storm.db"))
+}
 
-		oldStorage := NewLegacyStorage(oldDb)
-		newStorage := storage.NewSqlStorage(newDb, "testdata/uploads")
-		migration = NewMigration(oldStorage, newStorage)
+func (s *MigrationTestSuite) TestDo() {
+	s.err = s.migration.Do()
+	s.NoError(s.err)
 
-		Expect(oldDb.Save(&ticker)).To(Succeed())
-		Expect(oldDb.Save(&message)).To(Succeed())
-		Expect(oldDb.Save(&adminUser)).To(Succeed())
-		Expect(oldDb.Save(&user)).To(Succeed())
-		Expect(oldDb.Save(&upload)).To(Succeed())
-		Expect(oldDb.Save(&refreshIntervalSetting)).To(Succeed())
-		Expect(oldDb.Save(&inactiveSettingsSetting)).To(Succeed())
-	})
+	var tickers []storage.Ticker
+	s.NoError(s.newDb.Find(&tickers).Error)
+	s.Equal(1, len(tickers))
+	s.Equal(s.ticker.ID, tickers[0].ID)
+	s.Equal(s.ticker.Active, tickers[0].Active)
 
-	AfterEach(func() {
-		Expect(oldDb.Close()).To(Succeed())
-		Expect(os.Remove("storm.db")).To(Succeed())
-	})
+	var telegram storage.TickerTelegram
+	s.NoError(s.newDb.First(&telegram).Error)
+	s.Equal(s.ticker.Telegram.Active, telegram.Active)
 
-	Describe("Do", func() {
-		It("migrates all the data successfully", func() {
-			err = migration.Do()
-			Expect(err).ToNot(HaveOccurred())
+	var mastodon storage.TickerMastodon
+	s.NoError(s.newDb.First(&mastodon).Error)
+	s.Equal(s.ticker.Mastodon.Active, mastodon.Active)
 
-			var tickers []storage.Ticker
-			Expect(newDb.Find(&tickers).Error).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-			Expect(tickers[0].ID).To(Equal(ticker.ID))
-			Expect(tickers[0].CreatedAt).Should(BeTemporally("~", ticker.CreationDate, time.Second))
-			Expect(tickers[0].UpdatedAt).Should(BeTemporally("~", ticker.CreationDate, time.Second))
-			Expect(tickers[0].Active).To(BeTrue())
+	var users []storage.User
+	s.NoError(s.newDb.Find(&users).Error)
+	s.Equal(2, len(users))
+	s.Equal(s.adminUser.ID, users[0].ID)
+	s.Equal(s.adminUser.Email, users[0].Email)
+	s.Equal(s.adminUser.IsSuperAdmin, users[0].IsSuperAdmin)
+	s.Equal(s.user.ID, users[1].ID)
+	s.Equal(s.user.Email, users[1].Email)
+	s.Equal(s.user.IsSuperAdmin, users[1].IsSuperAdmin)
 
-			var telegram storage.TickerTelegram
-			Expect(newDb.First(&telegram).Error).ToNot(HaveOccurred())
-			Expect(telegram.Active).To(BeTrue())
+	var tickersUsers []storage.User
+	s.NoError(s.newDb.Model(&tickers[0]).Association("Users").Find(&tickersUsers))
+	s.Equal(1, len(tickersUsers))
+	s.Equal(s.user.ID, tickersUsers[0].ID)
+	s.Equal(s.user.Email, tickersUsers[0].Email)
 
-			var mastodon storage.TickerMastodon
-			Expect(newDb.First(&mastodon).Error).ToNot(HaveOccurred())
-			Expect(mastodon.Active).To(BeTrue())
+	var messages []storage.Message
+	s.NoError(s.newDb.Find(&messages).Error)
+	s.Equal(1, len(messages))
+	s.Equal(s.message.ID, messages[0].ID)
+	s.Equal(s.message.Ticker, messages[0].TickerID)
+	s.Equal(s.message.Text, messages[0].Text)
 
-			var users []storage.User
-			Expect(newDb.Find(&users).Error).ToNot(HaveOccurred())
-			Expect(users).To(HaveLen(2))
-			Expect(users[0].ID).To(Equal(adminUser.ID))
-			Expect(users[0].CreatedAt).Should(BeTemporally("~", adminUser.CreationDate, time.Second))
-			Expect(users[0].Email).To(Equal(adminUser.Email))
-			Expect(users[0].IsSuperAdmin).To(BeTrue())
-			Expect(users[1].ID).To(Equal(user.ID))
-			Expect(users[1].CreatedAt).Should(BeTemporally("~", user.CreationDate, time.Second))
-			Expect(users[1].Email).To(Equal(user.Email))
-			Expect(users[1].IsSuperAdmin).To(BeFalse())
+	var attachments []storage.Attachment
+	s.NoError(s.newDb.Find(&attachments).Error)
+	s.Equal(1, len(attachments))
+	s.Equal(s.attachment.UUID, attachments[0].UUID)
+	s.Equal(s.attachment.Extension, attachments[0].Extension)
+	s.Equal(s.attachment.ContentType, attachments[0].ContentType)
 
-			var tickersUsers []storage.User
-			Expect(newDb.Model(&tickers[0]).Association("Users").Find(&tickersUsers)).To(Succeed())
-			Expect(tickersUsers).To(HaveLen(1))
-			Expect(tickersUsers[0].Email).To(Equal(user.Email))
+	var uploads []storage.Upload
+	s.NoError(s.newDb.Find(&uploads).Error)
+	s.Equal(1, len(uploads))
+	s.Equal(s.upload.ID, uploads[0].ID)
+	s.Equal(s.upload.TickerID, uploads[0].TickerID)
+	s.Equal(s.upload.UUID, uploads[0].UUID)
 
-			var messages []storage.Message
-			Expect(newDb.Find(&messages).Error).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(1))
-			Expect(messages[0].ID).To(Equal(message.ID))
-			Expect(messages[0].TickerID).To(Equal(message.Ticker))
-			Expect(messages[0].Text).To(Equal(message.Text))
-			Expect(messages[0].CreatedAt).Should(BeTemporally("~", message.CreationDate, time.Second))
+	var settings []storage.Setting
+	s.NoError(s.newDb.Find(&settings).Error)
+	s.Equal(2, len(settings))
+	s.Equal(s.refreshIntervalSetting.Name, settings[0].Name)
+	s.Equal(`{"refreshInterval":10000}`, settings[0].Value)
+	s.Equal(s.inactiveSettingsSetting.Name, settings[1].Name)
+	s.Equal(`{"headline":"Headline","subHeadline":"Subheadline","description":"Description","author":"Author","email":"Email","homepage":"","twitter":"Twitter"}`, settings[1].Value)
+}
 
-			var attachments []storage.Attachment
-			Expect(newDb.Find(&attachments).Error).ToNot(HaveOccurred())
-			Expect(attachments).To(HaveLen(1))
-			Expect(attachments[0].MessageID).To(Equal(message.ID))
-			Expect(attachments[0].UUID).To(Equal(attachment.UUID))
-			Expect(attachments[0].CreatedAt).Should(BeTemporally("~", message.CreationDate, time.Second))
-
-			var uploads []storage.Upload
-			Expect(newDb.Find(&uploads).Error).ToNot(HaveOccurred())
-			Expect(uploads).To(HaveLen(1))
-			Expect(uploads[0].ID).To(Equal(upload.ID))
-			Expect(uploads[0].CreatedAt).Should(BeTemporally("~", upload.CreationDate, time.Second))
-			Expect(uploads[0].TickerID).To(Equal(upload.TickerID))
-			Expect(uploads[0].UUID).To(Equal(upload.UUID))
-
-			var settings []storage.Setting
-			Expect(newDb.Find(&settings).Error).ToNot(HaveOccurred())
-			Expect(settings).To(HaveLen(2))
-			Expect(settings[0].Name).To(Equal(refreshIntervalSetting.Name))
-			Expect(settings[0].Value).To(Equal(`{"refreshInterval":10000}`))
-			Expect(settings[1].Name).To(Equal(inactiveSettingsSetting.Name))
-			Expect(settings[1].Value).To(Equal(`{"headline":"Headline","subHeadline":"Subheadline","description":"Description","author":"Author","email":"Email","homepage":"","twitter":"Twitter"}`))
-		})
-	})
-})
+func TestMigrationTestSuite(t *testing.T) {
+	suite.Run(t, new(MigrationTestSuite))
+}

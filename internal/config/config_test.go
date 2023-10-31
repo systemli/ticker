@@ -1,23 +1,23 @@
 package config
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestConfig(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Config Suite")
+type ConfigTestSuite struct {
+	envs map[string]string
+	suite.Suite
 }
 
-var _ = Describe("Config", func() {
-	log.Logger.SetOutput(GinkgoWriter)
+func (s *ConfigTestSuite) SetupTest() {
+	log.Logger.SetOutput(io.Discard)
 
-	var envs map[string]string = map[string]string{
+	s.envs = map[string]string{
 		"TICKER_LISTEN":         ":7070",
 		"TICKER_LOG_LEVEL":      "trace",
 		"TICKER_LOG_FORMAT":     "text",
@@ -29,81 +29,85 @@ var _ = Describe("Config", func() {
 		"TICKER_UPLOAD_URL":     "https://example.com",
 		"TICKER_TELEGRAM_TOKEN": "token",
 	}
+}
 
-	Describe("LoadConfig", func() {
-		BeforeEach(func() {
-			for key := range envs {
-				os.Unsetenv(key)
-			}
-		})
-
-		Context("when path is empty", func() {
-			It("loads config with default values", func() {
+func (s *ConfigTestSuite) TestConfig() {
+	s.Run("LoadConfig", func() {
+		s.Run("when path is empty", func() {
+			s.Run("loads config with default values", func() {
 				c := LoadConfig("")
-				Expect(c.Listen).To(Equal(":8080"))
-				Expect(c.LogLevel).To(Equal("debug"))
-				Expect(c.LogFormat).To(Equal("json"))
-				Expect(c.Secret).ToNot(BeEmpty())
-				Expect(c.Database.Type).To(Equal("sqlite"))
-				Expect(c.Database.DSN).To(Equal("ticker.db"))
-				Expect(c.MetricsListen).To(Equal(":8181"))
-				Expect(c.Upload.Path).To(Equal("uploads"))
-				Expect(c.Upload.URL).To(Equal("http://localhost:8080"))
-				Expect(c.Telegram.Token).To(BeEmpty())
-				Expect(c.Telegram.Enabled()).To(BeFalse())
+				s.Equal(":8080", c.Listen)
+				s.Equal("debug", c.LogLevel)
+				s.Equal("json", c.LogFormat)
+				s.NotEmpty(c.Secret)
+				s.Equal("sqlite", c.Database.Type)
+				s.Equal("ticker.db", c.Database.DSN)
+				s.Equal(":8181", c.MetricsListen)
+				s.Equal("uploads", c.Upload.Path)
+				s.Equal("http://localhost:8080", c.Upload.URL)
+				s.Empty(c.Telegram.Token)
+				s.False(c.Telegram.Enabled())
 			})
 
-			It("loads config from env", func() {
-				for key, value := range envs {
+			s.Run("loads config from env", func() {
+				for key, value := range s.envs {
 					err := os.Setenv(key, value)
-					Expect(err).ToNot(HaveOccurred())
+					s.NoError(err)
 				}
 
 				c := LoadConfig("")
-				Expect(c.Listen).To(Equal(envs["TICKER_LISTEN"]))
-				Expect(c.LogLevel).To(Equal(envs["TICKER_LOG_LEVEL"]))
-				Expect(c.LogFormat).To(Equal(envs["TICKER_LOG_FORMAT"]))
-				Expect(c.Secret).To(Equal(envs["TICKER_SECRET"]))
-				Expect(c.Database.Type).To(Equal(envs["TICKER_DATABASE_TYPE"]))
-				Expect(c.Database.DSN).To(Equal(envs["TICKER_DATABASE_DSN"]))
-				Expect(c.MetricsListen).To(Equal(envs["TICKER_METRICS_LISTEN"]))
-				Expect(c.Upload.Path).To(Equal(envs["TICKER_UPLOAD_PATH"]))
-				Expect(c.Upload.URL).To(Equal(envs["TICKER_UPLOAD_URL"]))
-				Expect(c.Telegram.Token).To(Equal(envs["TICKER_TELEGRAM_TOKEN"]))
-				Expect(c.Telegram.Enabled()).To(BeTrue())
+				s.Equal(s.envs["TICKER_LISTEN"], c.Listen)
+				s.Equal(s.envs["TICKER_LOG_LEVEL"], c.LogLevel)
+				s.Equal(s.envs["TICKER_LOG_FORMAT"], c.LogFormat)
+				s.Equal(s.envs["TICKER_SECRET"], c.Secret)
+				s.Equal(s.envs["TICKER_DATABASE_TYPE"], c.Database.Type)
+				s.Equal(s.envs["TICKER_DATABASE_DSN"], c.Database.DSN)
+				s.Equal(s.envs["TICKER_METRICS_LISTEN"], c.MetricsListen)
+				s.Equal(s.envs["TICKER_UPLOAD_PATH"], c.Upload.Path)
+				s.Equal(s.envs["TICKER_UPLOAD_URL"], c.Upload.URL)
+				s.Equal(s.envs["TICKER_TELEGRAM_TOKEN"], c.Telegram.Token)
+				s.True(c.Telegram.Enabled())
+
+				for key := range s.envs {
+					os.Unsetenv(key)
+				}
 			})
 		})
 
-		Context("when path is not empty", func() {
-			Context("when path is absolute", func() {
-				It("loads config from file", func() {
+		s.Run("when path is not empty", func() {
+			s.Run("when path is absolute", func() {
+				s.Run("loads config from file", func() {
 					path, err := filepath.Abs("../../testdata/config_valid.yml")
-					Expect(err).ToNot(HaveOccurred())
+					s.NoError(err)
 					c := LoadConfig(path)
-					Expect(c.Listen).To(Equal("127.0.0.1:8888"))
+					s.Equal("127.0.0.1:8888", c.Listen)
 				})
 			})
 
-			Context("when path is relative", func() {
-				It("loads config from file", func() {
+			s.Run("when path is relative", func() {
+				s.Run("loads config from file", func() {
 					c := LoadConfig("../../testdata/config_valid.yml")
-					Expect(c.Listen).To(Equal("127.0.0.1:8888"))
+					s.Equal("127.0.0.1:8888", c.Listen)
 				})
 			})
 
-			Context("when file does not exist", func() {
-				It("loads config with default values", func() {
+			s.Run("when file does not exist", func() {
+				s.Run("loads config with default values", func() {
 					c := LoadConfig("config_notfound.yml")
-					Expect(c.Listen).To(Equal(":8080"))
+					s.Equal(":8080", c.Listen)
 				})
 			})
 
-			Context("when file is invalid", func() {
-				It("loads config with default values", func() {
+			s.Run("when file is invalid", func() {
+				s.Run("loads config with default values", func() {
 					c := LoadConfig("../../testdata/config_invalid.txt")
-					Expect(c.Listen).To(Equal(":8080"))
+					s.Equal(":8080", c.Listen)
 				})
 			})
 		})
 	})
-})
+}
+
+func TestConfig(t *testing.T) {
+	suite.Run(t, new(ConfigTestSuite))
+}

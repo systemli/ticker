@@ -100,10 +100,5 @@ func BotUser(token string) (tgbotapi.User, error) {
 		return tgbotapi.User{}, err
 	}
 
-	user, err := bot.GetMe()
-	if err != nil {
-		return tgbotapi.User{}, err
-	}
-
-	return user, nil
+	return bot.Self, nil
 }
