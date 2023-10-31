@@ -11,261 +11,234 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type UploadTestSuite struct {
+	w     *httptest.ResponseRecorder
+	ctx   *gin.Context
+	store *storage.MockStorage
+	cfg   config.Config
+	suite.Suite
+}
+
+func (s *UploadTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestPostUploadForbidden(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *UploadTestSuite) Run(name string, subtest func()) {
+	s.T().Run(name, func(t *testing.T) {
+		s.w = httptest.NewRecorder()
+		s.ctx, _ = gin.CreateTestContext(s.w)
+		s.store = &storage.MockStorage{}
+		s.cfg = config.LoadConfig("")
 
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusNotFound, w.Code)
+		subtest()
+	})
 }
 
-func TestPostUploadMultipartError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", nil)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *UploadTestSuite) TestPostUpload() {
+	s.Run("when no user is set", func() {
+		h := s.handler()
+		h.PostUpload(s.ctx)
 
-	h.PostUpload(c)
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+	s.Run("when form is invalid", func() {
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", nil)
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when ticker is missing", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.CreateFormField("field")
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when ticker value is invalid", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.CreateFormField("ticker")
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when ticker is not found", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, errors.New("not found")).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when form files are missing", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when too much files are uploaded", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		path := "../../testdata/gopher.jpg"
+		part1, _ := writer.CreateFormFile("files", filepath.Base(path))
+		part2, _ := writer.CreateFormFile("files", filepath.Base(path))
+		part3, _ := writer.CreateFormFile("files", filepath.Base(path))
+		part4, _ := writer.CreateFormFile("files", filepath.Base(path))
+		b, _ := os.ReadFile(path)
+
+		part1.Write(b)
+		part2.Write(b)
+		part3.Write(b)
+		part4.Write(b)
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when file type is not allowed", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		path := "./api.go"
+		part, _ := writer.CreateFormFile("files", filepath.Base(path))
+		b, _ := os.ReadFile(path)
+		part.Write(b)
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when file is gif", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		path := "../../testdata/gopher-dance.gif"
+		part, _ := writer.CreateFormFile("files", filepath.Base(path))
+		b, _ := os.ReadFile(path)
+		part.Write(b)
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.On("SaveUpload", mock.Anything).Return(nil).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when save returns an error", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		path := "../../testdata/gopher.jpg"
+		part, _ := writer.CreateFormFile("files", filepath.Base(path))
+		b, _ := os.ReadFile(path)
+		part.Write(b)
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.On("SaveUpload", mock.Anything).Return(errors.New("save error")).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when save is successful", func() {
+		body := new(bytes.Buffer)
+		writer := multipart.NewWriter(body)
+		writer.WriteField("ticker", "1")
+		path := "../../testdata/gopher.jpg"
+		part, _ := writer.CreateFormFile("files", filepath.Base(path))
+		b, _ := os.ReadFile(path)
+		part.Write(b)
+		_ = writer.Close()
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
+		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
+		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.On("SaveUpload", mock.Anything).Return(nil).Once()
+		h := s.handler()
+		h.PostUpload(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestPostUploadMissingTickerValue(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.CreateFormField("field")
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
+func (s *UploadTestSuite) handler() handler {
+	return handler{
+		storage: s.store,
+		config:  s.cfg,
 	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
-func TestPostUploadTickerValueWrong(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.CreateFormField("ticker")
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostUploadTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostUploadMissingFiles(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostUpload(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	path := "../../testdata/gopher.jpg"
-	part, err := writer.CreateFormFile("files", filepath.Base(path))
-	if err != nil {
-		t.Error(err)
-	}
-	b, err := os.ReadFile(path)
-	if err != nil {
-		t.Error(err)
-	}
-	part.Write(b)
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
-	s.On("SaveUpload", mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestPostUploadGIF(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	path := "../../testdata/gopher-dance.gif"
-	part, err := writer.CreateFormFile("files", filepath.Base(path))
-	if err != nil {
-		t.Error(err)
-	}
-	b, err := os.ReadFile(path)
-	if err != nil {
-		t.Error(err)
-	}
-	part.Write(b)
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
-	s.On("SaveUpload", mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestPostUploadTooMuchFiles(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	path := "../../testdata/gopher.jpg"
-	part1, _ := writer.CreateFormFile("files", filepath.Base(path))
-	part2, _ := writer.CreateFormFile("files", filepath.Base(path))
-	part3, _ := writer.CreateFormFile("files", filepath.Base(path))
-	part4, _ := writer.CreateFormFile("files", filepath.Base(path))
-	b, _ := os.ReadFile(path)
-
-	part1.Write(b)
-	part2.Write(b)
-	part3.Write(b)
-	part4.Write(b)
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
-	s.On("SaveUpload", mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-func TestPostUploadForbiddenFileType(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("me", storage.User{IsSuperAdmin: true})
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-	writer.WriteField("ticker", "1")
-	path := "./api.go"
-	part, err := writer.CreateFormFile("files", filepath.Base(path))
-	if err != nil {
-		t.Error(err)
-	}
-	b, err := os.ReadFile(path)
-	if err != nil {
-		t.Error(err)
-	}
-	part.Write(b)
-	_ = writer.Close()
-	c.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
-	c.Request.Header.Add("Content-Type", writer.FormDataContentType())
-	s := &storage.MockStorage{}
-	s.On("FindTickerByUserAndID", mock.Anything, mock.Anything).Return(storage.Ticker{}, nil)
-	s.On("SaveUpload", mock.Anything).Return(nil)
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.PostUpload(c)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
+func TestUploadTestSuite(t *testing.T) {
+	suite.Run(t, new(UploadTestSuite))
 }

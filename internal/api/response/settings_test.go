@@ -3,24 +3,32 @@ package response
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestInactiveSettingsResponse(t *testing.T) {
+type SettingsResponseTestSuite struct {
+	suite.Suite
+}
+
+func (s *SettingsResponseTestSuite) TestInactiveSettingsResponse() {
 	inactiveSettings := storage.DefaultInactiveSettings()
 
 	setting := InactiveSettingsResponse(inactiveSettings)
 
-	assert.Equal(t, storage.SettingInactiveName, setting.Name)
-	assert.Equal(t, inactiveSettings, setting.Value)
+	s.Equal(storage.SettingInactiveName, setting.Name)
+	s.Equal(inactiveSettings, setting.Value)
 }
 
-func TestRefreshIntervalSettingsResponse(t *testing.T) {
+func (s *SettingsResponseTestSuite) TestRefreshIntervalSettingsResponse() {
 	refreshIntervalSettings := storage.DefaultRefreshIntervalSettings()
 
 	setting := RefreshIntervalSettingsResponse(refreshIntervalSettings)
 
-	assert.Equal(t, storage.SettingRefreshInterval, setting.Name)
-	assert.Equal(t, refreshIntervalSettings, setting.Value)
+	s.Equal(storage.SettingRefreshInterval, setting.Name)
+	s.Equal(refreshIntervalSettings, setting.Value)
+}
+
+func TestSettingsResponseTestSuite(t *testing.T) {
+	suite.Run(t, new(SettingsResponseTestSuite))
 }

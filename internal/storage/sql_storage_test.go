@@ -6,28 +6,27 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/suite"
 	pagination "github.com/systemli/ticker/internal/api/pagination"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func TestSqlStorage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "SqlStorage Suite")
+type SqlStorageTestSuite struct {
+	db    *gorm.DB
+	store *SqlStorage
+	suite.Suite
 }
 
-var _ = Describe("SqlStorage", func() {
-	log.Logger.SetOutput(GinkgoWriter)
+func (s *SqlStorageTestSuite) SetupTest() {
 	db, err := gorm.Open(sqlite.Open("file:testdatabase?mode=memory&cache=shared"), &gorm.Config{})
-	Expect(err).ToNot(HaveOccurred())
+	s.NoError(err)
 
-	var store = NewSqlStorage(db, "/uploads")
+	s.db = db
+	s.store = NewSqlStorage(db, "/uploads")
 
 	err = db.AutoMigrate(
 		&Ticker{},
-		&TickerInformation{},
 		&TickerTelegram{},
 		&TickerMastodon{},
 		&User{},
@@ -36,1007 +35,988 @@ var _ = Describe("SqlStorage", func() {
 		&Attachment{},
 		&Setting{},
 	)
-	Expect(err).ToNot(HaveOccurred())
+	s.NoError(err)
+}
 
-	BeforeEach(func() {
-		db.Exec("DELETE FROM users")
-		db.Exec("DELETE FROM messages")
-		db.Exec("DELETE FROM attachments")
-		db.Exec("DELETE FROM tickers")
-		db.Exec("DELETE FROM settings")
-		db.Exec("DELETE FROM uploads")
+func (s *SqlStorageTestSuite) BeforeTest(suiteName, testName string) {
+	s.NoError(s.db.Exec("DELETE FROM users").Error)
+	s.NoError(s.db.Exec("DELETE FROM messages").Error)
+	s.NoError(s.db.Exec("DELETE FROM attachments").Error)
+	s.NoError(s.db.Exec("DELETE FROM tickers").Error)
+	s.NoError(s.db.Exec("DELETE FROM ticker_mastodons").Error)
+	s.NoError(s.db.Exec("DELETE FROM ticker_telegrams").Error)
+	s.NoError(s.db.Exec("DELETE FROM settings").Error)
+	s.NoError(s.db.Exec("DELETE FROM uploads").Error)
+}
+
+func (s *SqlStorageTestSuite) TestFindUsers() {
+	s.Run("when no users exist", func() {
+		users, err := s.store.FindUsers()
+		s.NoError(err)
+		s.Empty(users)
 	})
 
-	Describe("FindUsers", func() {
-		It("returns all users", func() {
-			users, err := store.FindUsers()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(BeEmpty())
+	s.Run("when users exist", func() {
+		err := s.db.Create(&User{Tickers: []Ticker{{ID: 1}}}).Error
+		s.NoError(err)
 
-			err = db.Create(&User{}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			users, err = store.FindUsers()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(HaveLen(1))
+		s.Run("without preload", func() {
+			users, err := s.store.FindUsers()
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Empty(users[0].Tickers)
 		})
 
-		It("returns all users with preloaded tickers", func() {
-			var ticker Ticker
-			err = db.Create(&ticker).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Create(&User{
-				Tickers: []Ticker{ticker},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			users, err := store.FindUsers(WithTickers())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(HaveLen(1))
-			Expect(users[0].Tickers).To(HaveLen(1))
+		s.Run("with preload", func() {
+			users, err := s.store.FindUsers(WithTickers())
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Len(users[0].Tickers, 1)
 		})
 	})
+}
 
-	Describe("FindUserByID", func() {
-		It("returns the user with the given id", func() {
-			user, err := store.FindUserByID(1)
-			Expect(err).To(HaveOccurred())
-			Expect(user).To(BeZero())
-
-			err = db.Create(&User{}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByID(1)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user).ToNot(BeZero())
-		})
+func (s *SqlStorageTestSuite) TestFindUserByID() {
+	s.Run("when user does not exist", func() {
+		_, err := s.store.FindUserByID(1)
+		s.Error(err)
 	})
 
-	Describe("FindUsersByIDs", func() {
-		It("returns the users with the given ids", func() {
-			users, err := store.FindUsersByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(BeEmpty())
+	s.Run("when user exists", func() {
+		err := s.db.Create(&User{ID: 1, Tickers: []Ticker{{ID: 1}}}).Error
+		s.NoError(err)
 
-			err = db.Create(&User{}).Error
-			Expect(err).ToNot(HaveOccurred())
+		s.Run("without preload", func() {
+			user, err := s.store.FindUserByID(1)
+			s.NoError(err)
+			s.NotNil(user)
+			s.Empty(user.Tickers)
+		})
 
-			users, err = store.FindUsersByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(HaveLen(1))
+		s.Run("with preload", func() {
+			user, err := s.store.FindUserByID(1, WithTickers())
+			s.NoError(err)
+			s.NotNil(user)
+			s.Len(user.Tickers, 1)
 		})
 	})
+}
 
-	Describe("FindUserByEmail", func() {
-		It("returns the user with the given email", func() {
-			user, err := store.FindUserByEmail("user@systemli.org")
-			Expect(err).To(HaveOccurred())
-			Expect(user).To(BeZero())
-
-			err = db.Create(&User{Email: "user@systemli.org"}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByEmail("user@systemli.org")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user).ToNot(BeZero())
-		})
+func (s *SqlStorageTestSuite) TestFindUsersByIDs() {
+	s.Run("when no users exist", func() {
+		users, err := s.store.FindUsersByIDs([]int{1, 2})
+		s.NoError(err)
+		s.Empty(users)
 	})
 
-	Describe("FindUsersByTicker", func() {
-		It("returns the users with the given ticker", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when users exist", func() {
+		err := s.db.Create(&User{ID: 1, Tickers: []Ticker{{ID: 1}}}).Error
+		s.NoError(err)
 
-			users, err := store.FindUsersByTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(BeEmpty())
+		s.Run("without preload", func() {
+			users, err := s.store.FindUsersByIDs([]int{1})
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Empty(users[0].Tickers)
+		})
 
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker.Users = append(ticker.Users, user)
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			users, err = store.FindUsersByTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(users).To(HaveLen(1))
+		s.Run("with preload", func() {
+			users, err := s.store.FindUsersByIDs([]int{1}, WithTickers())
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Len(users[0].Tickers, 1)
 		})
 	})
+}
 
-	Describe("SaveUser", func() {
-		It("persists the user", func() {
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&User{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
-
-		It("persists the user with tickers", func() {
-			ticker := &Ticker{
-				Title:  "Title",
-				Domain: "systemli.org",
-			}
-			err = store.SaveTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			user.Tickers = append(user.Tickers, *ticker)
-
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByID(user.ID, WithTickers())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.Tickers).To(HaveLen(1))
-		})
-
-		It("updates existing user", func() {
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user.Email = "new@systemli.org"
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByID(user.ID)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.Email).To(Equal("new@systemli.org"))
-
-			ticker := &Ticker{
-				Title:  "Title",
-				Domain: "systemli.org",
-			}
-			err = store.SaveTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			user.Tickers = append(user.Tickers, *ticker)
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByID(user.ID, WithTickers())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.Tickers).To(HaveLen(1))
-		})
-
-		It("updates existing user with less tickers", func() {
-			ticker := &Ticker{
-				Title:  "Title",
-				Domain: "systemli.org",
-			}
-			err = store.SaveTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-
-			user.Tickers = append(user.Tickers, *ticker)
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user.Tickers = []Ticker{}
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err = store.FindUserByID(user.ID, WithTickers())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(user.Tickers).To(BeEmpty())
-		})
+func (s *SqlStorageTestSuite) TestFindUserByEmail() {
+	s.Run("when user does not exist", func() {
+		_, err := s.store.FindUserByEmail("user@systemli.org")
+		s.Error(err)
 	})
 
-	Describe("DeleteUser", func() {
-		It("deletes the user", func() {
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when user exists", func() {
+		err := s.db.Create(&User{Email: "user@systemli.org", Tickers: []Ticker{{ID: 1}}}).Error
+		s.NoError(err)
 
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
+		s.Run("without preload", func() {
+			user, err := s.store.FindUserByEmail("user@systemli.org")
+			s.NoError(err)
+			s.NotNil(user)
+			s.Empty(user.Tickers)
+		})
 
-			var count int64
-			err = db.Model(&User{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteUser(user)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&User{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
+		s.Run("with preload", func() {
+			user, err := s.store.FindUserByEmail("user@systemli.org", WithTickers())
+			s.NoError(err)
+			s.NotNil(user)
+			s.Len(user.Tickers, 1)
 		})
 	})
+}
 
-	Describe("DeleteTickerUsers", func() {
-		It("deletes the users from the ticker", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker.Users = append(ticker.Users, user)
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&User{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteTickerUsers(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker.Users).To(BeEmpty())
-
-			count = db.Model(ticker).Association("Users").Count()
-			Expect(count).To(Equal(int64(0)))
-		})
+func (s *SqlStorageTestSuite) TestFindUsersByTicker() {
+	s.Run("when no users exist", func() {
+		users, err := s.store.FindUsersByTicker(Ticker{ID: 1})
+		s.NoError(err)
+		s.Empty(users)
 	})
 
-	Describe("DeleteTickerUser", func() {
-		It("deletes the user from the ticker", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when users exist", func() {
+		err := s.db.Create(&User{Tickers: []Ticker{{ID: 1}}}).Error
+		s.NoError(err)
 
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
+		s.Run("without preload", func() {
+			users, err := s.store.FindUsersByTicker(Ticker{ID: 1})
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Empty(users[0].Tickers)
+		})
 
-			ticker.Users = append(ticker.Users, user)
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&User{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteTickerUser(&ticker, &user)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker.Users).To(BeEmpty())
+		s.Run("with preload", func() {
+			users, err := s.store.FindUsersByTicker(Ticker{ID: 1}, WithTickers())
+			s.NoError(err)
+			s.Len(users, 1)
+			s.Len(users[0].Tickers, 1)
 		})
 	})
+}
 
-	Describe("AddTickerUser", func() {
-		It("adds the user to the ticker", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
+func (s *SqlStorageTestSuite) TestSaveUser() {
+	user, err := NewUser("user@systemli.org", "password")
+	s.NoError(err)
 
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when user is new", func() {
+		err = s.store.SaveUser(&user)
+		s.NoError(err)
 
-			err = store.AddTickerUser(&ticker, &user)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker.Users).To(HaveLen(1))
-		})
+		var count int64
+		err = s.db.Model(&User{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
 	})
 
-	Describe("FindTickers", func() {
-		It("returns all tickers", func() {
-			tickers, err := store.FindTickers()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(BeEmpty())
+	s.Run("when user is existing", func() {
+		user.Email = "update@systemli.org"
 
-			err = db.Create(&Ticker{}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			tickers, err = store.FindTickers()
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-		})
-
-		It("returns all tickers with preload", func() {
-			err = db.Create(&Ticker{
-				Information: TickerInformation{
-					Author: "Author",
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			tickers, err := store.FindTickers(WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-
-			Expect(tickers[0].Information.Author).To(Equal("Author"))
-		})
+		err = s.store.SaveUser(&user)
+		s.NoError(err)
 	})
 
-	Describe("FindTickersByUser", func() {
-		var user = User{
-			Email:        "user@systemli.org",
-			IsSuperAdmin: false,
-		}
-		var admin User = User{
-			Email:        "admin@systemli.org",
-			IsSuperAdmin: true,
-		}
-		var ticker Ticker = Ticker{
-			Users: []User{user},
-		}
+	s.Run("when user is existing with tickers", func() {
+		ticker := Ticker{}
+		err = s.store.SaveTicker(&ticker)
+		s.NoError(err)
 
-		BeforeEach(func() {
-			Expect(db.Create(&user).Error).ToNot(HaveOccurred())
-			Expect(db.Create(&admin).Error).ToNot(HaveOccurred())
-			Expect(db.Create(&ticker).Error).ToNot(HaveOccurred())
-		})
+		user.Tickers = append(user.Tickers, ticker)
+		err = s.store.SaveUser(&user)
+		s.NoError(err)
 
-		It("returns all tickers for admins", func() {
-			tickers, err := store.FindTickersByUser(admin)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-		})
-
-		It("returns all tickers for users", func() {
-			tickers, err := store.FindTickersByUser(user)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-		})
-
-		It("returns no tickers for users", func() {
-			tickers, err := store.FindTickersByUser(User{ID: 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(BeEmpty())
-		})
+		user, err = s.store.FindUserByID(user.ID, WithTickers())
+		s.NoError(err)
+		s.Len(user.Tickers, 1)
 	})
 
-	Describe("FindTickerByUserAndID", func() {
-		var user = User{
-			Email:        "user@systemli.org",
-			IsSuperAdmin: false,
-		}
-		var admin = User{
-			Email:        "admin@systemli.org",
-			IsSuperAdmin: true,
-		}
-		var ticker = Ticker{
-			Users: []User{user},
-		}
+	s.Run("when user removes tickers", func() {
+		user.Tickers = []Ticker{}
+		err = s.store.SaveUser(&user)
+		s.NoError(err)
 
-		BeforeEach(func() {
-			Expect(db.Create(&user).Error).ToNot(HaveOccurred())
-			Expect(db.Create(&admin).Error).ToNot(HaveOccurred())
-			Expect(db.Create(&ticker).Error).ToNot(HaveOccurred())
-		})
+		user, err = s.store.FindUserByID(user.ID, WithTickers())
+		s.NoError(err)
+		s.Empty(user.Tickers)
+	})
+}
 
-		It("returns the ticker for admins", func() {
-			ticker, err := store.FindTickerByUserAndID(admin, ticker.ID)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
-		})
-
-		It("returns the ticker for users", func() {
-			ticker, err := store.FindTickerByUserAndID(user, ticker.ID)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
-		})
-
-		It("returns no ticker for users", func() {
-			ticker, err := store.FindTickerByUserAndID(User{ID: 2}, ticker.ID)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).To(BeZero())
-		})
+func (s *SqlStorageTestSuite) TestDeleteUser() {
+	s.Run("when user does not exist", func() {
+		user := User{ID: 1}
+		err := s.store.DeleteUser(user)
+		s.NoError(err)
 	})
 
-	Describe("FindTickersByIDs", func() {
-		It("returns the tickers with the given ids", func() {
-			tickers, err := store.FindTickersByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(BeEmpty())
+	s.Run("when user exists", func() {
+		user := User{ID: 1}
+		err := s.db.Create(&user).Error
+		s.NoError(err)
 
-			err = db.Create(&Ticker{}).Error
-			Expect(err).ToNot(HaveOccurred())
+		err = s.store.DeleteUser(user)
+		s.NoError(err)
 
-			tickers, err = store.FindTickersByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-		})
+		var count int64
+		err = s.db.Model(&User{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
 
-		It("returns the tickers with the given ids and preload", func() {
-			err = db.Create(&Ticker{
-				Information: TickerInformation{
-					Author: "Author",
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			tickers, err := store.FindTickersByIDs([]int{1, 2}, WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(tickers).To(HaveLen(1))
-
-			Expect(tickers[0].Information.Author).To(Equal("Author"))
-		})
+func (s *SqlStorageTestSuite) TestDeleteTickerUsers() {
+	s.Run("when ticker does not exist", func() {
+		ticker := &Ticker{ID: 1}
+		err := s.store.DeleteTickerUsers(ticker)
+		s.NoError(err)
 	})
 
-	Describe("FindTickerByID", func() {
-		It("returns the ticker with the given id", func() {
-			ticker, err := store.FindTickerByID(1)
-			Expect(err).To(HaveOccurred())
-			Expect(ticker).To(BeZero())
+	s.Run("when ticker exists", func() {
+		ticker := &Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
 
-			err = db.Create(&Ticker{}).Error
-			Expect(err).ToNot(HaveOccurred())
+		count := s.db.Model(&ticker).Association("Users").Count()
+		s.Equal(int64(0), count)
 
-			ticker, err = store.FindTickerByID(1)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
-		})
+		user := User{ID: 1}
+		err = s.db.Create(&user).Error
+		s.NoError(err)
 
-		It("returns the ticker with the given id and preload", func() {
-			err = db.Create(&Ticker{
-				Information: TickerInformation{
-					Author: "Author",
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
+		err = s.db.Model(&ticker).Association("Users").Append(&user)
+		s.NoError(err)
 
-			ticker, err := store.FindTickerByID(1, WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
+		count = s.db.Model(&ticker).Association("Users").Count()
+		s.Equal(int64(1), count)
 
-			Expect(ticker.Information.Author).To(Equal("Author"))
-		})
+		err = s.store.DeleteTickerUsers(ticker)
+		s.NoError(err)
+
+		count = s.db.Model(&ticker).Association("Users").Count()
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteTickerUser() {
+	s.Run("when ticker does not exist", func() {
+		ticker := &Ticker{ID: 1}
+		user := &User{ID: 1}
+		err := s.store.DeleteTickerUser(ticker, user)
+		s.NoError(err)
 	})
 
-	Describe("FindTickerByDomain", func() {
-		It("returns the ticker with the given domain", func() {
-			ticker, err := store.FindTickerByDomain("systemli.org")
-			Expect(err).To(HaveOccurred())
-			Expect(ticker).To(BeZero())
+	s.Run("when ticker exists", func() {
+		ticker := &Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
 
-			ticker = Ticker{
-				Domain: "systemli.org",
-				Information: TickerInformation{
-					Author: "Author",
-				},
-			}
-			err = db.Create(&ticker).Error
-			Expect(err).ToNot(HaveOccurred())
+		user := User{ID: 1}
+		err = s.db.Create(&user).Error
+		s.NoError(err)
 
-			ticker, err = store.FindTickerByDomain("systemli.org")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
-			Expect(ticker.Information.Author).To(Equal("Author"))
-		})
+		err = s.db.Model(&ticker).Association("Users").Append(&user)
+		s.NoError(err)
 
-		It("returns the ticker for the given domain with preload all associations", func() {
-			ticker = Ticker{
-				Domain: "systemli.org",
-				Mastodon: TickerMastodon{
-					Active: true,
-				},
-				Telegram: TickerTelegram{
-					Active: true,
-				},
-			}
-			err = db.Create(&ticker).Error
-			Expect(err).ToNot(HaveOccurred())
+		count := s.db.Model(&ticker).Association("Users").Count()
+		s.Equal(int64(1), count)
 
-			ticker, err = store.FindTickerByDomain("systemli.org", WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker).ToNot(BeZero())
-			Expect(ticker.Mastodon.Active).To(BeTrue())
-			Expect(ticker.Telegram.Active).To(BeTrue())
-		})
+		err = s.store.DeleteTickerUser(ticker, &user)
+		s.NoError(err)
+
+		count = s.db.Model(&ticker).Association("Users").Count()
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestAddTickerUser() {
+	ticker := &Ticker{}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
+
+	user := User{Email: "user@systemli.org"}
+	err = s.db.Create(&user).Error
+	s.NoError(err)
+
+	err = s.store.AddTickerUser(ticker, &user)
+	s.NoError(err)
+
+	count := s.db.Model(&ticker).Association("Users").Count()
+	s.Equal(int64(1), count)
+}
+
+func (s *SqlStorageTestSuite) TestFindTickers() {
+	s.Run("when no tickers exist", func() {
+		tickers, err := s.store.FindTickers()
+		s.NoError(err)
+		s.Empty(tickers)
 	})
 
-	Describe("SaveTicker", func() {
-		It("persists the ticker", func() {
-			ticker := NewTicker()
+	s.Run("when tickers exist", func() {
+		err := s.db.Create(&Ticker{ID: 1}).Error
+		s.NoError(err)
 
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
+		tickers, err := s.store.FindTickers()
+		s.NoError(err)
+		s.Len(tickers, 1)
+	})
+}
 
-			var count int64
-			err = db.Model(&Ticker{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
-
-		It("persists the ticker with users", func() {
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker := NewTicker()
-			ticker.Users = append(ticker.Users, user)
-
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker, err = store.FindTickerByID(ticker.ID, WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker.Users).To(HaveLen(1))
-		})
-
-		It("removes users from ticker", func() {
-			user, err := NewUser("user@systemli.org", "password")
-			Expect(err).ToNot(HaveOccurred())
-			err = store.SaveUser(&user)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker := NewTicker()
-			ticker.Users = append(ticker.Users, user)
-
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker.Users = []User{}
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			ticker, err = store.FindTickerByID(ticker.ID, WithPreload())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(ticker.Users).To(BeEmpty())
-		})
+func (s *SqlStorageTestSuite) TestFindTickerByID() {
+	s.Run("when ticker does not exist", func() {
+		_, err := s.store.FindTickerByID(1)
+		s.Error(err)
 	})
 
-	Describe("DeleteTicker", func() {
-		It("deletes the ticker", func() {
-			ticker := NewTicker()
+	err := s.db.Create(&Ticker{ID: 1}).Error
+	s.NoError(err)
 
-			err = store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Ticker{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Ticker{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+	s.Run("when ticker exists", func() {
+		ticker, err := s.store.FindTickerByID(1)
+		s.NoError(err)
+		s.NotNil(ticker)
 	})
 
-	Describe("FindUploadByUUID", func() {
-		It("returns the upload with the given uuid", func() {
-			upload, err := store.FindUploadByUUID("uuid")
-			Expect(err).To(HaveOccurred())
-			Expect(upload).To(BeZero())
+	s.Run("when ticker exists with users", func() {
+		user := User{Email: "user@systemli.org"}
+		err = s.db.Create(&user).Error
+		s.NoError(err)
 
-			err = db.Create(&Upload{UUID: "uuid"}).Error
-			Expect(err).ToNot(HaveOccurred())
+		err = s.db.Model(&Ticker{ID: 1}).Association("Users").Append(&user)
+		s.NoError(err)
 
-			upload, err = store.FindUploadByUUID("uuid")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(upload).ToNot(BeZero())
-		})
+		ticker, err := s.store.FindTickerByID(1, WithPreload())
+		s.NoError(err)
+		s.NotNil(ticker)
+		s.Len(ticker.Users, 1)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindTickersByIDs() {
+	s.Run("when no tickers exist", func() {
+		tickers, err := s.store.FindTickersByIDs([]int{1, 2})
+		s.NoError(err)
+		s.Empty(tickers)
+	})
+	err := s.db.Create(&Ticker{ID: 1}).Error
+	s.NoError(err)
+
+	s.Run("when tickers exist", func() {
+		tickers, err := s.store.FindTickersByIDs([]int{1})
+		s.NoError(err)
+		s.Len(tickers, 1)
 	})
 
-	Describe("FindUploadsByIDs", func() {
-		It("returns the uploads with the given ids", func() {
-			uploads, err := store.FindUploadsByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(uploads).To(BeEmpty())
+	s.Run("when tickers exist with users", func() {
+		user := User{Email: "user@systemli.org"}
+		err = s.db.Create(&user).Error
 
-			err = db.Create(&Upload{}).Error
-			Expect(err).ToNot(HaveOccurred())
+		err = s.db.Model(&Ticker{ID: 1}).Association("Users").Append(&user)
+		s.NoError(err)
 
-			uploads, err = store.FindUploadsByIDs([]int{1, 2})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(uploads).To(HaveLen(1))
-		})
+		tickers, err := s.store.FindTickersByIDs([]int{1}, WithPreload())
+		s.NoError(err)
+		s.Len(tickers, 1)
+		s.Len(tickers[0].Users, 1)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindTickerByDomain() {
+	s.Run("when ticker does not exist", func() {
+		_, err := s.store.FindTickerByDomain("systemli.org")
+		s.Error(err)
 	})
 
-	Describe("SaveUpload", func() {
-		It("persists the upload", func() {
-			upload := NewUpload("image.jpg", "content-type", 1)
+	ticker := Ticker{Domain: "systemli.org"}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
 
-			err = store.SaveUpload(&upload)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
+	s.Run("when ticker exists", func() {
+		ticker, err := s.store.FindTickerByDomain("systemli.org")
+		s.NoError(err)
+		s.NotNil(ticker)
 	})
 
-	Describe("DeleteUpload", func() {
-		It("deletes the upload", func() {
-			upload := NewUpload("image.jpg", "content-type", 1)
+	s.Run("when ticker exists with preload", func() {
+		ticker.Mastodon = TickerMastodon{Active: true}
+		ticker.Telegram = TickerTelegram{Active: true}
 
-			err = store.SaveUpload(&upload)
-			Expect(err).ToNot(HaveOccurred())
+		err = s.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&ticker).Error
+		s.NoError(err)
 
-			var count int64
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
+		ticker, err := s.store.FindTickerByDomain("systemli.org", WithPreload())
+		s.NoError(err)
+		s.NotNil(ticker)
+		s.True(ticker.Mastodon.Active)
+		s.True(ticker.Telegram.Active)
+	})
+}
 
-			err = store.DeleteUpload(upload)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+func (s *SqlStorageTestSuite) TestFindTickersByUser() {
+	s.Run("when no tickers exist", func() {
+		tickers, err := s.store.FindTickersByUser(User{ID: 1})
+		s.NoError(err)
+		s.Empty(tickers)
 	})
 
-	Describe("DeleteUploads", func() {
-		It("deletes the uploads", func() {
-			upload := NewUpload("image.jpg", "content-type", 1)
+	user := User{Email: "user@systemli.org"}
+	err := s.db.Create(&user).Error
+	s.NoError(err)
 
-			err = store.SaveUpload(&upload)
-			Expect(err).ToNot(HaveOccurred())
+	ticker := Ticker{Users: []User{user}}
+	err = s.db.Create(&ticker).Error
+	s.NoError(err)
 
-			var count int64
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			uploads := []Upload{upload}
-			store.DeleteUploads(uploads)
-
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+	s.Run("when tickers exist", func() {
+		tickers, err := s.store.FindTickersByUser(user)
+		s.NoError(err)
+		s.Len(tickers, 1)
 	})
 
-	Describe("DeleteUploadsByTicker", func() {
-		It("deletes the uploads", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			upload := NewUpload("image.jpg", "content-type", ticker.ID)
-			err = store.SaveUpload(&upload)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteUploadsByTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Upload{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+	s.Run("when tickers exist with preload", func() {
+		tickers, err := s.store.FindTickersByUser(user, WithPreload())
+		s.NoError(err)
+		s.Len(tickers, 1)
+		s.Len(tickers[0].Users, 1)
 	})
 
-	Describe("FindMessage", func() {
-		It("returns the message with the given id", func() {
-			message, err := store.FindMessage(1, 1)
-			Expect(err).To(HaveOccurred())
-			Expect(message).To(BeZero())
+	s.Run("when super admin", func() {
+		tickers, err := s.store.FindTickersByUser(User{IsSuperAdmin: true})
+		s.NoError(err)
+		s.Len(tickers, 1)
+	})
+}
 
-			err = db.Create(&Message{ID: 1, TickerID: 1}).Error
-			Expect(err).ToNot(HaveOccurred())
+func (s *SqlStorageTestSuite) TestFindTickerByUserAndID() {
+	user := User{Email: "user@systemli.org"}
+	err := s.db.Create(&user).Error
+	s.NoError(err)
 
-			message, err = store.FindMessage(1, 1)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(message).ToNot(BeZero())
-		})
+	ticker := Ticker{Users: []User{user}}
+	err = s.db.Create(&ticker).Error
+	s.NoError(err)
 
-		It("returns the message with the given id and attachments", func() {
-			err = db.Create(&Message{
-				ID:       1,
-				TickerID: 1,
-				Text:     "Text",
-				Attachments: []Attachment{
-					{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			message, err := store.FindMessage(1, 1, WithAttachments())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(message).ToNot(BeZero())
-
-			Expect(message.Attachments).To(HaveLen(1))
-			Expect(message.Attachments[0].UUID).To(Equal("uuid"))
-		})
+	s.Run("when ticker exists", func() {
+		ticker, err := s.store.FindTickerByUserAndID(user, ticker.ID)
+		s.NoError(err)
+		s.NotNil(ticker)
 	})
 
-	Describe("FindMessagesByTicker", func() {
-		It("returns the messages with the given ticker", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			messages, err := store.FindMessagesByTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(BeEmpty())
-
-			err = db.Create(&Message{TickerID: ticker.ID}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			messages, err = store.FindMessagesByTicker(ticker)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(1))
-		})
-
-		It("returns the messages with the given ticker and attachments", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Create(&Message{
-				TickerID: ticker.ID,
-				Text:     "Text",
-				Attachments: []Attachment{
-					{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			messages, err := store.FindMessagesByTicker(ticker, WithAttachments())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(1))
-
-			Expect(messages[0].Attachments).To(HaveLen(1))
-			Expect(messages[0].Attachments[0].UUID).To(Equal("uuid"))
-		})
+	s.Run("when ticker exists with preload", func() {
+		ticker, err := s.store.FindTickerByUserAndID(user, ticker.ID, WithPreload())
+		s.NoError(err)
+		s.NotNil(ticker)
+		s.Len(ticker.Users, 1)
 	})
 
-	Describe("FindMessagesByTickerAndPagination", func() {
-		It("returns the messages with the given ticker and pagination", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when super admin", func() {
+		ticker, err := s.store.FindTickerByUserAndID(User{IsSuperAdmin: true}, ticker.ID)
+		s.NoError(err)
+		s.NotNil(ticker)
+	})
+}
 
-			c := &gin.Context{}
-			p := pagination.NewPagination(c)
-			messages, err := store.FindMessagesByTickerAndPagination(ticker, *p)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(BeEmpty())
+func (s *SqlStorageTestSuite) TestSaveTicker() {
+	ticker := Ticker{}
 
-			err = db.Create(&Message{TickerID: ticker.ID}).Error
-			Expect(err).ToNot(HaveOccurred())
+	s.Run("when ticker is new", func() {
+		err := s.store.SaveTicker(&ticker)
+		s.NoError(err)
 
-			messages, err = store.FindMessagesByTickerAndPagination(ticker, *p)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(1))
-
-			err = db.Create([]Message{
-				{TickerID: ticker.ID, ID: 2},
-				{TickerID: ticker.ID, ID: 3},
-				{TickerID: ticker.ID, ID: 4},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			c = &gin.Context{}
-			c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2"}}
-			p = pagination.NewPagination(c)
-			messages, err = store.FindMessagesByTickerAndPagination(ticker, *p)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(2))
-
-			c = &gin.Context{}
-			c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2&after=2"}}
-			p = pagination.NewPagination(c)
-			messages, err = store.FindMessagesByTickerAndPagination(ticker, *p)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(2))
-
-			c = &gin.Context{}
-			c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2&before=4"}}
-			p = pagination.NewPagination(c)
-			messages, err = store.FindMessagesByTickerAndPagination(ticker, *p)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(2))
-		})
-
-		It("returns the messages with the given ticker, pagination and attachments", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Create(&Message{
-				TickerID: ticker.ID,
-				Text:     "Text",
-				Attachments: []Attachment{
-					{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-				},
-			}).Error
-			Expect(err).ToNot(HaveOccurred())
-
-			c := &gin.Context{}
-			p := pagination.NewPagination(c)
-			messages, err := store.FindMessagesByTickerAndPagination(ticker, *p, WithAttachments())
-			Expect(err).ToNot(HaveOccurred())
-			Expect(messages).To(HaveLen(1))
-
-			Expect(messages[0].Attachments).To(HaveLen(1))
-			Expect(messages[0].Attachments[0].UUID).To(Equal("uuid"))
-		})
+		var count int64
+		err = s.db.Model(&Ticker{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
 	})
 
-	Describe("SaveMessage", func() {
-		It("persists the message", func() {
-			Expect(store.SaveMessage(&Message{})).ToNot(HaveOccurred())
+	s.Run("when ticker is existing", func() {
+		ticker.Domain = "systemli.org"
+		err := s.store.SaveTicker(&ticker)
+		s.NoError(err)
 
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
+		var count int64
+		err = s.db.Model(&Ticker{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
 
-		It("persists the message with attachments", func() {
-			message := &Message{}
-			message.Attachments = []Attachment{
+	s.Run("when ticker is existing with users", func() {
+		user := User{Email: "user@systemli.org"}
+		err := s.db.Create(&user).Error
+		s.NoError(err)
+
+		ticker.Users = append(ticker.Users, user)
+		err = s.store.SaveTicker(&ticker)
+		s.NoError(err)
+
+		ticker, err = s.store.FindTickerByID(ticker.ID, WithPreload())
+		s.NoError(err)
+		s.Len(ticker.Users, 1)
+	})
+
+	s.Run("when ticker removes users", func() {
+		ticker.Users = []User{}
+		err := s.store.SaveTicker(&ticker)
+		s.NoError(err)
+
+		ticker, err = s.store.FindTickerByID(ticker.ID, WithPreload())
+		s.NoError(err)
+		s.Empty(ticker.Users)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteTicker() {
+	s.Run("when ticker does not exist", func() {
+		ticker := Ticker{ID: 1}
+		err := s.store.DeleteTicker(ticker)
+		s.NoError(err)
+	})
+
+	s.Run("when ticker exists", func() {
+		ticker := Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTicker(ticker)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Ticker{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindUploadByUUID() {
+	s.Run("when upload does not exist", func() {
+		_, err := s.store.FindUploadByUUID("uuid")
+		s.Error(err)
+	})
+
+	s.Run("when upload exists", func() {
+		err := s.db.Create(&Upload{UUID: "uuid"}).Error
+		s.NoError(err)
+
+		upload, err := s.store.FindUploadByUUID("uuid")
+		s.NoError(err)
+		s.NotNil(upload)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindUploadsByIDs() {
+	s.Run("when no uploads exist", func() {
+		uploads, err := s.store.FindUploadsByIDs([]int{1, 2})
+		s.NoError(err)
+		s.Empty(uploads)
+	})
+
+	s.Run("when uploads exist", func() {
+		err := s.db.Create(&Upload{ID: 1}).Error
+		s.NoError(err)
+
+		uploads, err := s.store.FindUploadsByIDs([]int{1})
+		s.NoError(err)
+		s.Len(uploads, 1)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveUpload() {
+	upload := Upload{}
+
+	s.Run("when upload is new", func() {
+		err := s.store.SaveUpload(&upload)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
+
+	s.Run("when upload is existing", func() {
+		upload.UUID = "uuid"
+		err := s.store.SaveUpload(&upload)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+		s.Equal("uuid", upload.UUID)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteUpload() {
+	s.Run("when upload does not exist", func() {
+		upload := Upload{ID: 1}
+		err := s.store.DeleteUpload(upload)
+		s.NoError(err)
+	})
+
+	s.Run("when upload exists", func() {
+		upload := Upload{ID: 1}
+		err := s.db.Create(&upload).Error
+		s.NoError(err)
+
+		err = s.store.DeleteUpload(upload)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteUploads() {
+	s.Run("when uploads do not exist", func() {
+		uploads := []Upload{{ID: 1}}
+		s.store.DeleteUploads(uploads)
+
+		var count int64
+		err := s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+
+	s.Run("when uploads exist", func() {
+		var count int64
+		uploads := []Upload{{ID: 1}}
+		err := s.db.Create(&uploads).Error
+		s.NoError(err)
+
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		s.store.DeleteUploads(uploads)
+		s.NoError(err)
+
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteUploadsByTicker() {
+	s.Run("when uploads do not exist", func() {
+		ticker := Ticker{ID: 1}
+		err := s.store.DeleteUploadsByTicker(ticker)
+		s.NoError(err)
+	})
+
+	s.Run("when uploads exist", func() {
+		ticker := Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		upload := Upload{TickerID: ticker.ID}
+		err = s.db.Create(&upload).Error
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		err = s.store.DeleteUploadsByTicker(ticker)
+		s.NoError(err)
+
+		err = s.db.Model(&Upload{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindMessage() {
+	s.Run("when message does not exist", func() {
+		_, err := s.store.FindMessage(1, 1)
+		s.Error(err)
+	})
+
+	message := Message{ID: 1, TickerID: 1}
+	err := s.db.Create(&message).Error
+	s.NoError(err)
+
+	s.Run("when message exists", func() {
+		message, err := s.store.FindMessage(1, 1)
+		s.NoError(err)
+		s.NotNil(message)
+	})
+
+	s.Run("when message exists with attachments", func() {
+		message.Attachments = []Attachment{{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}
+		err := s.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&message).Error
+		s.NoError(err)
+
+		message, err := s.store.FindMessage(1, 1, WithAttachments())
+		s.NoError(err)
+		s.NotNil(message)
+		s.Len(message.Attachments, 1)
+		s.Equal("uuid", message.Attachments[0].UUID)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindMessagesByTicker() {
+	ticker := Ticker{ID: 1}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
+
+	s.Run("when no messages exist", func() {
+		messages, err := s.store.FindMessagesByTicker(ticker)
+		s.NoError(err)
+		s.Empty(messages)
+	})
+
+	s.Run("when messages exist", func() {
+		messages, err := s.store.FindMessagesByTicker(ticker)
+		s.NoError(err)
+		s.Empty(messages)
+	})
+
+	s.Run("when messages exist with attachments", func() {
+		message := Message{
+			TickerID: ticker.ID,
+			Text:     "Text",
+			Attachments: []Attachment{
 				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-			}
+			},
+		}
+		err := s.db.Create(&message).Error
+		s.NoError(err)
 
-			err = store.SaveMessage(message)
-			Expect(err).ToNot(HaveOccurred())
+		messages, err := s.store.FindMessagesByTicker(ticker, WithAttachments())
+		s.NoError(err)
+		s.Len(messages, 1)
 
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
+		s.Len(messages[0].Attachments, 1)
+		s.Equal("uuid", messages[0].Attachments[0].UUID)
+	})
+}
 
-			err = db.Model(&Attachment{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
+func (s *SqlStorageTestSuite) TestFindMessagesByTickerAndPagination() {
+	ticker := Ticker{ID: 1}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
 
-		It("updates the message with attachments", func() {
-			message := &Message{}
-			Expect(store.SaveMessage(message)).ToNot(HaveOccurred())
-			Expect(message.Attachments).To(BeEmpty())
-
-			message.Attachments = []Attachment{
-				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-			}
-
-			Expect(store.SaveMessage(message)).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Attachment{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-		})
-
+	s.Run("when no messages exist", func() {
+		p := pagination.NewPagination(&gin.Context{})
+		messages, err := s.store.FindMessagesByTickerAndPagination(ticker, *p)
+		s.NoError(err)
+		s.Empty(messages)
 	})
 
-	Describe("DeleteMessage", func() {
-		It("deletes the message", func() {
-			message := NewMessage()
+	err = s.db.Create(&[]Message{
+		{TickerID: ticker.ID, ID: 1, Attachments: []Attachment{{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}},
+		{TickerID: ticker.ID, ID: 2, Attachments: []Attachment{{ID: 2, MessageID: 2, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}},
+		{TickerID: ticker.ID, ID: 3, Attachments: []Attachment{{ID: 3, MessageID: 3, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}},
+		{TickerID: ticker.ID, ID: 4, Attachments: []Attachment{{ID: 4, MessageID: 4, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}},
+	}).Error
+	s.NoError(err)
 
-			err = store.SaveMessage(&message)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteMessage(message)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
-
-		It("deletes the message with attachments", func() {
-			message := NewMessage()
-			message.Attachments = []Attachment{
-				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-			}
-
-			err = store.SaveMessage(&message)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteMessage(message)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-
-			err = db.Model(&Attachment{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+	s.Run("when messages exist with attachments", func() {
+		p := pagination.NewPagination(&gin.Context{})
+		messages, err := s.store.FindMessagesByTickerAndPagination(ticker, *p, WithAttachments())
+		s.NoError(err)
+		s.Len(messages, 4)
+		s.Equal("uuid", messages[0].Attachments[0].UUID)
+		s.Equal("uuid", messages[1].Attachments[0].UUID)
+		s.Equal("uuid", messages[2].Attachments[0].UUID)
+		s.Equal("uuid", messages[3].Attachments[0].UUID)
 	})
 
-	Describe("DeleteMessages", func() {
-		It("deletes the messages", func() {
-			ticker := NewTicker()
-			err := store.SaveTicker(&ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			message := NewMessage()
-			message.TickerID = ticker.ID
-			message.Attachments = []Attachment{
-				{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"},
-			}
-			err = store.SaveMessage(&message)
-			Expect(err).ToNot(HaveOccurred())
-
-			var count int64
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(1)))
-
-			err = store.DeleteMessages(ticker)
-			Expect(err).ToNot(HaveOccurred())
-
-			err = db.Model(&Message{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-
-			err = db.Model(&Attachment{}).Count(&count).Error
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(int64(0)))
-		})
+	s.Run("when messages exist with limit set", func() {
+		c := &gin.Context{}
+		c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2"}}
+		p := pagination.NewPagination(c)
+		messages, err := s.store.FindMessagesByTickerAndPagination(ticker, *p)
+		s.NoError(err)
+		s.Len(messages, 2)
+		s.Equal(4, messages[0].ID)
+		s.Equal(3, messages[1].ID)
 	})
 
-	Describe("GetInactiveSettings", func() {
-		It("returns the default inactive setting", func() {
-			setting := store.GetInactiveSettings()
-			Expect(setting.Author).To(Equal(DefaultInactiveSettings().Author))
-		})
-
-		It("returns the inactive setting", func() {
-			settings := InactiveSettings{
-				Author: "author",
-			}
-
-			err = store.SaveInactiveSettings(settings)
-			Expect(err).ToNot(HaveOccurred())
-
-			setting := store.GetInactiveSettings()
-			Expect(setting.Author).To(Equal(settings.Author))
-		})
+	s.Run("when messages exist with limit and after set", func() {
+		c := &gin.Context{}
+		c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2&after=2"}}
+		p := pagination.NewPagination(c)
+		messages, err := s.store.FindMessagesByTickerAndPagination(ticker, *p)
+		s.NoError(err)
+		s.Len(messages, 2)
+		s.Equal(4, messages[0].ID)
+		s.Equal(3, messages[1].ID)
 	})
 
-	Describe("GetRefreshIntervalSetting", func() {
-		It("returns the default refresh interval setting", func() {
-			setting := store.GetRefreshIntervalSettings()
-			Expect(setting.RefreshInterval).To(Equal(DefaultRefreshIntervalSettings().RefreshInterval))
-		})
-
-		It("returns the refresh interval setting", func() {
-			settings := RefreshIntervalSettings{
-				RefreshInterval: 1000,
-			}
-
-			err = store.SaveRefreshIntervalSettings(settings)
-			Expect(err).ToNot(HaveOccurred())
-
-			setting := store.GetRefreshIntervalSettings()
-			Expect(setting.RefreshInterval).To(Equal(settings.RefreshInterval))
-		})
+	s.Run("when messages exist with limit and before set", func() {
+		c := &gin.Context{}
+		c.Request = &http.Request{URL: &url.URL{RawQuery: "limit=2&before=4"}}
+		p := pagination.NewPagination(c)
+		messages, err := s.store.FindMessagesByTickerAndPagination(ticker, *p)
+		s.NoError(err)
+		s.Len(messages, 2)
+		s.Equal(3, messages[0].ID)
+		s.Equal(2, messages[1].ID)
 	})
-})
+}
+
+func (s *SqlStorageTestSuite) TestSaveMessage() {
+	message := Message{Attachments: []Attachment{{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}}
+
+	s.Run("when message is new", func() {
+		err := s.store.SaveMessage(&message)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Message{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		err = s.db.Model(&Attachment{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
+
+	s.Run("when message is existing", func() {
+		message.TickerID = 1
+		message.Attachments = append(message.Attachments, Attachment{ID: 2, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"})
+		err := s.store.SaveMessage(&message)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Message{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		err = s.db.Model(&Attachment{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(2), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteMessage() {
+	s.Run("when message does not exist", func() {
+		message := Message{ID: 1}
+		err := s.store.DeleteMessage(message)
+		s.NoError(err)
+	})
+
+	s.Run("when message exists", func() {
+		message := Message{ID: 1, Attachments: []Attachment{{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}}
+		err := s.db.Create(&message).Error
+		s.NoError(err)
+
+		err = s.store.DeleteMessage(message)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Message{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+
+		err = s.db.Model(&Attachment{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteMessages() {
+	ticker := Ticker{ID: 1}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
+
+	message := Message{ID: 1, TickerID: ticker.ID, Attachments: []Attachment{{ID: 1, MessageID: 1, UUID: "uuid", ContentType: "image/jpg", Extension: "jpg"}}}
+	err = s.db.Create(&message).Error
+	s.NoError(err)
+
+	s.Run("when messages do not exist", func() {
+		err := s.store.DeleteMessages(Ticker{ID: 2})
+		s.NoError(err)
+	})
+
+	s.Run("when messages exist", func() {
+		err := s.store.DeleteMessages(ticker)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Message{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+
+		err = s.db.Model(&Attachment{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestGetInactiveSettings() {
+	s.Run("when no settings exist", func() {
+		settings := s.store.GetInactiveSettings()
+		s.Equal(DefaultInactiveSettings().Author, settings.Author)
+	})
+
+	s.Run("when settings exist", func() {
+		setting := Setting{Name: SettingInactiveName, Value: `{"author":"test"}`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetInactiveSettings()
+		s.Equal("test", settings.Author)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
+	settings := InactiveSettings{Author: "test"}
+
+	s.Run("when settings are new", func() {
+		err := s.store.SaveInactiveSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
+
+	s.Run("when settings are existing", func() {
+		settings.Author = "test2"
+		err := s.store.SaveInactiveSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+		s.Equal("test2", settings.Author)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestGetRefreshIntervalSettings() {
+	s.Run("when no settings exist", func() {
+		settings := s.store.GetRefreshIntervalSettings()
+		s.Equal(DefaultRefreshIntervalSettings().RefreshInterval, settings.RefreshInterval)
+	})
+
+	s.Run("when settings exist", func() {
+		setting := Setting{Name: SettingRefreshInterval, Value: `{"refreshInterval":1000}`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetRefreshIntervalSettings()
+		s.Equal(1000, settings.RefreshInterval)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveRefreshIntervalSettings() {
+	settings := RefreshIntervalSettings{RefreshInterval: 1000}
+
+	s.Run("when settings are new", func() {
+		err := s.store.SaveRefreshIntervalSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
+
+	s.Run("when settings are existing", func() {
+		settings.RefreshInterval = 2000
+		err := s.store.SaveRefreshIntervalSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+		s.Equal(2000, settings.RefreshInterval)
+	})
+}
+
+func TestSqlStorageTestSuite(t *testing.T) {
+	suite.Run(t, new(SqlStorageTestSuite))
+}

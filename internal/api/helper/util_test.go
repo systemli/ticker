@@ -6,140 +6,143 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestGetDomainEmptyOrigin(t *testing.T) {
-	req := http.Request{
-		URL: &url.URL{},
-	}
-
-	c := gin.Context{Request: &req}
-
-	domain, err := GetDomain(&c)
-	assert.Equal(t, "", domain)
-	assert.Equal(t, "origin header not found", err.Error())
+type UtilTestSuite struct {
+	suite.Suite
 }
 
-func TestGetDomainLocalhost(t *testing.T) {
-	req := http.Request{
-		Header: http.Header{
+func (s *UtilTestSuite) TestGetDomain() {
+	s.Run("when origin is empty", func() {
+		c := s.buildContext(url.URL{}, http.Header{})
+		domain, err := GetDomain(c)
+		s.Equal("", domain)
+		s.Equal("origin header not found", err.Error())
+	})
+
+	s.Run("when origin is localhost", func() {
+		c := s.buildContext(url.URL{}, http.Header{
 			"Origin": []string{"http://localhost/"},
-		},
-		URL: &url.URL{},
-	}
+		})
+		domain, err := GetDomain(c)
+		s.Equal("localhost", domain)
+		s.NoError(err)
+	})
 
-	c := gin.Context{Request: &req}
-
-	domain, err := GetDomain(&c)
-	assert.Equal(t, "localhost", domain)
-	assert.Equal(t, nil, err)
-}
-
-func TestGetDomainLocalhostPort(t *testing.T) {
-	req := http.Request{
-		Header: http.Header{
+	s.Run("when origin is localhost with port", func() {
+		c := s.buildContext(url.URL{}, http.Header{
 			"Origin": []string{"http://localhost:3000/"},
-		},
-		URL: &url.URL{},
-	}
+		})
+		domain, err := GetDomain(c)
+		s.Equal("localhost", domain)
+		s.NoError(err)
+	})
 
-	c := gin.Context{Request: &req}
-
-	domain, err := GetDomain(&c)
-	assert.Equal(t, "localhost", domain)
-	assert.Equal(t, nil, err)
-}
-
-func TestGetDomainWWW(t *testing.T) {
-	req := http.Request{
-		Header: http.Header{
+	s.Run("when origin has subdomain", func() {
+		c := s.buildContext(url.URL{}, http.Header{
 			"Origin": []string{"http://www.demoticker.org/"},
-		},
-		URL: &url.URL{},
-	}
+		})
+		domain, err := GetDomain(c)
+		s.Equal("demoticker.org", domain)
+		s.NoError(err)
+	})
 
-	c := gin.Context{Request: &req}
-
-	domain, err := GetDomain(&c)
-	assert.Equal(t, "demoticker.org", domain)
-	assert.Equal(t, nil, err)
-}
-
-func TestGetDomainOriginQueryOverwrite(t *testing.T) {
-	req := http.Request{
-		Header: http.Header{
+	s.Run("when query param is set", func() {
+		c := s.buildContext(url.URL{RawQuery: "origin=another.demoticker.org"}, http.Header{
 			"Origin": []string{"http://www.demoticker.org/"},
-		},
-		URL: &url.URL{RawQuery: "origin=another.demoticker.org"},
+		})
+		domain, err := GetDomain(c)
+		s.Equal("another.demoticker.org", domain)
+		s.NoError(err)
+	})
+}
+
+func (s *UtilTestSuite) TestMe() {
+	s.Run("when me is not set", func() {
+		c := &gin.Context{}
+		_, err := Me(c)
+		s.Equal("me not found", err.Error())
+	})
+
+	s.Run("when me is set", func() {
+		c := &gin.Context{}
+		c.Set("me", storage.User{})
+		_, err := Me(c)
+		s.NoError(err)
+	})
+}
+
+func (s *UtilTestSuite) TestIsAdmin() {
+	s.Run("when me is not set", func() {
+		c := &gin.Context{}
+		isAdmin := IsAdmin(c)
+		s.False(isAdmin)
+	})
+
+	s.Run("when me is set", func() {
+		c := &gin.Context{}
+		c.Set("me", storage.User{IsSuperAdmin: true})
+		isAdmin := IsAdmin(c)
+		s.True(isAdmin)
+	})
+}
+
+func (s *UtilTestSuite) TestTicker() {
+	s.Run("when ticker is not set", func() {
+		c := &gin.Context{}
+		_, err := Ticker(c)
+		s.Equal("ticker not found", err.Error())
+	})
+
+	s.Run("when ticker is set", func() {
+		c := &gin.Context{}
+		c.Set("ticker", storage.Ticker{})
+		_, err := Ticker(c)
+		s.NoError(err)
+	})
+}
+
+func (s *UtilTestSuite) TestMessage() {
+	s.Run("when message is not set", func() {
+		c := &gin.Context{}
+		_, err := Message(c)
+		s.Equal("message not found", err.Error())
+	})
+
+	s.Run("when message is set", func() {
+		c := &gin.Context{}
+		c.Set("message", storage.Message{})
+		_, err := Message(c)
+		s.NoError(err)
+	})
+}
+
+func (s *UtilTestSuite) TestUser() {
+	s.Run("when user is not set", func() {
+		c := &gin.Context{}
+		_, err := User(c)
+		s.Equal("user not found", err.Error())
+	})
+
+	s.Run("when user is set", func() {
+		c := &gin.Context{}
+		c.Set("user", storage.User{})
+		_, err := User(c)
+		s.NoError(err)
+	})
+}
+
+func (s *UtilTestSuite) buildContext(u url.URL, headers http.Header) *gin.Context {
+	req := http.Request{
+		Header: headers,
+		URL:    &u,
 	}
 
-	c := gin.Context{Request: &req}
-
-	domain, err := GetDomain(&c)
-	assert.Equal(t, "another.demoticker.org", domain)
-	assert.Equal(t, nil, err)
+	return &gin.Context{Request: &req}
 }
 
-func TestMe(t *testing.T) {
-	c := &gin.Context{}
-	_, err := Me(c)
-
-	assert.NotNil(t, err)
-
-	c.Set("me", storage.User{})
-
-	_, err = Me(c)
-
-	assert.Nil(t, err)
-}
-
-func TestIsAdmin(t *testing.T) {
-	c := &gin.Context{}
-	isAdmin := IsAdmin(c)
-
-	assert.False(t, isAdmin)
-
-	c.Set("me", storage.User{IsSuperAdmin: true})
-
-	isAdmin = IsAdmin(c)
-
-	assert.True(t, isAdmin)
-}
-
-func TestTicker(t *testing.T) {
-	c := &gin.Context{}
-
-	_, err := Ticker(c)
-	assert.NotNil(t, err)
-
-	c.Set("ticker", storage.Ticker{})
-
-	_, err = Ticker(c)
-	assert.Nil(t, err)
-}
-
-func TestMessage(t *testing.T) {
-	c := &gin.Context{}
-
-	_, err := Message(c)
-	assert.NotNil(t, err)
-
-	c.Set("message", storage.Message{})
-
-	_, err = Message(c)
-	assert.Nil(t, err)
-}
-
-func TestUser(t *testing.T) {
-	c := &gin.Context{}
-
-	_, err := User(c)
-	assert.NotNil(t, err)
-
-	c.Set("user", storage.User{})
-
-	_, err = User(c)
-	assert.Nil(t, err)
+func TestUtilTestSuite(t *testing.T) {
+	suite.Run(t, new(UtilTestSuite))
 }

@@ -6,35 +6,45 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestDefaultPagination(t *testing.T) {
-	req := http.Request{
-		URL: &url.URL{
-			RawQuery: ``,
-		},
-	}
-
-	c := gin.Context{Request: &req}
-	p := NewPagination(&c)
-
-	assert.Equal(t, p.GetLimit(), 10)
-	assert.Equal(t, p.GetBefore(), 0)
-	assert.Equal(t, p.GetAfter(), 0)
+type PaginationTestSuite struct {
+	suite.Suite
 }
 
-func TestCustomPagination(t *testing.T) {
-	req := http.Request{
-		URL: &url.URL{
-			RawQuery: `limit=20&before=1&after=1`,
-		},
-	}
+func (s *PaginationTestSuite) TestNewPagination() {
+	s.Run("with default values", func() {
+		req := http.Request{
+			URL: &url.URL{
+				RawQuery: ``,
+			},
+		}
 
-	c := gin.Context{Request: &req}
-	p := NewPagination(&c)
+		c := gin.Context{Request: &req}
+		p := NewPagination(&c)
 
-	assert.Equal(t, p.GetLimit(), 20)
-	assert.Equal(t, p.GetBefore(), 1)
-	assert.Equal(t, p.GetAfter(), 1)
+		s.Equal(10, p.GetLimit())
+		s.Equal(0, p.GetBefore())
+		s.Equal(0, p.GetAfter())
+	})
+
+	s.Run("with custom values", func() {
+		req := http.Request{
+			URL: &url.URL{
+				RawQuery: `limit=20&before=1&after=1`,
+			},
+		}
+
+		c := gin.Context{Request: &req}
+		p := NewPagination(&c)
+
+		s.Equal(20, p.GetLimit())
+		s.Equal(1, p.GetBefore())
+		s.Equal(1, p.GetAfter())
+	})
+}
+
+func TestPaginationTestSuite(t *testing.T) {
+	suite.Run(t, new(PaginationTestSuite))
 }

@@ -4,11 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func TestInitTickerResponse(t *testing.T) {
+type InitTickerResponseTestSuite struct {
+	suite.Suite
+}
+
+func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 	ticker := storage.Ticker{
 		ID:          1,
 		CreatedAt:   time.Now(),
@@ -27,15 +31,19 @@ func TestInitTickerResponse(t *testing.T) {
 
 	response := InitTickerResponse(ticker)
 
-	assert.Equal(t, ticker.ID, response.ID)
-	assert.Equal(t, ticker.CreatedAt, response.CreatedAt)
-	assert.Equal(t, ticker.Domain, response.Domain)
-	assert.Equal(t, ticker.Title, response.Title)
-	assert.Equal(t, ticker.Description, response.Description)
-	assert.Equal(t, ticker.Information.Author, response.Information.Author)
-	assert.Equal(t, ticker.Information.URL, response.Information.URL)
-	assert.Equal(t, ticker.Information.Email, response.Information.Email)
-	assert.Equal(t, ticker.Information.Twitter, response.Information.Twitter)
-	assert.Equal(t, ticker.Information.Facebook, response.Information.Facebook)
-	assert.Equal(t, ticker.Information.Telegram, response.Information.Telegram)
+	s.Equal(ticker.ID, response.ID)
+	s.Equal(ticker.CreatedAt, response.CreatedAt)
+	s.Equal(ticker.Domain, response.Domain)
+	s.Equal(ticker.Title, response.Title)
+	s.Equal(ticker.Description, response.Description)
+	s.Equal(ticker.Information.Author, response.Information.Author)
+	s.Equal(ticker.Information.URL, response.Information.URL)
+	s.Equal(ticker.Information.Email, response.Information.Email)
+	s.Equal(ticker.Information.Twitter, response.Information.Twitter)
+	s.Equal(ticker.Information.Facebook, response.Information.Facebook)
+	s.Equal(ticker.Information.Telegram, response.Information.Telegram)
+}
+
+func TestInitTickerResponseTestSuite(t *testing.T) {
+	suite.Run(t, new(InitTickerResponseTestSuite))
 }

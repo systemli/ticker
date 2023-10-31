@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -16,14 +16,22 @@ var (
 	}
 )
 
-func TestUploadResponse(t *testing.T) {
-	response := UploadResponse(u, c)
-
-	assert.Equal(t, fmt.Sprintf("%s/media/%s", c.Upload.URL, u.FileName()), response.URL)
+type UploadResponseTestSuite struct {
+	suite.Suite
 }
 
-func TestUploadsResponse(t *testing.T) {
+func (s *UploadResponseTestSuite) TestUploadResponse() {
+	response := UploadResponse(u, c)
+
+	s.Equal(fmt.Sprintf("%s/media/%s", c.Upload.URL, u.FileName()), response.URL)
+}
+
+func (s *UploadResponseTestSuite) TestUploadsResponse() {
 	response := UploadsResponse([]storage.Upload{u}, c)
 
-	assert.Equal(t, 1, len(response))
+	s.Equal(1, len(response))
+}
+
+func TestUploadResponseTestSuite(t *testing.T) {
+	suite.Run(t, new(UploadResponseTestSuite))
 }

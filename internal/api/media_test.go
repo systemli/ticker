@@ -7,49 +7,62 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type MediaTestSuite struct {
+	w     *httptest.ResponseRecorder
+	ctx   *gin.Context
+	store *storage.MockStorage
+	cfg   config.Config
+	suite.Suite
+}
+
+func (s *MediaTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
+
+	s.w = httptest.NewRecorder()
+	s.ctx, _ = gin.CreateTestContext(s.w)
+	s.ctx.Request = httptest.NewRequest(http.MethodGet, "/media", nil)
+	s.store = &storage.MockStorage{}
+	s.cfg = config.LoadConfig("")
 }
 
-func TestGetMedia(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/media", nil)
+func (s *MediaTestSuite) TestGetMedia() {
+	s.Run("when upload not found", func() {
+		s.store.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found")).Once()
+		h := s.handler()
+		h.GetMedia(s.ctx)
 
-	upload := storage.NewUpload("image.jpg", "image/jpeg", 1)
-	s := &storage.MockStorage{}
-	s.On("FindUploadByUUID", mock.Anything).Return(upload, nil)
-	s.On("UploadPath").Return("./uploads")
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+	s.Run("when upload found", func() {
+		upload := storage.NewUpload("image.jpg", "image/jpeg", 1)
+		s.store.On("FindUploadByUUID", mock.Anything).Return(upload, nil).Once()
+		s.store.On("UploadPath").Return("./uploads").Once()
 
-	h.GetMedia(c)
+		h := s.handler()
+		h.GetMedia(s.ctx)
 
-	assert.NotEmpty(t, w.Header().Get("Cache-Control"))
-	assert.NotEmpty(t, w.Header().Get("Expires"))
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.NotEmpty(s.w.Header().Get("Cache-Control"))
+		s.NotEmpty(s.w.Header().Get("Expires"))
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestGetMediaNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	s := &storage.MockStorage{}
-	s.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found"))
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
+func (s *MediaTestSuite) handler() handler {
+	return handler{
+		storage: s.store,
+		config:  s.cfg,
 	}
-	h.GetMedia(c)
+}
 
-	assert.Equal(t, http.StatusNotFound, w.Code)
+func TestMediaTestSuite(t *testing.T) {
+	suite.Run(t, new(MediaTestSuite))
 }

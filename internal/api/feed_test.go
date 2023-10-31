@@ -7,74 +7,85 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func init() {
+type FeedTestSuite struct {
+	w     *httptest.ResponseRecorder
+	ctx   *gin.Context
+	store *storage.MockStorage
+	cfg   config.Config
+	suite.Suite
+}
+
+func (s *FeedTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
+
+	s.w = httptest.NewRecorder()
+	s.ctx, _ = gin.CreateTestContext(s.w)
+	s.store = &storage.MockStorage{}
+	s.cfg = config.LoadConfig("")
 }
 
-func TestGetFeedTickerNotFound(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	s := &storage.MockStorage{}
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
+func (s *FeedTestSuite) TestGetFeed() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.GetFeed(s.ctx)
 
-	h.GetFeed(c)
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), response.TickerNotFound)
+		s.store.AssertExpectations(s.T())
+	})
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), response.TickerNotFound)
+	s.Run("when fetching messages fails", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+
+		h := s.handler()
+		h.GetFeed(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), response.MessageFetchError)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when fetching messages succeeds", func() {
+		ticker := storage.Ticker{
+			ID:    1,
+			Title: "Title",
+			Information: storage.TickerInformation{
+				URL:    "https://demoticker.org",
+				Author: "Author",
+				Email:  "author@demoticker.org",
+			},
+		}
+		s.ctx.Set("ticker", ticker)
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/feed?format=atom", nil)
+		message := storage.Message{
+			TickerID: ticker.ID,
+			Text:     "Text",
+		}
+		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{message}, nil).Once()
+
+		h := s.handler()
+		h.GetFeed(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
-func TestGetFeedMessageFetchError(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Set("ticker", storage.Ticker{})
-	s := &storage.MockStorage{}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error"))
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
+func (s *FeedTestSuite) handler() handler {
+	return handler{
+		storage: s.store,
+		config:  s.cfg,
 	}
-
-	h.GetFeed(c)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), response.MessageFetchError)
 }
 
-func TestGetFeed(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	ticker := storage.Ticker{
-		ID:    1,
-		Title: "Title",
-		Information: storage.TickerInformation{
-			URL:    "https://demoticker.org",
-			Author: "Author",
-			Email:  "author@demoticker.org",
-		},
-	}
-	c.Set("ticker", ticker)
-	s := &storage.MockStorage{}
-	message := storage.Message{
-		TickerID: ticker.ID,
-		Text:     "Text",
-	}
-	s.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{message}, nil)
-
-	h := handler{
-		storage: s,
-		config:  config.LoadConfig(""),
-	}
-
-	h.GetFeed(c)
+func TestFeedTestSuite(t *testing.T) {
+	suite.Run(t, new(FeedTestSuite))
 }
