@@ -5,11 +5,19 @@ import (
 	"io"
 	"testing"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/h2non/gock"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
+
+var tickerWithoutBridges storage.Ticker
+var tickerWithBridges storage.Ticker
+
+var messageWithoutBridges storage.Message
+var messageWithBridges storage.Message
 
 type BridgeTestSuite struct {
 	suite.Suite
@@ -17,10 +25,65 @@ type BridgeTestSuite struct {
 
 func (s *BridgeTestSuite) SetupTest() {
 	log.Logger.SetOutput(io.Discard)
+	gock.DisableNetworking()
+	defer gock.Off()
+
+	tickerWithoutBridges = storage.Ticker{
+		Mastodon: storage.TickerMastodon{
+			Active: false,
+		},
+		Telegram: storage.TickerTelegram{
+			Active: false,
+		},
+	}
+	tickerWithBridges = storage.Ticker{
+		Mastodon: storage.TickerMastodon{
+			Active:      true,
+			Server:      "https://systemli.social",
+			Token:       "token",
+			Secret:      "secret",
+			AccessToken: "access_token",
+		},
+		Telegram: storage.TickerTelegram{
+			Active:      true,
+			ChannelName: "channel",
+		},
+	}
+	messageWithoutBridges = storage.Message{
+		Text: "Hello World",
+		Attachments: []storage.Attachment{
+			{
+				UUID: "123",
+			},
+		},
+	}
+	messageWithBridges = storage.Message{
+		Text: "Hello World",
+		Attachments: []storage.Attachment{
+			{
+				UUID: "123",
+			},
+			{
+				UUID: "456",
+			},
+		},
+		Mastodon: storage.MastodonMeta{
+			ID: "123",
+		},
+		Telegram: storage.TelegramMeta{
+			Messages: []tgbotapi.Message{
+				{
+					MessageID: 123,
+					Chat: &tgbotapi.Chat{
+						ID: 123,
+					},
+				},
+			},
+		},
+	}
 }
 
 func (s *BridgeTestSuite) TestSend() {
-
 	s.Run("when successful", func() {
 		ticker := storage.Ticker{}
 		bridge := MockBridge{}
