@@ -82,5 +82,5 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/gorilla/feeds v1.1.1
 	github.com/mattn/go-mastodon v0.0.6
-	golang.org/x/image v0.5.0 // indirect
+	golang.org/x/image v0.10.0 // indirect
 )
