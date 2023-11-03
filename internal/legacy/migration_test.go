@@ -186,6 +186,9 @@ func (s *MigrationTestSuite) TestDo() {
 	s.Equal(s.upload.ID, uploads[0].ID)
 	s.Equal(s.upload.TickerID, uploads[0].TickerID)
 	s.Equal(s.upload.UUID, uploads[0].UUID)
+	s.Equal(s.upload.Extension, uploads[0].Extension)
+	s.Equal(s.upload.ContentType, uploads[0].ContentType)
+	s.Equal(s.upload.Path, uploads[0].Path)
 
 	var settings []storage.Setting
 	s.NoError(s.newDb.Find(&settings).Error)

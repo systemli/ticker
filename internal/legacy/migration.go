@@ -163,6 +163,7 @@ func (m *Migration) Do() error {
 			UpdatedAt:   time.Now(),
 			TickerID:    oldUpload.TickerID,
 			UUID:        oldUpload.UUID,
+			Path:        oldUpload.Path,
 			Extension:   oldUpload.Extension,
 			ContentType: oldUpload.ContentType,
 		}
