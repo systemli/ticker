@@ -30,7 +30,7 @@ func (s *ResponseCacheTestSuite) TestCreateKey() {
 		}
 
 		key := CreateKey(&c)
-		s.Equal("response:localhost::origin=localhost", key)
+		s.Equal("response:localhost:/api/v1/settings:origin=localhost", key)
 	})
 
 	s.Run("create cache key without origin", func() {
@@ -42,7 +42,7 @@ func (s *ResponseCacheTestSuite) TestCreateKey() {
 		}
 
 		key := CreateKey(&c)
-		s.Equal("response:unknown::", key)
+		s.Equal("response:unknown:/api/v1/settings:", key)
 	})
 }
 
@@ -85,7 +85,7 @@ func (s *ResponseCacheTestSuite) TestCachePage() {
 
 		inMemoryCache := cache.NewCache(time.Minute)
 		defer inMemoryCache.Close()
-		inMemoryCache.Set("response:localhost::", responseCache{
+		inMemoryCache.Set("response:localhost:/ping:", responseCache{
 			Status: http.StatusOK,
 			Header: http.Header{
 				"DNT": []string{"1"},
