@@ -120,7 +120,7 @@ func CreateKey(c *gin.Context) string {
 	if err != nil {
 		domain = "unknown"
 	}
-	name := c.HandlerName()
+	name := c.Request.URL.Path
 	query := c.Request.URL.Query().Encode()
 
 	return fmt.Sprintf("response:%s:%s:%s", domain, name, query)
