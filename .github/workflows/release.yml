@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          ref: ${{ github.ref }}
 
       - name: Setup go
         uses: actions/setup-go@v4
