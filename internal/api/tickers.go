@@ -328,6 +328,7 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 			Twitter  string `json:"twitter"`
 			Facebook string `json:"facebook"`
 			Telegram string `json:"telegram"`
+			Mastodon string `json:"mastodon"`
 		} `json:"information"`
 		Location struct {
 			Lat float64 `json:"lat"`
@@ -350,6 +351,7 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	t.Information.Twitter = body.Information.Twitter
 	t.Information.Facebook = body.Information.Facebook
 	t.Information.Telegram = body.Information.Telegram
+	t.Information.Mastodon = body.Information.Mastodon
 	t.Location.Lat = body.Location.Lat
 	t.Location.Lon = body.Location.Lon
 
