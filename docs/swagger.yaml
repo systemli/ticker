@@ -40,6 +40,8 @@ definitions:
                     type: string
                   url:
                     type: string
+                  mastodon:
+                    type: string
           status:
             type: string
           error:

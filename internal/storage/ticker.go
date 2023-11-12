@@ -40,6 +40,7 @@ type TickerInformation struct {
 	Twitter  string
 	Facebook string
 	Telegram string
+	Mastodon string
 }
 
 type TickerTelegram struct {
