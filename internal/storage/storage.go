@@ -39,7 +39,6 @@ type Storage interface {
 	SaveMessage(message *Message) error
 	DeleteMessage(message Message) error
 	DeleteMessages(ticker Ticker) error
-	DeleteAttachmentsByMessage(message Message) error
 	GetInactiveSettings() InactiveSettings
 	GetRefreshIntervalSettings() RefreshIntervalSettings
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error
