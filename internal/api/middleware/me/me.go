@@ -8,7 +8,7 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func MeMiddleware(storage storage.Storage) gin.HandlerFunc {
+func MeMiddleware(store storage.Storage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("id")
 		if !exists {
@@ -16,7 +16,7 @@ func MeMiddleware(storage storage.Storage) gin.HandlerFunc {
 			return
 		}
 
-		user, err := storage.FindUserByID(int(userID.(float64)))
+		user, err := store.FindUserByID(int(userID.(float64)), storage.WithTickers())
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 			return
