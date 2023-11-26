@@ -35,7 +35,7 @@ func (s *MeTestSuite) TestMeMiddleware() {
 	s.Run("when id is present", func() {
 		s.Run("when user is not found", func() {
 			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
+			mockStorage.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("not found"))
 			mw := MeMiddleware(mockStorage)
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
@@ -48,7 +48,7 @@ func (s *MeTestSuite) TestMeMiddleware() {
 
 		s.Run("when user is found", func() {
 			mockStorage := &storage.MockStorage{}
-			mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
+			mockStorage.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{ID: 1}, nil)
 			mw := MeMiddleware(mockStorage)
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
