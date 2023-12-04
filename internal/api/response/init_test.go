@@ -26,6 +26,8 @@ func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 			Twitter:  "example",
 			Facebook: "example",
 			Telegram: "example",
+			Mastodon: "example",
+			Bluesky:  "example",
 		},
 	}
 
@@ -42,6 +44,8 @@ func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 	s.Equal(ticker.Information.Twitter, response.Information.Twitter)
 	s.Equal(ticker.Information.Facebook, response.Information.Facebook)
 	s.Equal(ticker.Information.Telegram, response.Information.Telegram)
+	s.Equal(ticker.Information.Mastodon, response.Information.Mastodon)
+	s.Equal(ticker.Information.Bluesky, response.Information.Bluesky)
 }
 
 func TestInitTickerResponseTestSuite(t *testing.T) {

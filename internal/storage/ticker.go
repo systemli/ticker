@@ -41,6 +41,7 @@ type TickerInformation struct {
 	Facebook string
 	Telegram string
 	Mastodon string
+	Bluesky  string
 }
 
 type TickerTelegram struct {

@@ -29,6 +29,8 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 			Twitter:  "@example",
 			Facebook: "https://facebook.com/example",
 			Telegram: "example",
+			Mastodon: "https://systemli.social/@example",
+			Bluesky:  "https://example.com",
 		},
 		Telegram: storage.TickerTelegram{
 			Active:      true,
@@ -72,6 +74,8 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(ticker.Information.Twitter, tickerResponse[0].Information.Twitter)
 	s.Equal(ticker.Information.Facebook, tickerResponse[0].Information.Facebook)
 	s.Equal(ticker.Information.Telegram, tickerResponse[0].Information.Telegram)
+	s.Equal(ticker.Information.Mastodon, tickerResponse[0].Information.Mastodon)
+	s.Equal(ticker.Information.Bluesky, tickerResponse[0].Information.Bluesky)
 	s.Equal(ticker.Telegram.Active, tickerResponse[0].Telegram.Active)
 	s.Equal(ticker.Telegram.Connected(), tickerResponse[0].Telegram.Connected)
 	s.Equal(config.Telegram.User.UserName, tickerResponse[0].Telegram.BotUsername)
