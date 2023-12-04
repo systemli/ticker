@@ -23,6 +23,7 @@ type InitTickerInformation struct {
 	Facebook string `json:"facebook"`
 	Telegram string `json:"telegram"`
 	Mastodon string `json:"mastodon"`
+	Bluesky  string `json:"bluesky"`
 }
 
 func InitTickerResponse(ticker storage.Ticker) InitTicker {
@@ -40,6 +41,7 @@ func InitTickerResponse(ticker storage.Ticker) InitTicker {
 			Facebook: ticker.Information.Facebook,
 			Telegram: ticker.Information.Telegram,
 			Mastodon: ticker.Information.Mastodon,
+			Bluesky:  ticker.Information.Bluesky,
 		},
 	}
 }

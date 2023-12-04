@@ -28,6 +28,7 @@ type Information struct {
 	Facebook string `json:"facebook"`
 	Telegram string `json:"telegram"`
 	Mastodon string `json:"mastodon"`
+	Bluesky  string `json:"bluesky"`
 }
 
 type Telegram struct {
@@ -68,6 +69,7 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Facebook: t.Information.Facebook,
 			Telegram: t.Information.Telegram,
 			Mastodon: t.Information.Mastodon,
+			Bluesky:  t.Information.Bluesky,
 		},
 		Telegram: Telegram{
 			Active:      t.Telegram.Active,
