@@ -10,7 +10,7 @@ require (
 	github.com/gin-contrib/size v0.0.0-20220102055520-f75bacbc2df3
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/h2non/gock v1.2.0
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/prometheus/client_golang v1.17.0
