@@ -50,12 +50,35 @@ var (
 			fmt.Printf("Password: %s\n", password)
 		},
 	}
+
+	userDeleteCmd = &cobra.Command{
+		Use:   "delete",
+		Short: "Delete a user",
+		Run: func(cmd *cobra.Command, args []string) {
+			if email == "" {
+				log.Fatal("email is required")
+			}
+
+			user, err := store.FindUserByEmail(email)
+			if err != nil {
+				log.WithError(err).Fatal("could not find user")
+			}
+
+			if err := store.DeleteUser(user); err != nil {
+				log.WithError(err).Fatal("could not delete user")
+			}
+
+			fmt.Printf("Deleted user %s\n", email)
+		},
+	}
 )
 
 func init() {
 	userCmd.AddCommand(userCreateCmd)
-
 	userCreateCmd.Flags().StringVar(&email, "email", "", "email address of the user")
 	userCreateCmd.Flags().StringVar(&password, "password", "", "password of the user")
 	userCreateCmd.Flags().BoolVar(&isSuperAdmin, "super-admin", false, "make the user a super admin")
+
+	userCmd.AddCommand(userDeleteCmd)
+	userDeleteCmd.Flags().StringVar(&email, "email", "", "email address of the user")
 }
