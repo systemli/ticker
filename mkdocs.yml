@@ -1,5 +1,5 @@
 site_name: Systemli Ticker
-site_author: Systemli Admin Team
+site_author: Systemli
 repo_url: https://github.com/systemli/ticker
 
 nav:
@@ -11,6 +11,11 @@ nav:
 
 theme:
   name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  palette:
+    primary: "blue"
+    accent: "blue"
 
   features:
     - navigation.instant
