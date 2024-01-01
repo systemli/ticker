@@ -5,6 +5,10 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      ticker:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/"
