@@ -1,4 +1,4 @@
-FROM alpine:3.19.0 as build
+FROM alpine:3.19.1 as build
 
 ENV USER=ticker
 ENV UID=10001
