@@ -1,7 +1,9 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	geojson "github.com/paulmach/go.geojson"
@@ -105,5 +107,18 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
+	h.ClearMessagesCache(&ticker)
+
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
+}
+
+// ClearMessagesCache clears the cache for the timeline endpoint of a ticker
+func (h *handler) ClearMessagesCache(ticker *storage.Ticker) {
+	h.cache.Range(func(key, value interface{}) bool {
+		if strings.HasPrefix(key.(string), fmt.Sprintf("response:%s:/v1/timeline", ticker.Domain)) {
+			h.cache.Delete(key)
+		}
+
+		return true
+	})
 }

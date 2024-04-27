@@ -8,11 +8,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-mastodon"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/systemli/ticker/internal/cache"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -22,6 +24,7 @@ type TickerTestSuite struct {
 	ctx   *gin.Context
 	store *storage.MockStorage
 	cfg   config.Config
+	cache *cache.Cache
 	suite.Suite
 }
 
@@ -35,6 +38,7 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 		s.ctx, _ = gin.CreateTestContext(s.w)
 		s.store = &storage.MockStorage{}
 		s.cfg = config.LoadConfig("")
+		s.cache = cache.NewCache(time.Minute)
 
 		subtest()
 	})
@@ -177,8 +181,9 @@ func (s *TickerTestSuite) TestPutTicker() {
 		s.store.AssertExpectations(s.T())
 	})
 
-	s.Run("when storage returns ticker", func() {
+	s.Run("happy path", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
+		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		body := `{"domain":"localhost","title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
@@ -187,6 +192,7 @@ func (s *TickerTestSuite) TestPutTicker() {
 		h.PutTicker(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
+		s.Nil(s.cache.Get("response:localhost:/v1/init"))
 		s.store.AssertExpectations(s.T())
 	})
 }
@@ -437,8 +443,9 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 		s.store.AssertExpectations(s.T())
 	})
 
-	s.Run("when storage returns ticker", func() {
-		s.ctx.Set("ticker", storage.Ticker{})
+	s.Run("happy path", func() {
+		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
+		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
 		s.store.On("DeleteMessages", mock.Anything).Return(nil)
 		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(nil)
 		s.store.On("DeleteTicker", mock.Anything).Return(nil)
@@ -446,6 +453,7 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 		h.DeleteTicker(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
+		s.Nil(s.cache.Get("response:localhost:/v1/init"))
 		s.store.AssertExpectations(s.T())
 	})
 }
@@ -538,8 +546,9 @@ func (s *TickerTestSuite) TestResetTicker() {
 		s.store.AssertExpectations(s.T())
 	})
 
-	s.Run("when storage returns ticker", func() {
-		s.ctx.Set("ticker", storage.Ticker{})
+	s.Run("happy path", func() {
+		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
+		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
 		s.store.On("DeleteMessages", mock.Anything).Return(nil).Once()
 		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(nil).Once()
 		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
@@ -548,6 +557,7 @@ func (s *TickerTestSuite) TestResetTicker() {
 		h.ResetTicker(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
+		s.Nil(s.cache.Get("response:localhost:/v1/init"))
 		s.store.AssertExpectations(s.T())
 	})
 }
@@ -556,6 +566,7 @@ func (s *TickerTestSuite) handler() handler {
 	return handler{
 		storage: s.store,
 		config:  s.cfg,
+		cache:   s.cache,
 	}
 }
 
