@@ -72,7 +72,7 @@ func (s *SqlStorage) SaveUser(user *User) error {
 		log.WithError(err).WithField("user_id", user.ID).Error("failed to replace user tickers")
 	}
 
-	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(user).Error
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Model(user).Updates(user.AsMap()).Error
 }
 
 func (s *SqlStorage) DeleteUser(user User) error {
@@ -170,7 +170,7 @@ func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
 		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to replace ticker users")
 	}
 
-	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(ticker).Error
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Model(ticker).Updates(ticker.AsMap()).Error
 }
 
 func (s *SqlStorage) DeleteTicker(ticker Ticker) error {
@@ -273,7 +273,7 @@ func (s *SqlStorage) SaveMessage(message *Message) error {
 		return s.DB.Create(message).Error
 	}
 
-	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Updates(message).Error
+	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Model(message).Updates(message.AsMap()).Error
 }
 
 func (s *SqlStorage) DeleteMessage(message Message) error {

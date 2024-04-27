@@ -33,6 +33,26 @@ func (t *Ticker) Reset() {
 	t.Mastodon.Reset()
 }
 
+func (t *Ticker) AsMap() map[string]interface{} {
+	return map[string]interface{}{
+		"id":          t.ID,
+		"created_at":  t.CreatedAt,
+		"updated_at":  t.UpdatedAt,
+		"domain":      t.Domain,
+		"title":       t.Title,
+		"description": t.Description,
+		"active":      t.Active,
+		"author":      t.Information.Author,
+		"url":         t.Information.URL,
+		"email":       t.Information.Email,
+		"twitter":     t.Information.Twitter,
+		"facebook":    t.Information.Facebook,
+		"telegram":    t.Information.Telegram,
+		"lat":         t.Location.Lat,
+		"lon":         t.Location.Lon,
+	}
+}
+
 type TickerInformation struct {
 	Author   string
 	URL      string
