@@ -47,6 +47,17 @@ func (u *User) UpdatePassword(password string) {
 	u.EncryptedPassword = pw
 }
 
+func (u *User) AsMap() map[string]interface{} {
+	return map[string]interface{}{
+		"id":                 u.ID,
+		"created_at":         u.CreatedAt,
+		"updated_at":         u.UpdatedAt,
+		"email":              u.Email,
+		"encrypted_password": u.EncryptedPassword,
+		"is_super_admin":     u.IsSuperAdmin,
+	}
+}
+
 func hashPassword(password string) (string, error) {
 	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -22,6 +23,23 @@ type Message struct {
 
 func NewMessage() Message {
 	return Message{}
+}
+
+func (m *Message) AsMap() map[string]interface{} {
+	geoInformation, _ := m.GeoInformation.MarshalJSON()
+	telegram, _ := json.Marshal(m.Telegram)
+	mastodon, _ := json.Marshal(m.Mastodon)
+
+	return map[string]interface{}{
+		"id":              m.ID,
+		"created_at":      m.CreatedAt,
+		"updated_at":      m.UpdatedAt,
+		"ticker_id":       m.TickerID,
+		"text":            m.Text,
+		"geo_information": string(geoInformation),
+		"telegram":        telegram,
+		"mastodon":        mastodon,
+	}
 }
 
 type TelegramMeta struct {

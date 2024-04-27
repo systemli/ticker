@@ -525,6 +525,31 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 		s.Equal(int64(1), count)
 	})
 
+	s.Run("when ticker is existing and properties are updated", func() {
+		ticker.Active = true
+		ticker.Information = TickerInformation{Author: "Author"}
+		ticker.Location = TickerLocation{Lat: 1, Lon: 1}
+
+		s.NoError(s.store.SaveTicker(&ticker))
+		s.True(ticker.Active)
+		s.Equal("Author", ticker.Information.Author)
+		s.Equal(float64(1), ticker.Location.Lat)
+		s.Equal(float64(1), ticker.Location.Lon)
+
+		ticker.Active = false
+		ticker.Information.Author = ""
+		ticker.Location.Lat = 0
+		ticker.Location.Lon = 0
+
+		s.NoError(s.store.SaveTicker(&ticker))
+
+		ticker, err := s.store.FindTickerByID(ticker.ID)
+		s.NoError(err)
+		s.Equal("", ticker.Information.Author)
+		s.Equal(float64(0), ticker.Location.Lat)
+		s.Equal(float64(0), ticker.Location.Lon)
+	})
+
 	s.Run("when ticker is existing with users", func() {
 		user := User{Email: "user@systemli.org"}
 		err := s.db.Create(&user).Error
