@@ -1,8 +1,10 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-mastodon"
@@ -84,6 +86,8 @@ func (h *handler) PutTicker(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
+
+	h.ClearTickerCache(&ticker)
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
@@ -251,6 +255,8 @@ func (h *handler) DeleteTicker(c *gin.Context) {
 		return
 	}
 
+	h.ClearTickerCache(&ticker)
+
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
 }
 
@@ -312,7 +318,19 @@ func (h *handler) ResetTicker(c *gin.Context) {
 		return
 	}
 
+	h.ClearTickerCache(&ticker)
+
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+// ClearTickerCache clears the cache for the init endpoint of a ticker
+func (h *handler) ClearTickerCache(ticker *storage.Ticker) {
+	h.cache.Range(func(key, value interface{}) bool {
+		if strings.HasPrefix(key.(string), fmt.Sprintf("response:%s:/v1/init", ticker.Domain)) {
+			h.cache.Delete(key)
+		}
+		return true
+	})
 }
 
 func updateTicker(t *storage.Ticker, c *gin.Context) error {

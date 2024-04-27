@@ -28,16 +28,18 @@ type handler struct {
 	config  config.Config
 	storage storage.Storage
 	bridges bridge.Bridges
+	cache   *cache.Cache
 }
 
 func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.Engine {
+	inMemoryCache := cache.NewCache(5 * time.Minute)
+
 	handler := handler{
 		config:  config,
 		storage: store,
 		bridges: bridge.RegisterBridges(config, store),
+		cache:   inMemoryCache,
 	}
-
-	inMemoryCache := cache.NewCache(5 * time.Minute)
 
 	gin.SetMode(gin.ReleaseMode)
 
