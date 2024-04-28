@@ -181,8 +181,26 @@ func (s *TickerTestSuite) TestPutTicker() {
 		s.store.AssertExpectations(s.T())
 	})
 
+	s.Run("user tries to update the domain", func() {
+		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
+		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
+		s.ctx.Set("me", storage.User{IsSuperAdmin: false})
+		body := `{"domain":"new_domain","title":"title","description":"description"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		ticker := &storage.Ticker{Domain: "localhost", Title: "title", Description: "description"}
+		s.store.On("SaveTicker", ticker).Return(nil).Once()
+		h := s.handler()
+		h.PutTicker(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Nil(s.cache.Get("response:localhost:/v1/init"))
+		s.store.AssertExpectations(s.T())
+	})
+
 	s.Run("happy path", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		body := `{"domain":"localhost","title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
