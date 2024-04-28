@@ -360,7 +360,10 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 		return err
 	}
 
-	t.Domain = body.Domain
+	me, _ := helper.Me(c)
+	if me.IsSuperAdmin {
+		t.Domain = body.Domain
+	}
 	t.Title = body.Title
 	t.Description = body.Description
 	t.Active = body.Active
