@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -19,6 +20,7 @@ type Message struct {
 	GeoInformation geojson.FeatureCollection `gorm:"serializer:json"`
 	Telegram       TelegramMeta              `gorm:"serializer:json"`
 	Mastodon       MastodonMeta              `gorm:"serializer:json"`
+	Bluesky        BlueskyMeta               `gorm:"serializer:json"`
 }
 
 func NewMessage() Message {
@@ -29,6 +31,7 @@ func (m *Message) AsMap() map[string]interface{} {
 	geoInformation, _ := m.GeoInformation.MarshalJSON()
 	telegram, _ := json.Marshal(m.Telegram)
 	mastodon, _ := json.Marshal(m.Mastodon)
+	bluesky, _ := json.Marshal(m.Bluesky)
 
 	return map[string]interface{}{
 		"id":              m.ID,
@@ -39,6 +42,7 @@ func (m *Message) AsMap() map[string]interface{} {
 		"geo_information": string(geoInformation),
 		"telegram":        telegram,
 		"mastodon":        mastodon,
+		"bluesky":         bluesky,
 	}
 }
 
@@ -50,6 +54,12 @@ type MastodonMeta struct {
 	ID  string
 	URI string
 	URL string
+}
+
+type BlueskyMeta struct {
+	Handle string
+	Uri    string
+	Cid    string
 }
 
 type Attachment struct {
@@ -93,4 +103,13 @@ func (m *Message) MastodonURL() string {
 	}
 
 	return m.Mastodon.URL
+}
+
+func (m *Message) BlueskyURL() string {
+	parts := strings.Split(m.Bluesky.Uri, "/")
+	if len(parts) < 3 {
+		return ""
+	}
+
+	return fmt.Sprintf("https://bsky.app/profile/%s/post/%s", m.Bluesky.Handle, parts[len(parts)-1])
 }

@@ -22,6 +22,7 @@ func (s *MessagesResponseTestSuite) TestMessagesResponse() {
 	s.Equal(1, len(response))
 	s.Empty(response[0].TelegramURL)
 	s.Empty(response[0].MastodonURL)
+	s.Empty(response[0].BlueskyURL)
 	s.Equal(`{"type":"FeatureCollection","features":[]}`, response[0].GeoInformation)
 	s.Equal(1, len(response[0].Attachments))
 

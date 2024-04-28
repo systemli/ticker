@@ -21,6 +21,15 @@ func TestTickerTelegramConnected(t *testing.T) {
 	assert.True(t, ticker.Telegram.Connected())
 }
 
+func TestTickerBlueskyConnected(t *testing.T) {
+	assert.False(t, ticker.Bluesky.Connected())
+
+	ticker.Bluesky.Handle = "Handle"
+	ticker.Bluesky.AppKey = "AppKey"
+
+	assert.True(t, ticker.Bluesky.Connected())
+}
+
 func TestTickerReset(t *testing.T) {
 	ticker.Active = true
 	ticker.Description = "Description"

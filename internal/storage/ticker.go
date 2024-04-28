@@ -18,6 +18,7 @@ type Ticker struct {
 	Location    TickerLocation    `gorm:"embedded"`
 	Telegram    TickerTelegram
 	Mastodon    TickerMastodon
+	Bluesky     TickerBluesky
 	Users       []User `gorm:"many2many:ticker_users;"`
 }
 
@@ -33,6 +34,7 @@ func (t *Ticker) Reset() {
 
 	t.Telegram.Reset()
 	t.Mastodon.Reset()
+	t.Bluesky.Reset()
 }
 
 func (t *Ticker) AsMap() map[string]interface{} {
@@ -114,6 +116,26 @@ func (m *TickerMastodon) Reset() {
 	m.Secret = ""
 	m.AccessToken = ""
 	m.User = MastodonUser{}
+}
+
+type TickerBluesky struct {
+	ID        int `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TickerID  int `gorm:"index"`
+	Active    bool
+	Handle    string
+	AppKey    string
+}
+
+func (b *TickerBluesky) Connected() bool {
+	return b.Handle != "" && b.AppKey != ""
+}
+
+func (b *TickerBluesky) Reset() {
+	b.Active = false
+	b.Handle = ""
+	b.AppKey = ""
 }
 
 type TickerLocation struct {

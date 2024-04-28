@@ -10,7 +10,6 @@ const (
 	Unauthorized            ErrorMessage = "unauthorized"
 	UserIdentifierMissing   ErrorMessage = "user identifier not found"
 	TickerIdentifierMissing ErrorMessage = "ticker identifier not found"
-	MessageIdentierMissing  ErrorMessage = "message identifier not found"
 	MessageNotFound         ErrorMessage = "message not found"
 	FilesIdentifierMissing  ErrorMessage = "files identifier not found"
 	TooMuchFiles            ErrorMessage = "upload limit exceeded"
@@ -22,6 +21,7 @@ const (
 	StorageError            ErrorMessage = "failed to save"
 	UploadsNotFound         ErrorMessage = "uploads not found"
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
+	BlueskyError            ErrorMessage = "unable to connect to bluesky"
 	PasswordError           ErrorMessage = "could not authenticate password"
 
 	StatusSuccess Status = `success`

@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-mastodon"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/bluesky"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -225,6 +226,59 @@ func (h *handler) DeleteTickerMastodon(c *gin.Context) {
 	}
 
 	ticker.Mastodon.Reset()
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) PutTickerBluesky(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body storage.TickerBluesky
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	if body.Handle != "" && body.AppKey != "" {
+		_, err = bluesky.Authenticate(body.Handle, body.AppKey)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeBadCredentials, response.BlueskyError))
+			return
+		}
+
+		ticker.Bluesky.Handle = body.Handle
+		ticker.Bluesky.AppKey = body.AppKey
+	}
+	ticker.Bluesky.Active = body.Active
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerBluesky(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	ticker.Bluesky.Reset()
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {

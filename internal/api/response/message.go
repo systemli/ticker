@@ -15,6 +15,7 @@ type Message struct {
 	Ticker         int                 `json:"ticker"`
 	TelegramURL    string              `json:"telegramUrl,omitempty"`
 	MastodonURL    string              `json:"mastodonUrl,omitempty"`
+	BlueskyURL     string              `json:"blueskyUrl,omitempty"`
 	GeoInformation string              `json:"geoInformation"`
 	Attachments    []MessageAttachment `json:"attachments"`
 }
@@ -40,6 +41,7 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 		Ticker:         message.TickerID,
 		TelegramURL:    message.TelegramURL(),
 		MastodonURL:    message.MastodonURL(),
+		BlueskyURL:     message.BlueskyURL(),
 		GeoInformation: string(m),
 		Attachments:    attachments,
 	}

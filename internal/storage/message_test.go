@@ -47,3 +47,23 @@ func TestMastodonURL(t *testing.T) {
 
 	assert.Equal(t, url, message.MastodonURL())
 }
+
+func TestBlueskyURL(t *testing.T) {
+	message := NewMessage()
+
+	assert.Empty(t, message.BlueskyURL())
+
+	message.Bluesky = BlueskyMeta{
+		Uri: "",
+	}
+
+	assert.Empty(t, message.BlueskyURL())
+
+	url := "https://bsky.app/profile/systemli.bsky.social/post/3kr7p3jxkpw2n"
+	message.Bluesky = BlueskyMeta{
+		Uri:    "at://did:plc:izpk4tc54wu6b3yufcdixqje/app.bsky.feed.post/3kr7p3jxkpw2n",
+		Handle: "systemli.bsky.social",
+	}
+
+	assert.Equal(t, url, message.BlueskyURL())
+}
