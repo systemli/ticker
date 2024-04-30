@@ -355,23 +355,6 @@ func (s *SqlStorageTestSuite) TestAddTickerUser() {
 	s.Equal(int64(1), count)
 }
 
-func (s *SqlStorageTestSuite) TestFindTickers() {
-	s.Run("when no tickers exist", func() {
-		tickers, err := s.store.FindTickers()
-		s.NoError(err)
-		s.Empty(tickers)
-	})
-
-	s.Run("when tickers exist", func() {
-		err := s.db.Create(&Ticker{ID: 1}).Error
-		s.NoError(err)
-
-		tickers, err := s.store.FindTickers()
-		s.NoError(err)
-		s.Len(tickers, 1)
-	})
-}
-
 func (s *SqlStorageTestSuite) TestFindTickerByID() {
 	s.Run("when ticker does not exist", func() {
 		_, err := s.store.FindTickerByID(1)
@@ -464,7 +447,8 @@ func (s *SqlStorageTestSuite) TestFindTickerByDomain() {
 
 func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 	s.Run("when no tickers exist", func() {
-		tickers, err := s.store.FindTickersByUser(User{ID: 1})
+		filter := TickerFilter{OrderBy: "id", Sort: "desc"}
+		tickers, err := s.store.FindTickersByUser(User{ID: 1}, filter)
 		s.NoError(err)
 		s.Empty(tickers)
 	})
@@ -473,27 +457,62 @@ func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 	err := s.db.Create(&user).Error
 	s.NoError(err)
 
-	ticker := Ticker{Users: []User{user}}
+	ticker := Ticker{Users: []User{user}, Active: false, Domain: "localhost", Title: "title"}
 	err = s.db.Create(&ticker).Error
 	s.NoError(err)
 
 	s.Run("when tickers exist", func() {
-		tickers, err := s.store.FindTickersByUser(user)
+		filter := TickerFilter{OrderBy: "id", Sort: "desc"}
+		tickers, err := s.store.FindTickersByUser(user, filter)
 		s.NoError(err)
 		s.Len(tickers, 1)
 	})
 
 	s.Run("when tickers exist with preload", func() {
-		tickers, err := s.store.FindTickersByUser(user, WithPreload())
+		filter := TickerFilter{OrderBy: "id", Sort: "desc"}
+		tickers, err := s.store.FindTickersByUser(user, filter, WithPreload())
 		s.NoError(err)
 		s.Len(tickers, 1)
 		s.Len(tickers[0].Users, 1)
 	})
 
 	s.Run("when super admin", func() {
-		tickers, err := s.store.FindTickersByUser(User{IsSuperAdmin: true})
+		filter := TickerFilter{OrderBy: "id", Sort: "desc"}
+		tickers, err := s.store.FindTickersByUser(User{IsSuperAdmin: true}, filter)
 		s.NoError(err)
 		s.Len(tickers, 1)
+	})
+
+	s.Run("when filter is set", func() {
+		active := true
+		filter := TickerFilter{OrderBy: "id", Sort: "desc", Active: &active}
+		tickers, err := s.store.FindTickersByUser(user, filter)
+		s.NoError(err)
+		s.Empty(tickers)
+
+		active = false
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Active: &active}
+		tickers, err = s.store.FindTickersByUser(user, filter)
+		s.NoError(err)
+		s.Len(tickers, 1)
+
+		title := "title"
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Title: &title}
+		tickers, err = s.store.FindTickersByUser(user, filter)
+		s.NoError(err)
+		s.Len(tickers, 1)
+
+		domain := "localhost"
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Domain: &domain}
+		tickers, err = s.store.FindTickersByUser(user, filter)
+		s.NoError(err)
+		s.Len(tickers, 1)
+
+		domain = "systemli.org"
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Domain: &domain}
+		tickers, err = s.store.FindTickersByUser(user, filter)
+		s.NoError(err)
+		s.Empty(tickers)
 	})
 }
 

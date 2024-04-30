@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,4 +42,28 @@ func TestTickerReset(t *testing.T) {
 	assert.Empty(t, ticker.Information.Twitter)
 	assert.Empty(t, ticker.Telegram.ChannelName)
 	assert.Empty(t, ticker.Location)
+}
+
+func TestNewTickerFilter(t *testing.T) {
+	filter := NewTickerFilter(nil)
+	assert.Nil(t, filter.Active)
+	assert.Nil(t, filter.Domain)
+	assert.Nil(t, filter.Title)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	filter = NewTickerFilter(req)
+	assert.Nil(t, filter.Active)
+	assert.Nil(t, filter.Domain)
+	assert.Nil(t, filter.Title)
+
+	req = httptest.NewRequest("GET", "/?active=true&domain=example.org&title=Title", nil)
+	filter = NewTickerFilter(req)
+	assert.True(t, *filter.Active)
+	assert.Equal(t, "example.org", *filter.Domain)
+	assert.Equal(t, "Title", *filter.Title)
+
+	req = httptest.NewRequest("GET", "/?order_by=created_at&sort=asc", nil)
+	filter = NewTickerFilter(req)
+	assert.Equal(t, "created_at", filter.OrderBy)
+	assert.Equal(t, "asc", filter.Sort)
 }

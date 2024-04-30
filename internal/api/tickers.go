@@ -20,7 +20,8 @@ func (h *handler) GetTickers(c *gin.Context) {
 		return
 	}
 
-	tickers, err := h.storage.FindTickersByUser(me)
+	filter := storage.NewTickerFilter(c.Request)
+	tickers, err := h.storage.FindTickersByUser(me, filter)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
