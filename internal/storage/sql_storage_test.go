@@ -51,29 +51,54 @@ func (s *SqlStorageTestSuite) BeforeTest(suiteName, testName string) {
 
 func (s *SqlStorageTestSuite) TestFindUsers() {
 	s.Run("when no users exist", func() {
-		users, err := s.store.FindUsers()
+		filter := NewUserFilter(nil)
+		users, err := s.store.FindUsers(filter)
 		s.NoError(err)
 		s.Empty(users)
 	})
 
 	s.Run("when users exist", func() {
-		err := s.db.Create(&User{Tickers: []Ticker{{ID: 1}}}).Error
+		err := s.db.Create(&User{Email: "user@example.org", IsSuperAdmin: false, Tickers: []Ticker{{ID: 1}}}).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
-			users, err := s.store.FindUsers()
+			filter := NewUserFilter(nil)
+			users, err := s.store.FindUsers(filter)
 			s.NoError(err)
 			s.Len(users, 1)
 			s.Empty(users[0].Tickers)
 		})
 
 		s.Run("with preload", func() {
-			users, err := s.store.FindUsers(WithTickers())
+			filter := NewUserFilter(nil)
+			users, err := s.store.FindUsers(filter, WithTickers())
 			s.NoError(err)
 			s.Len(users, 1)
 			s.Len(users[0].Tickers, 1)
 		})
+
+		s.Run("with filters", func() {
+			email := "user@example.org"
+			isSuperAdmin := false
+			filter := UserFilter{Email: &email, IsSuperAdmin: &isSuperAdmin, OrderBy: "id", Sort: "asc"}
+			users, err := s.store.FindUsers(filter)
+			s.NoError(err)
+			s.Len(users, 1)
+
+			email = "user@example.com"
+			filter = UserFilter{Email: &email, OrderBy: "id", Sort: "asc"}
+			users, err = s.store.FindUsers(filter)
+			s.NoError(err)
+			s.Empty(users)
+
+			isSuperAdmin = true
+			filter = UserFilter{IsSuperAdmin: &isSuperAdmin, OrderBy: "id", Sort: "asc"}
+			users, err = s.store.FindUsers(filter)
+			s.NoError(err)
+			s.Empty(users)
+		})
 	})
+
 }
 
 func (s *SqlStorageTestSuite) TestFindUserByID() {

@@ -11,7 +11,8 @@ import (
 
 func (h *handler) GetUsers(c *gin.Context) {
 	//TODO: Discuss need of Pagination
-	users, err := h.storage.FindUsers(storage.WithTickers())
+	filter := storage.NewUserFilter(c.Request)
+	users, err := h.storage.FindUsers(filter, storage.WithTickers())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
