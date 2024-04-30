@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/systemli/ticker/internal/api/pagination"
@@ -21,10 +22,19 @@ func NewSqlStorage(db *gorm.DB, uploadPath string) *SqlStorage {
 	}
 }
 
-func (s *SqlStorage) FindUsers(opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
+func (s *SqlStorage) FindUsers(filter UserFilter, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
 	users := make([]User, 0)
 	db := s.prepareDb(opts...)
-	err := db.Find(&users).Error
+
+	if filter.Email != nil {
+		db = db.Where("email LIKE ?", fmt.Sprintf("%%%s%%", *filter.Email))
+	}
+
+	if filter.IsSuperAdmin != nil {
+		db = db.Where("is_super_admin = ?", *filter.IsSuperAdmin)
+	}
+
+	err := db.Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.Sort)).Find(&users).Error
 
 	return users, err
 }

@@ -40,7 +40,7 @@ func (s *UserTestSuite) Run(name string, subtest func()) {
 func (s *UserTestSuite) TestGetUsers() {
 	s.Run("when storage returns an error", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindUsers", mock.Anything).Return([]storage.User{}, errors.New("storage error")).Once()
+		s.store.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetUsers(s.ctx)
 
@@ -50,7 +50,7 @@ func (s *UserTestSuite) TestGetUsers() {
 
 	s.Run("when storage returns users", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindUsers", mock.Anything).Return([]storage.User{}, nil).Once()
+		s.store.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, nil).Once()
 		h := s.handler()
 		h.GetUsers(s.ctx)
 

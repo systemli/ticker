@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,4 +38,27 @@ func TestNewUser(t *testing.T) {
 
 	_, err = NewUser("user@systemli.org", TooLongPassword)
 	assert.NotNil(t, err)
+}
+
+func TestNewUserFilter(t *testing.T) {
+	filter := NewUserFilter(nil)
+	assert.Nil(t, filter.Email)
+	assert.Nil(t, filter.IsSuperAdmin)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	filter = NewUserFilter(req)
+	assert.Nil(t, filter.Email)
+	assert.Nil(t, filter.IsSuperAdmin)
+
+	req = httptest.NewRequest("GET", "/?email=user@example.org&is_super_admin=true", nil)
+	filter = NewUserFilter(req)
+	assert.Equal(t, "user@example.org", *filter.Email)
+	assert.True(t, *filter.IsSuperAdmin)
+
+	req = httptest.NewRequest("GET", "/?order_by=created_at&sort=asc", nil)
+	filter = NewUserFilter(req)
+	assert.Nil(t, filter.Email)
+	assert.Nil(t, filter.IsSuperAdmin)
+	assert.Equal(t, "created_at", filter.OrderBy)
+	assert.Equal(t, "asc", filter.Sort)
 }

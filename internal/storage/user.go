@@ -1,9 +1,15 @@
 package storage
 
 import (
+	"net/http"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	UserOrderFields = []string{"id", "created_at", "updated_at", "email", "is_super_admin"}
 )
 
 type User struct {
@@ -64,4 +70,48 @@ func hashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(pw), nil
+}
+
+type UserFilter struct {
+	Email        *string
+	IsSuperAdmin *bool
+	OrderBy      string
+	Sort         string
+}
+
+func NewUserFilter(req *http.Request) UserFilter {
+	filter := UserFilter{
+		OrderBy: "id",
+		Sort:    "desc",
+	}
+
+	if req == nil {
+		return filter
+	}
+
+	if req.URL.Query().Get("order_by") != "" {
+		opts := []string{"id", "created_at", "updated_at", "email", "is_super_admin"}
+		for _, opt := range opts {
+			if req.URL.Query().Get("order_by") == opt {
+				filter.OrderBy = req.URL.Query().Get("order_by")
+				break
+			}
+		}
+	}
+	if req.URL.Query().Get("sort") != "" {
+		filter.Sort = req.URL.Query().Get("sort")
+	}
+
+	email := req.URL.Query().Get("email")
+	isSuperAdmin := req.URL.Query().Get("is_super_admin")
+	if email != "" {
+		filter.Email = &email
+	}
+
+	if isSuperAdmin != "" {
+		isSuperAdminBool, _ := strconv.ParseBool(isSuperAdmin)
+		filter.IsSuperAdmin = &isSuperAdminBool
+	}
+
+	return filter
 }
