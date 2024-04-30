@@ -107,17 +107,23 @@ func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
 	return err
 }
 
-func (s *SqlStorage) FindTickers(opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
+func (s *SqlStorage) FindTickersByUser(user User, filter TickerFilter, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
 	db := s.prepareDb(opts...)
-	err := db.Find(&tickers).Error
 
-	return tickers, err
-}
+	if filter.Active != nil {
+		db = db.Where("active = ?", *filter.Active)
+	}
 
-func (s *SqlStorage) FindTickersByUser(user User, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
-	tickers := make([]Ticker, 0)
-	db := s.prepareDb(opts...)
+	if filter.Domain != nil {
+		db = db.Where("domain LIKE ?", fmt.Sprintf("%%%s%%", *filter.Domain))
+	}
+
+	if filter.Title != nil {
+		db = db.Where("title LIKE ?", fmt.Sprintf("%%%s%%", *filter.Title))
+	}
+
+	db = db.Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.Sort))
 
 	var err error
 	if user.IsSuperAdmin {

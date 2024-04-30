@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -117,4 +119,54 @@ func (m *TickerMastodon) Reset() {
 type TickerLocation struct {
 	Lat float64
 	Lon float64
+}
+
+type TickerFilter struct {
+	Domain  *string
+	Title   *string
+	Active  *bool
+	OrderBy string
+	Sort    string
+}
+
+func NewTickerFilter(req *http.Request) TickerFilter {
+	filter := TickerFilter{
+		OrderBy: "id",
+		Sort:    "asc",
+	}
+
+	if req == nil {
+		return filter
+	}
+
+	if req.URL.Query().Get("order_by") != "" {
+		opts := []string{"id", "created_at", "updated_at", "domain", "title", "active"}
+		for _, opt := range opts {
+			if req.URL.Query().Get("order_by") == opt {
+				filter.OrderBy = req.URL.Query().Get("order_by")
+				break
+			}
+		}
+	}
+	if req.URL.Query().Get("sort") != "" {
+		filter.Sort = req.URL.Query().Get("sort")
+	}
+
+	domain := req.URL.Query().Get("domain")
+	if domain != "" {
+		filter.Domain = &domain
+	}
+
+	title := req.URL.Query().Get("title")
+	if title != "" {
+		filter.Title = &title
+	}
+
+	active := req.URL.Query().Get("active")
+	if active != "" {
+		activeBool, _ := strconv.ParseBool(active)
+		filter.Active = &activeBool
+	}
+
+	return filter
 }

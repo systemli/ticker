@@ -55,7 +55,7 @@ func (s *TickerTestSuite) TestGetTickers() {
 
 	s.Run("when storage returns an error", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickersByUser", mock.Anything, mock.Anything).Return([]storage.Ticker{}, errors.New("storage error")).Once()
+		s.store.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetTickers(s.ctx)
 
@@ -65,7 +65,7 @@ func (s *TickerTestSuite) TestGetTickers() {
 
 	s.Run("when storage returns tickers", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickersByUser", mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil).Once()
+		s.store.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil).Once()
 		h := s.handler()
 		h.GetTickers(s.ctx)
 
