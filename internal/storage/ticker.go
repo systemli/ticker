@@ -148,8 +148,11 @@ func NewTickerFilter(req *http.Request) TickerFilter {
 			}
 		}
 	}
-	if req.URL.Query().Get("sort") != "" {
-		filter.Sort = req.URL.Query().Get("sort")
+
+	if req.URL.Query().Get("sort") == "asc" {
+		filter.Sort = "asc"
+	} else {
+		filter.Sort = "desc"
 	}
 
 	domain := req.URL.Query().Get("domain")

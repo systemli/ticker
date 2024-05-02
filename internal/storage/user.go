@@ -8,10 +8,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	UserOrderFields = []string{"id", "created_at", "updated_at", "email", "is_super_admin"}
-)
-
 type User struct {
 	ID                int `gorm:"primaryKey"`
 	CreatedAt         time.Time
@@ -98,8 +94,11 @@ func NewUserFilter(req *http.Request) UserFilter {
 			}
 		}
 	}
-	if req.URL.Query().Get("sort") != "" {
-		filter.Sort = req.URL.Query().Get("sort")
+
+	if req.URL.Query().Get("sort") == "asc" {
+		filter.Sort = "asc"
+	} else {
+		filter.Sort = "desc"
 	}
 
 	email := req.URL.Query().Get("email")
