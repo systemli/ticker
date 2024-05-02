@@ -71,6 +71,31 @@ var (
 			fmt.Printf("Deleted user %s\n", email)
 		},
 	}
+
+	userChangePasswordCmd = &cobra.Command{
+		Use:   "password",
+		Short: "Change a user's password",
+		Run: func(cmd *cobra.Command, args []string) {
+			if email == "" {
+				log.Fatal("email is required")
+			}
+			if password == "" {
+				log.Fatal("password is required")
+			}
+
+			user, err := store.FindUserByEmail(email)
+			if err != nil {
+				log.WithError(err).Fatal("could not find user")
+			}
+
+			user.UpdatePassword(password)
+			if err := store.SaveUser(&user); err != nil {
+				log.WithError(err).Fatal("could not save user")
+			}
+
+			fmt.Printf("Changed password for user %s\n", email)
+		},
+	}
 )
 
 func init() {
@@ -81,4 +106,8 @@ func init() {
 
 	userCmd.AddCommand(userDeleteCmd)
 	userDeleteCmd.Flags().StringVar(&email, "email", "", "email address of the user")
+
+	userCmd.AddCommand(userChangePasswordCmd)
+	userChangePasswordCmd.Flags().StringVar(&email, "email", "", "email address of the user")
+	userChangePasswordCmd.Flags().StringVar(&password, "password", "", "new password of the user")
 }
