@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/h2non/gock"
 	"github.com/mattn/go-mastodon"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -30,6 +31,8 @@ type TickerTestSuite struct {
 
 func (s *TickerTestSuite) SetupTest() {
 	gin.SetMode(gin.TestMode)
+	gock.DisableNetworking()
+	defer gock.Off()
 }
 
 func (s *TickerTestSuite) Run(name string, subtest func()) {
@@ -434,6 +437,133 @@ func (s *TickerTestSuite) TestDeleteTickerMastodon() {
 		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerMastodon(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestPutTickerBluesky() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body is invalid", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Equal(gock.IsDone(), true)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when enabling bluesky successfully", func() {
+		gock.New("https://bsky.social").
+			Post("/xrpc/com.atproto.server.createSession").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]string{
+				"Did":        "sample-did",
+				"AccessJwt":  "sample-access-jwt",
+				"RefreshJwt": "sample-refresh-jwt",
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"handle":"bluesky","appKey":"appKey"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when enabling bluesky not successfully", func() {
+		gock.New("https://bsky.social").
+			Post("/xrpc/com.atproto.server.createSession").
+			MatchHeader("Content-Type", "application/json").
+			Reply(401).
+			JSON(map[string]string{
+				"error": "error",
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"handle":"bluesky","appKey":"appKey"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestDeleteTickerBluesky() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.DeleteTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		h := s.handler()
+		h.DeleteTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		h := s.handler()
+		h.DeleteTickerBluesky(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())
