@@ -125,7 +125,9 @@ type TickerBluesky struct {
 	TickerID  int `gorm:"index"`
 	Active    bool
 	Handle    string
-	AppKey    string
+	// AppKey is the application password from Bluesky
+	// Future consideration: persist the access token, refresh token instead of app key
+	AppKey string
 }
 
 func (b *TickerBluesky) Connected() bool {
