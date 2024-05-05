@@ -572,7 +572,15 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 
 	s.Run("when ticker is existing and properties are updated", func() {
 		ticker.Active = true
-		ticker.Information = TickerInformation{Author: "Author"}
+		ticker.Information = TickerInformation{
+			Author:   "Author",
+			Email:    "Email",
+			Twitter:  "Twitter",
+			Facebook: "Facebook",
+			Telegram: "Telegram",
+			Mastodon: "Mastodon",
+			Bluesky:  "Bluesky",
+		}
 		ticker.Location = TickerLocation{Lat: 1, Lon: 1}
 
 		s.NoError(s.store.SaveTicker(&ticker))
@@ -583,6 +591,12 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 
 		ticker.Active = false
 		ticker.Information.Author = ""
+		ticker.Information.Email = ""
+		ticker.Information.Twitter = ""
+		ticker.Information.Facebook = ""
+		ticker.Information.Telegram = ""
+		ticker.Information.Mastodon = ""
+		ticker.Information.Bluesky = ""
 		ticker.Location.Lat = 0
 		ticker.Location.Lon = 0
 
@@ -591,6 +605,12 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 		ticker, err := s.store.FindTickerByID(ticker.ID)
 		s.NoError(err)
 		s.Equal("", ticker.Information.Author)
+		s.Equal("", ticker.Information.Email)
+		s.Equal("", ticker.Information.Twitter)
+		s.Equal("", ticker.Information.Facebook)
+		s.Equal("", ticker.Information.Telegram)
+		s.Equal("", ticker.Information.Mastodon)
+		s.Equal("", ticker.Information.Bluesky)
 		s.Equal(float64(0), ticker.Location.Lat)
 		s.Equal(float64(0), ticker.Location.Lon)
 	})
