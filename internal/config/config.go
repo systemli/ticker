@@ -14,14 +14,15 @@ import (
 var log = logrus.WithField("package", "config")
 
 type Config struct {
-	Listen        string   `yaml:"listen"`
-	LogLevel      string   `yaml:"log_level"`
-	LogFormat     string   `yaml:"log_format"`
-	Secret        string   `yaml:"secret"`
-	Database      Database `yaml:"database"`
-	Telegram      Telegram `yaml:"telegram"`
-	MetricsListen string   `yaml:"metrics_listen"`
-	Upload        Upload   `yaml:"upload"`
+	Listen        string      `yaml:"listen"`
+	LogLevel      string      `yaml:"log_level"`
+	LogFormat     string      `yaml:"log_format"`
+	Secret        string      `yaml:"secret"`
+	Database      Database    `yaml:"database"`
+	Telegram      Telegram    `yaml:"telegram"`
+	SignalGroup   SignalGroup `yaml:"signal_group"`
+	MetricsListen string      `yaml:"metrics_listen"`
+	Upload        Upload      `yaml:"upload"`
 	FileBackend   afero.Fs
 }
 
@@ -33,6 +34,11 @@ type Database struct {
 type Telegram struct {
 	Token string `yaml:"token"`
 	User  tgbotapi.User
+}
+
+type SignalGroup struct {
+	ApiUrl  string `yaml:"api_url"`
+	Account string
 }
 
 type Upload struct {
@@ -61,6 +67,11 @@ func defaultConfig() Config {
 // Enabled returns true if the required token is not empty.
 func (t *Telegram) Enabled() bool {
 	return t.Token != ""
+}
+
+// Enabled returns true if requried API URL and account are set.
+func (t *SignalGroup) Enabled() bool {
+	return t.ApiUrl != "" && t.Account != ""
 }
 
 // LoadConfig loads config from file.
@@ -107,6 +118,12 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_TELEGRAM_TOKEN") != "" {
 		c.Telegram.Token = os.Getenv("TICKER_TELEGRAM_TOKEN")
+	}
+	if os.Getenv("TICKER_SIGNAL_GROUP_API_URL") != "" {
+		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_URL")
+	}
+	if os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT") != "" {
+		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT")
 	}
 
 	return c

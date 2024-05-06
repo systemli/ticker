@@ -13,6 +13,10 @@ secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
 telegram:
   token: ""
+# signal group configuration
+signal_group:
+  api_url: ""
+  account: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 upload:

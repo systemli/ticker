@@ -22,6 +22,7 @@ const (
 	UploadsNotFound         ErrorMessage = "uploads not found"
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
 	BlueskyError            ErrorMessage = "unable to connect to bluesky"
+	SignalGroupError        ErrorMessage = "unable to connect to signal"
 	PasswordError           ErrorMessage = "could not authenticate password"
 
 	StatusSuccess Status = `success`

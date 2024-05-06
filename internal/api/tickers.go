@@ -11,6 +11,7 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/bluesky"
+	"github.com/systemli/ticker/internal/signal"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -279,6 +280,66 @@ func (h *handler) DeleteTickerBluesky(c *gin.Context) {
 	}
 
 	ticker.Bluesky.Reset()
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) PutTickerSignalGroup(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body storage.TickerSignalGroup
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	if body.GroupName != "" && body.GroupDescription != "" {
+		ticker.SignalGroup.GroupName = body.GroupName
+		ticker.SignalGroup.GroupDescription = body.GroupDescription
+		err = signal.CreateOrUpdateGroup(&ticker.SignalGroup, h.config)
+		if err != nil {
+			log.WithError(err).Error("failed to create or update group")
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
+			return
+		}
+	}
+	ticker.SignalGroup.Active = body.Active
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	err = signal.QuitGroup(h.config, ticker.SignalGroup.GroupID)
+	if err != nil {
+		log.WithError(err).Error("failed to quit group")
+		// c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
+		// return
+	}
+
+	ticker.SignalGroup.Reset()
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {

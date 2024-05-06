@@ -291,6 +291,8 @@ github.com/warpfork/go-wish v0.0.0-20220906213052-39a1cc7a02d0 h1:GDDkbFiaK8jsSD
 github.com/warpfork/go-wish v0.0.0-20220906213052-39a1cc7a02d0/go.mod h1:x6AKhvSSexNrVSrViXSHUEbICjmGXhtgABaHIySUSGw=
 github.com/whyrusleeping/cbor-gen v0.1.1-0.20240311221002-68b9f235c302 h1:MhInbXe4SzcImAKktUvWBCWZgcw6MYf5NfumTj1BhAw=
 github.com/whyrusleeping/cbor-gen v0.1.1-0.20240311221002-68b9f235c302/go.mod h1:pM99HXyEbSQHcosHc0iW7YFmwnscr+t9Te4ibko05so=
+github.com/ybbus/jsonrpc/v3 v3.1.5 h1:0cC/QzS8OCuXYqqDbYnKKhsEe+IZLrNlDx8KPCieeW0=
+github.com/ybbus/jsonrpc/v3 v3.1.5/go.mod h1:U1QbyNfL5Pvi2roT0OpRbJeyvGxfWYSgKJHjxWdAEeE=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=

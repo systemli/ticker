@@ -19,6 +19,7 @@ type Ticker struct {
 	Telegram    TickerTelegram
 	Mastodon    TickerMastodon
 	Bluesky     TickerBluesky
+	SignalGroup TickerSignalGroup
 	Users       []User `gorm:"many2many:ticker_users;"`
 }
 
@@ -139,6 +140,30 @@ func (b *TickerBluesky) Reset() {
 	b.Active = false
 	b.Handle = ""
 	b.AppKey = ""
+}
+
+type TickerSignalGroup struct {
+	ID               int `gorm:"primaryKey"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	TickerID         int `gorm:"index"`
+	Active           bool
+	GroupName        string
+	GroupDescription string
+	GroupID          string
+	GroupInviteLink  string
+}
+
+func (s *TickerSignalGroup) Connected() bool {
+	return s.GroupID != ""
+}
+
+func (s *TickerSignalGroup) Reset() {
+	s.Active = false
+	s.GroupName = ""
+	s.GroupDescription = ""
+	s.GroupID = ""
+	s.GroupInviteLink = ""
 }
 
 type TickerLocation struct {
