@@ -85,7 +85,7 @@ type DeleteParams struct {
 
 func CreateOrUpdateGroup(ts *storage.TickerSignalGroup, config config.Config) error {
 	ctx := context.Background()
-	client := rpcClient(config.SignalGroup.ApiUrl)
+	client := rpcClient(config)
 
 	var err error
 	if ts.GroupID == "" {
@@ -150,7 +150,7 @@ func CreateOrUpdateGroup(ts *storage.TickerSignalGroup, config config.Config) er
 
 func QuitGroup(config config.Config, groupID string) error {
 	ctx := context.Background()
-	client := rpcClient(config.SignalGroup.ApiUrl)
+	client := rpcClient(config)
 
 	params := QuitGroupParams{
 		Account: config.SignalGroup.Account,
@@ -171,7 +171,7 @@ func QuitGroup(config config.Config, groupID string) error {
 
 func listGroups(config config.Config) ([]*ListGroupsResponseGroup, error) {
 	ctx := context.Background()
-	client := rpcClient(config.SignalGroup.ApiUrl)
+	client := rpcClient(config)
 
 	params := ListGroupsParams{
 		Account: config.SignalGroup.Account,
@@ -203,7 +203,7 @@ func getGroup(config config.Config, groupID string) (*ListGroupsResponseGroup, e
 
 func SendGroupMessage(config config.Config, ss storage.Storage, groupID string, message *storage.Message) error {
 	ctx := context.Background()
-	client := rpcClient(config.SignalGroup.ApiUrl)
+	client := rpcClient(config)
 
 	var attachments []string
 	if len(message.Attachments) > 0 {
@@ -250,7 +250,7 @@ func SendGroupMessage(config config.Config, ss storage.Storage, groupID string, 
 
 func DeleteMessage(config config.Config, groupID string, message *storage.Message) error {
 	ctx := context.Background()
-	client := rpcClient(config.SignalGroup.ApiUrl)
+	client := rpcClient(config)
 
 	params := DeleteParams{
 		Account:         config.SignalGroup.Account,
@@ -267,6 +267,15 @@ func DeleteMessage(config config.Config, groupID string, message *storage.Messag
 	return nil
 }
 
-func rpcClient(apiUrl string) jsonrpc.RPCClient {
-	return jsonrpc.NewClient(apiUrl)
+func rpcClient(config config.Config) jsonrpc.RPCClient {
+	if config.SignalGroup.ApiUser != "" && config.SignalGroup.ApiPass != "" {
+		return jsonrpc.NewClientWithOpts(config.SignalGroup.ApiUrl, &jsonrpc.RPCClientOpts{
+			CustomHeaders: map[string]string{
+				"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(config.SignalGroup.ApiUser+":"+config.SignalGroup.ApiPass)),
+			},
+		})
+	} else {
+		return jsonrpc.NewClient(config.SignalGroup.ApiUrl)
+
+	}
 }

@@ -38,6 +38,8 @@ type Telegram struct {
 
 type SignalGroup struct {
 	ApiUrl  string `yaml:"api_url"`
+	ApiUser string `yaml:"api_user"`
+	ApiPass string `yaml:"api_pass"`
 	Account string
 }
 
@@ -121,6 +123,12 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_SIGNAL_GROUP_API_URL") != "" {
 		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_URL")
+	}
+	if os.Getenv("TICKER_SIGNAL_GROUP_API_USER") != "" {
+		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_USER")
+	}
+	if os.Getenv("TICKER_SIGNAL_GROUP_API_PASS") != "" {
+		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_PASS")
 	}
 	if os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT") != "" {
 		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT")
