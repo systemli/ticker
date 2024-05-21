@@ -66,7 +66,7 @@ type BlueskyMeta struct {
 }
 
 type SignalGroupMeta struct {
-	Timestamp *int
+	Timestamp int
 }
 
 type Attachment struct {

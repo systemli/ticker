@@ -307,7 +307,8 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 	if body.GroupName != "" && body.GroupDescription != "" {
 		ticker.SignalGroup.GroupName = body.GroupName
 		ticker.SignalGroup.GroupDescription = body.GroupDescription
-		err = signal.CreateOrUpdateGroup(&ticker.SignalGroup, h.config)
+		groupClient := signal.NewGroupClient(h.config)
+		err = groupClient.CreateOrUpdateGroup(&ticker.SignalGroup)
 		if err != nil {
 			log.WithError(err).Error("failed to create or update group")
 			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
@@ -332,11 +333,10 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	err = signal.QuitGroup(h.config, ticker.SignalGroup.GroupID)
+	groupClient := signal.NewGroupClient(h.config)
+	err = groupClient.QuitGroup(ticker.SignalGroup.GroupID)
 	if err != nil {
 		log.WithError(err).Error("failed to quit group")
-		// c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
-		// return
 	}
 
 	ticker.SignalGroup.Reset()
