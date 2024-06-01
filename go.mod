@@ -10,20 +10,20 @@ require (
 	github.com/bluesky-social/indigo v0.0.0-20240425170844-efe2ce5ca2e1
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.2
-	github.com/gin-contrib/size v1.0.0
-	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-contrib/size v1.0.1
+	github.com/gin-gonic/gin v1.10.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/google/uuid v1.6.0
 	github.com/h2non/gock v1.2.0
 	github.com/paulmach/go.geojson v1.5.0
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/sethvargo/go-password v0.3.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.6
 	gorm.io/driver/postgres v1.5.7
@@ -92,7 +92,7 @@ require (
 	github.com/multiformats/go-multihash v0.2.3 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polydawn/refmt v0.89.1-0.20221221234430-40501e09de1f // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
@@ -114,19 +114,19 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/arch v0.8.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/protobuf v1.34.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
 
 require (
-	github.com/goccy/go-json v0.10.2
+	github.com/goccy/go-json v0.10.3
 	github.com/gorilla/feeds v1.1.2
-	github.com/mattn/go-mastodon v0.0.6
+	github.com/mattn/go-mastodon v0.0.8
 	golang.org/x/image v0.10.0 // indirect
 )
