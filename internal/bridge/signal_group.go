@@ -78,7 +78,7 @@ func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Messag
 }
 
 func (sb *SignalGroupBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
-	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active || message.SignalGroup.Timestamp != 0 {
+	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active || message.SignalGroup.Timestamp == 0 {
 		return nil
 	}
 

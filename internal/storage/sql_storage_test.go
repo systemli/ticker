@@ -30,6 +30,7 @@ func (s *SqlStorageTestSuite) SetupTest() {
 		&TickerTelegram{},
 		&TickerMastodon{},
 		&TickerBluesky{},
+		&TickerSignalGroup{},
 		&User{},
 		&Message{},
 		&Upload{},
@@ -46,6 +47,8 @@ func (s *SqlStorageTestSuite) BeforeTest(suiteName, testName string) {
 	s.NoError(s.db.Exec("DELETE FROM tickers").Error)
 	s.NoError(s.db.Exec("DELETE FROM ticker_mastodons").Error)
 	s.NoError(s.db.Exec("DELETE FROM ticker_telegrams").Error)
+	s.NoError(s.db.Exec("DELETE FROM ticker_blueskies").Error)
+	s.NoError(s.db.Exec("DELETE FROM ticker_signal_groups").Error)
 	s.NoError(s.db.Exec("DELETE FROM settings").Error)
 	s.NoError(s.db.Exec("DELETE FROM uploads").Error)
 }

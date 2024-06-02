@@ -36,6 +36,7 @@ func (t *Ticker) Reset() {
 	t.Telegram.Reset()
 	t.Mastodon.Reset()
 	t.Bluesky.Reset()
+	t.SignalGroup.Reset()
 }
 
 func (t *Ticker) AsMap() map[string]interface{} {

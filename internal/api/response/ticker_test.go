@@ -45,6 +45,13 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 				Avatar:      "https://example.com/avatar.png",
 			},
 		},
+		SignalGroup: storage.TickerSignalGroup{
+			Active:           true,
+			GroupID:          "example",
+			GroupName:        "Example",
+			GroupDescription: "Example",
+			GroupInviteLink:  "https://signal.group/#example",
+		},
 		Location: storage.TickerLocation{
 			Lat: 0.0,
 			Lon: 0.0,
@@ -86,6 +93,11 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(ticker.Mastodon.Server, tickerResponse[0].Mastodon.Server)
 	s.Equal(ticker.Mastodon.User.DisplayName, tickerResponse[0].Mastodon.ScreenName)
 	s.Equal(ticker.Mastodon.User.Avatar, tickerResponse[0].Mastodon.ImageURL)
+	s.Equal(ticker.SignalGroup.Active, tickerResponse[0].SignalGroup.Active)
+	s.Equal(ticker.SignalGroup.Connected(), tickerResponse[0].SignalGroup.Connected)
+	s.Equal(ticker.SignalGroup.GroupID, tickerResponse[0].SignalGroup.GroupID)
+	s.Equal(ticker.SignalGroup.GroupName, tickerResponse[0].SignalGroup.GroupName)
+	s.Equal(ticker.SignalGroup.GroupDescription, tickerResponse[0].SignalGroup.GroupDescription)
 	s.Equal(ticker.Location.Lat, tickerResponse[0].Location.Lat)
 	s.Equal(ticker.Location.Lon, tickerResponse[0].Location.Lon)
 }
