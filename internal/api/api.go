@@ -75,6 +75,7 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 		admin.DELETE(`/tickers/:tickerID/bluesky`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerBluesky)
 		admin.PUT(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerSignalGroup)
 		admin.DELETE(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerSignalGroup)
+		admin.PUT(`/tickers/:tickerID/signal_group/admin`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerSignalGroupAdmin)
 		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), ticker.PrefetchTicker(store), handler.DeleteTicker)
 		admin.PUT(`/tickers/:tickerID/reset`, ticker.PrefetchTicker(store, storage.WithPreload()), ticker.PrefetchTicker(store), handler.ResetTicker)
 		admin.GET(`/tickers/:tickerID/users`, ticker.PrefetchTicker(store), handler.GetTickerUsers)

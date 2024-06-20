@@ -23,6 +23,7 @@ const (
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
 	BlueskyError            ErrorMessage = "unable to connect to bluesky"
 	SignalGroupError        ErrorMessage = "unable to connect to signal"
+	SignalGroupDeleteError  ErrorMessage = "unable to delete signal group"
 	PasswordError           ErrorMessage = "could not authenticate password"
 
 	StatusSuccess Status = `success`
