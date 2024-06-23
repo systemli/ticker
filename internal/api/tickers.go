@@ -11,6 +11,7 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/bluesky"
+	"github.com/systemli/ticker/internal/signal"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -287,6 +288,104 @@ func (h *handler) DeleteTickerBluesky(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) PutTickerSignalGroup(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body storage.TickerSignalGroup
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	if body.GroupName != "" && body.GroupDescription != "" {
+		ticker.SignalGroup.GroupName = body.GroupName
+		ticker.SignalGroup.GroupDescription = body.GroupDescription
+		groupClient := signal.NewGroupClient(h.config)
+		err = groupClient.CreateOrUpdateGroup(&ticker.SignalGroup)
+		if err != nil {
+			log.WithError(err).Error("failed to create or update group")
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
+			return
+		}
+	}
+	ticker.SignalGroup.Active = body.Active
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	groupClient := signal.NewGroupClient(h.config)
+
+	// Remove all members except the account number
+	err = groupClient.RemoveAllMembers(ticker.SignalGroup.GroupID)
+	if err != nil {
+		log.WithError(err).Error("failed to remove members")
+		return
+	}
+
+	// Quit the group
+	err = groupClient.QuitGroup(ticker.SignalGroup.GroupID)
+	if err != nil {
+		log.WithError(err).Error("failed to quit group")
+		return
+	}
+
+	ticker.SignalGroup.Reset()
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) PutTickerSignalGroupAdmin(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body struct {
+		Number string `json:"number" binding:"required"`
+	}
+
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	groupClient := signal.NewGroupClient(h.config)
+	err = groupClient.AddAdminMember(ticker.SignalGroup.GroupID, body.Number)
+	if err != nil {
+		log.WithError(err).Error("failed to add member")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
 }
 
 func (h *handler) DeleteTicker(c *gin.Context) {

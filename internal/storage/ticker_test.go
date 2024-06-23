@@ -30,6 +30,14 @@ func TestTickerBlueskyConnected(t *testing.T) {
 	assert.True(t, ticker.Bluesky.Connected())
 }
 
+func TestTickerSignalGroupConnect(t *testing.T) {
+	assert.False(t, ticker.SignalGroup.Connected())
+
+	ticker.SignalGroup.GroupID = "GroupID"
+
+	assert.True(t, ticker.SignalGroup.Connected())
+}
+
 func TestTickerReset(t *testing.T) {
 	ticker.Active = true
 	ticker.Description = "Description"
@@ -38,6 +46,8 @@ func TestTickerReset(t *testing.T) {
 	ticker.Information.Twitter = "Twitter"
 	ticker.Telegram.Active = true
 	ticker.Telegram.ChannelName = "ChannelName"
+	ticker.SignalGroup.Active = true
+	ticker.SignalGroup.GroupID = "GroupID"
 	ticker.Location.Lat = 1
 	ticker.Location.Lon = 2
 
@@ -50,6 +60,7 @@ func TestTickerReset(t *testing.T) {
 	assert.Empty(t, ticker.Information.Email)
 	assert.Empty(t, ticker.Information.Twitter)
 	assert.Empty(t, ticker.Telegram.ChannelName)
+	assert.Empty(t, ticker.SignalGroup.GroupID)
 	assert.Empty(t, ticker.Location)
 }
 

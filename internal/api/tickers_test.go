@@ -41,6 +41,10 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 		s.ctx, _ = gin.CreateTestContext(s.w)
 		s.store = &storage.MockStorage{}
 		s.cfg = config.LoadConfig("")
+		s.cfg.SignalGroup = config.SignalGroup{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "+1234567890",
+		}
 		s.cache = cache.NewCache(time.Minute)
 
 		subtest()
@@ -567,6 +571,444 @@ func (s *TickerTestSuite) TestDeleteTickerBluesky() {
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestPutTickerSignalGroup() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body is invalid", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Equal(gock.IsDone(), true)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when signal-cli API call updateGroup returns error", func() {
+		// updateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(500)
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"GroupName":"Example","GroupDescription":"Example"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when signal-cli API call getGroups returns error", func() {
+		// updateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"groupId":   "sample-group-id",
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(500)
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"GroupName":"Example","GroupDescription":"Example"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when enabling signal group successfully", func() {
+		// updateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"groupId":   "sample-group-id",
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id":              "sample-group-id",
+						"name":            "Example",
+						"description":     "Example",
+						"groupInviteLink": "https://signal.group/#example",
+					},
+				},
+				"id": 1,
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"GroupName":"Example","GroupDescription":"Example"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when updating signal group successfully", func() {
+		// updateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"groupId":   "sample-group-id",
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id":              "sample-group-id",
+						"name":            "Example",
+						"description":     "Example",
+						"groupInviteLink": "https://signal.group/#example",
+					},
+				},
+				"id": 1,
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"GroupId":"sample-group-id","GroupName":"Example","GroupDescription":"Example"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.DeleteTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id":          "sample-group-id",
+						"name":        "Sample",
+						"description": "Sample",
+						"members": []map[string]interface{}{
+							{
+								"number": "+1234567890",
+								"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
+							},
+							{
+								"number": "+9999999999",
+								"uuid":   "99999999-90ab-cdef-1234-567890abcdef",
+							},
+						},
+						"groupInviteLink": "https://signal.group/#sample",
+					},
+				},
+				"id": 1,
+			})
+		// updateGroup (remove members)
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"results": []interface{}{
+							map[string]interface{}{
+								"recipientAddress": map[string]string{
+									"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
+									"number": "+1234567890",
+								},
+								"type": "SUCCESS",
+							},
+						},
+						"timestamp": 1,
+					},
+				},
+				"id": 1,
+			})
+		// quitGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{
+			SignalGroup: storage.TickerSignalGroup{
+				GroupID: "sample-group-id",
+			},
+		})
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		h := s.handler()
+		h.DeleteTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id":          "sample-group-id",
+						"name":        "Sample",
+						"description": "Sample",
+						"members": []map[string]interface{}{
+							{
+								"number": "+1234567890",
+								"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
+							},
+							{
+								"number": "+9999999999",
+								"uuid":   "99999999-90ab-cdef-1234-567890abcdef",
+							},
+						},
+						"groupInviteLink": "https://signal.group/#sample",
+					},
+				},
+				"id": 1,
+			})
+		// updateGroup (remove members)
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"results": []interface{}{
+							map[string]interface{}{
+								"recipientAddress": map[string]string{
+									"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
+									"number": "+1234567890",
+								},
+								"type": "SUCCESS",
+							},
+						},
+						"timestamp": 1,
+					},
+				},
+				"id": 1,
+			})
+		// quitGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{
+			SignalGroup: storage.TickerSignalGroup{
+				GroupID: "sample-group-id",
+			},
+		})
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		h := s.handler()
+		h.DeleteTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestPutTickerSignalGroupAdmin() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.PutTickerSignalGroupAdmin(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body is invalid", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group/admin", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PutTickerSignalGroupAdmin(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when signal-cli API call updateGroup returns error", func() {
+		// updateGroup (add admin)
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(500)
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"number":"+1234567890"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group/admin", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+
+		h := s.handler()
+		h.PutTickerSignalGroupAdmin(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("when adding signal group admin successfully", func() {
+		// updateGroup (add admin)
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"results": []interface{}{
+						map[string]interface{}{
+							"recipientAddress": map[string]string{
+								"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
+								"number": "+1234567890",
+							},
+							"type": "SUCCESS",
+						},
+					},
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"number":"+1234567890"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group/admin", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+
+		h := s.handler()
+		h.PutTickerSignalGroupAdmin(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(gock.IsDone())
 	})
 }
 

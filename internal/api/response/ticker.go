@@ -18,6 +18,7 @@ type Ticker struct {
 	Telegram    Telegram    `json:"telegram"`
 	Mastodon    Mastodon    `json:"mastodon"`
 	Bluesky     Bluesky     `json:"bluesky"`
+	SignalGroup SignalGroup `json:"signalGroup"`
 	Location    Location    `json:"location"`
 }
 
@@ -53,6 +54,15 @@ type Bluesky struct {
 	Active    bool   `json:"active"`
 	Connected bool   `json:"connected"`
 	Handle    string `json:"handle"`
+}
+
+type SignalGroup struct {
+	Active           bool   `json:"active"`
+	Connected        bool   `json:"connected"`
+	GroupID          string `json:"groupID"`
+	GroupName        string `json:"groupName"`
+	GroupDescription string `json:"groupDescription"`
+	GroupInviteLink  string `json:"groupInviteLink"`
 }
 
 type Location struct {
@@ -96,6 +106,14 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Active:    t.Bluesky.Active,
 			Connected: t.Bluesky.Connected(),
 			Handle:    t.Bluesky.Handle,
+		},
+		SignalGroup: SignalGroup{
+			Active:           t.SignalGroup.Active,
+			Connected:        t.SignalGroup.Connected(),
+			GroupID:          t.SignalGroup.GroupID,
+			GroupName:        t.SignalGroup.GroupName,
+			GroupDescription: t.SignalGroup.GroupDescription,
+			GroupInviteLink:  t.SignalGroup.GroupInviteLink,
 		},
 		Location: Location{
 			Lat: t.Location.Lat,

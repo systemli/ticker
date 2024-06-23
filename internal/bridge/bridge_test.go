@@ -53,6 +53,12 @@ func (s *BridgeTestSuite) SetupTest() {
 			Handle: "handle",
 			AppKey: "app_key",
 		},
+		SignalGroup: storage.TickerSignalGroup{
+			Active:           true,
+			GroupID:          "group_id",
+			GroupName:        "group_name",
+			GroupDescription: "group_description",
+		},
 	}
 	messageWithoutBridges = storage.Message{
 		Text: "Hello World",
@@ -89,6 +95,9 @@ func (s *BridgeTestSuite) SetupTest() {
 			Handle: "handle",
 			Uri:    "at://did:plc:sample-uri",
 			Cid:    "cid",
+		},
+		SignalGroup: storage.SignalGroupMeta{
+			Timestamp: 123,
 		},
 	}
 }
@@ -141,7 +150,7 @@ func (s *BridgeTestSuite) TestDelete() {
 
 func (s *BridgeTestSuite) TestRegisterBridges() {
 	bridges := RegisterBridges(config.Config{}, nil)
-	s.Equal(3, len(bridges))
+	s.Equal(4, len(bridges))
 }
 
 func TestBrigde(t *testing.T) {

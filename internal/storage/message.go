@@ -21,6 +21,7 @@ type Message struct {
 	Telegram       TelegramMeta              `gorm:"serializer:json"`
 	Mastodon       MastodonMeta              `gorm:"serializer:json"`
 	Bluesky        BlueskyMeta               `gorm:"serializer:json"`
+	SignalGroup    SignalGroupMeta           `gorm:"serializer:json"`
 }
 
 func NewMessage() Message {
@@ -32,6 +33,7 @@ func (m *Message) AsMap() map[string]interface{} {
 	telegram, _ := json.Marshal(m.Telegram)
 	mastodon, _ := json.Marshal(m.Mastodon)
 	bluesky, _ := json.Marshal(m.Bluesky)
+	signalGroup, _ := json.Marshal(m.SignalGroup)
 
 	return map[string]interface{}{
 		"id":              m.ID,
@@ -43,6 +45,7 @@ func (m *Message) AsMap() map[string]interface{} {
 		"telegram":        telegram,
 		"mastodon":        mastodon,
 		"bluesky":         bluesky,
+		"signal_group":    signalGroup,
 	}
 }
 
@@ -60,6 +63,10 @@ type BlueskyMeta struct {
 	Handle string
 	Uri    string
 	Cid    string
+}
+
+type SignalGroupMeta struct {
+	Timestamp int
 }
 
 type Attachment struct {

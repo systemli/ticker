@@ -19,8 +19,9 @@ func RegisterBridges(config config.Config, storage storage.Storage) Bridges {
 	telegram := TelegramBridge{config, storage}
 	mastodon := MastodonBridge{config, storage}
 	bluesky := BlueskyBridge{config, storage}
+	signalGroup := SignalGroupBridge{config, storage}
 
-	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky}
+	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup}
 }
 
 func (b *Bridges) Send(ticker storage.Ticker, message *storage.Message) error {
