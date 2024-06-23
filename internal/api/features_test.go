@@ -32,7 +32,7 @@ func (s *FeaturesTestSuite) TestGetFeatures() {
 	h.GetFeatures(c)
 
 	s.Equal(http.StatusOK, w.Code)
-	s.Equal(`{"data":{"features":{"telegramEnabled":false}},"status":"success","error":{}}`, w.Body.String())
+	s.Equal(`{"data":{"features":{"signalGroupEnabled":false,"telegramEnabled":false}},"status":"success","error":{}}`, w.Body.String())
 }
 
 func TestFeaturesTestSuite(t *testing.T) {
