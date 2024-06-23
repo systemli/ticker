@@ -126,6 +126,9 @@ func LoadConfig(path string) Config {
 	if os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT") != "" {
 		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT")
 	}
+	if os.Getenv("TICKER_SIGNAL_GROUP_AVATAR") != "" {
+		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_AVATAR")
+	}
 
 	return c
 }

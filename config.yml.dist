@@ -16,8 +16,7 @@ telegram:
 # signal group configuration
 signal_group:
   api_url: ""
-  api_user: "signal-cli"
-  api_pass: ""
+  avatar: ""
   account: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"

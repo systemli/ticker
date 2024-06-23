@@ -15,7 +15,12 @@ database:
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
 # telegram configuration
 telegram:
-  token: ""
+  token: "" # telegram bot token
+# signal group configuration
+signal_group:
+  api_url: "" # URL to your signal cli (https://github.com/AsamK/signal-cli)
+  avatar: "" # URL to the avatar for the signal group
+  account: "" # phone number for the signal account
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 upload:
@@ -39,6 +44,9 @@ The following env vars can be used:
 * `TICKER_INITIATOR`
 * `TICKER_SECRET`
 * `TICKER_TELEGRAM_TOKEN`
+* `TICKER_SIGNAL_GROUP_API_URL`
+* `TICKER_SIGNAL_GROUP_AVATAR`
+* `TICKER_SIGNAL_GROUP_ACCOUNT`
 * `TICKER_METRICS_LISTEN`
 * `TICKER_UPLOAD_PATH`
 * `TICKER_UPLOAD_URL`
