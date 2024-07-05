@@ -20,6 +20,7 @@ const (
 	FormError               ErrorMessage = "invalid form values"
 	StorageError            ErrorMessage = "failed to save"
 	UploadsNotFound         ErrorMessage = "uploads not found"
+	BridgeError             ErrorMessage = "unable to update ticker in bridges"
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
 	BlueskyError            ErrorMessage = "unable to connect to bluesky"
 	SignalGroupError        ErrorMessage = "unable to connect to signal"

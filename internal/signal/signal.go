@@ -33,11 +33,11 @@ func NewGroupClient(cfg config.Config) *GroupClient {
 	return &GroupClient{cfg, client}
 }
 
-func (gc *GroupClient) CreateOrUpdateGroup(ts *storage.TickerSignalGroup) error {
+func (gc *GroupClient) CreateOrUpdateGroup(t *storage.Ticker) error {
 	params := map[string]interface{}{
 		"account":                   gc.cfg.SignalGroup.Account,
-		"name":                      ts.GroupName,
-		"description":               ts.GroupDescription,
+		"name":                      t.Title,
+		"description":               t.Description,
 		"avatar":                    gc.cfg.SignalGroup.Avatar,
 		"link":                      "enabled",
 		"setPermissionAddMember":    "every-member",
@@ -45,8 +45,8 @@ func (gc *GroupClient) CreateOrUpdateGroup(ts *storage.TickerSignalGroup) error 
 		"setPermissionSendMessages": "only-admins",
 		"expiration":                86400,
 	}
-	if ts.GroupID != "" {
-		params["group-id"] = ts.GroupID
+	if t.SignalGroup.GroupID != "" {
+		params["group-id"] = t.SignalGroup.GroupID
 	}
 
 	var response struct {
@@ -57,15 +57,16 @@ func (gc *GroupClient) CreateOrUpdateGroup(ts *storage.TickerSignalGroup) error 
 	if err != nil {
 		return err
 	}
-	if ts.GroupID == "" {
-		ts.GroupID = response.GroupID
+	if t.SignalGroup.GroupID == "" {
+		// Set GroupID for newly created group
+		t.SignalGroup.GroupID = response.GroupID
 	}
 
-	if ts.GroupID == "" {
+	if t.SignalGroup.GroupID == "" {
 		return errors.New("unable to create or update group")
 	}
 
-	g, err := gc.getGroup(ts.GroupID)
+	g, err := gc.getGroup(t.SignalGroup.GroupID)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func (gc *GroupClient) CreateOrUpdateGroup(ts *storage.TickerSignalGroup) error 
 		return errors.New("unable to get group invite link")
 	}
 
-	ts.GroupInviteLink = g.GroupInviteLink
+	t.SignalGroup.GroupInviteLink = g.GroupInviteLink
 
 	return nil
 }

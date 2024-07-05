@@ -21,6 +21,20 @@ type SignalGroupResponse struct {
 	Timestamp int `json:"timestamp"`
 }
 
+func (sb *SignalGroupBridge) UpdateTicker(ticker storage.Ticker) error {
+	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() {
+		return nil
+	}
+
+	groupClient := signal.NewGroupClient(sb.config)
+	err := groupClient.CreateOrUpdateGroup(&ticker)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active {
 		return nil

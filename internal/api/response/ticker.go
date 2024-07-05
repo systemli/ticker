@@ -57,12 +57,10 @@ type Bluesky struct {
 }
 
 type SignalGroup struct {
-	Active           bool   `json:"active"`
-	Connected        bool   `json:"connected"`
-	GroupID          string `json:"groupID"`
-	GroupName        string `json:"groupName"`
-	GroupDescription string `json:"groupDescription"`
-	GroupInviteLink  string `json:"groupInviteLink"`
+	Active          bool   `json:"active"`
+	Connected       bool   `json:"connected"`
+	GroupID         string `json:"groupID"`
+	GroupInviteLink string `json:"groupInviteLink"`
 }
 
 type Location struct {
@@ -108,12 +106,10 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Handle:    t.Bluesky.Handle,
 		},
 		SignalGroup: SignalGroup{
-			Active:           t.SignalGroup.Active,
-			Connected:        t.SignalGroup.Connected(),
-			GroupID:          t.SignalGroup.GroupID,
-			GroupName:        t.SignalGroup.GroupName,
-			GroupDescription: t.SignalGroup.GroupDescription,
-			GroupInviteLink:  t.SignalGroup.GroupInviteLink,
+			Active:          t.SignalGroup.Active,
+			Connected:       t.SignalGroup.Connected(),
+			GroupID:         t.SignalGroup.GroupID,
+			GroupInviteLink: t.SignalGroup.GroupInviteLink,
 		},
 		Location: Location{
 			Lat: t.Location.Lat,

@@ -14,6 +14,10 @@ type MastodonBridge struct {
 	storage storage.Storage
 }
 
+func (mb *MastodonBridge) UpdateTicker(ticker storage.Ticker) error {
+	return nil
+}
+
 func (mb *MastodonBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	if !ticker.Mastodon.Active {
 		return nil

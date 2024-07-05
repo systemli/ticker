@@ -54,10 +54,8 @@ func (s *BridgeTestSuite) SetupTest() {
 			AppKey: "app_key",
 		},
 		SignalGroup: storage.TickerSignalGroup{
-			Active:           true,
-			GroupID:          "group_id",
-			GroupName:        "group_name",
-			GroupDescription: "group_description",
+			Active:  true,
+			GroupID: "sample-group-id",
 		},
 	}
 	messageWithoutBridges = storage.Message{
@@ -100,6 +98,29 @@ func (s *BridgeTestSuite) SetupTest() {
 			Timestamp: 123,
 		},
 	}
+}
+
+func (s *BridgeTestSuite) TestUpdateTicker() {
+	s.Run("when successful", func() {
+		ticker := storage.Ticker{}
+		bridge := MockBridge{}
+		bridge.On("UpdateTicker", ticker).Return(nil).Once()
+
+		bridges := Bridges{"mock": &bridge}
+		err := bridges.UpdateTicker(ticker)
+		s.NoError(err)
+		s.True(bridge.AssertExpectations(s.T()))
+	})
+
+	s.Run("when failed", func() {
+		ticker := storage.Ticker{}
+		bridge := MockBridge{}
+		bridge.On("UpdateTicker", ticker).Return(errors.New("failed to update ticker")).Once()
+
+		bridges := Bridges{"mock": &bridge}
+		_ = bridges.UpdateTicker(ticker)
+		s.True(bridge.AssertExpectations(s.T()))
+	})
 }
 
 func (s *BridgeTestSuite) TestSend() {

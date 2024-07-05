@@ -8,6 +8,76 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
+func (s *BridgeTestSuite) TestSignalGroupUpdateTicker() {
+	s.Run("when signalGroup is inactive", func() {
+		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
+
+		err := bridge.UpdateTicker(tickerWithoutBridges)
+		s.NoError(err)
+	})
+
+	s.Run("when signalGroup is active but signal-cli api fails", func() {
+		bridge := s.signalGroupBridge(config.Config{
+			SignalGroup: config.SignalGroup{
+				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+				Account: "0123456789",
+			},
+		}, &storage.MockStorage{})
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			Reply(500)
+
+		err := bridge.UpdateTicker(tickerWithBridges)
+		s.Error(err)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("happy path", func() {
+		bridge := s.signalGroupBridge(config.Config{
+			SignalGroup: config.SignalGroup{
+				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+				Account: "0123456789",
+			},
+		}, &storage.MockStorage{})
+
+		// updateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": map[string]interface{}{
+					"groupId":   "sample-group-id",
+					"timestamp": 1,
+				},
+				"id": 1,
+			})
+		// listGroups
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id":              "sample-group-id",
+						"name":            "Example",
+						"description":     "Example",
+						"groupInviteLink": "https://signal.group/#example",
+					},
+				},
+				"id": 1,
+			})
+
+		err := bridge.UpdateTicker(tickerWithBridges)
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+}
+
 func (s *BridgeTestSuite) TestSignalGroupSend() {
 	s.Run("when signalGroup is inactive", func() {
 		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})

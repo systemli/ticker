@@ -46,11 +46,9 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 			},
 		},
 		SignalGroup: storage.TickerSignalGroup{
-			Active:           true,
-			GroupID:          "example",
-			GroupName:        "Example",
-			GroupDescription: "Example",
-			GroupInviteLink:  "https://signal.group/#example",
+			Active:          true,
+			GroupID:         "example",
+			GroupInviteLink: "https://signal.group/#example",
 		},
 		Location: storage.TickerLocation{
 			Lat: 0.0,
@@ -96,8 +94,6 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(ticker.SignalGroup.Active, tickerResponse[0].SignalGroup.Active)
 	s.Equal(ticker.SignalGroup.Connected(), tickerResponse[0].SignalGroup.Connected)
 	s.Equal(ticker.SignalGroup.GroupID, tickerResponse[0].SignalGroup.GroupID)
-	s.Equal(ticker.SignalGroup.GroupName, tickerResponse[0].SignalGroup.GroupName)
-	s.Equal(ticker.SignalGroup.GroupDescription, tickerResponse[0].SignalGroup.GroupDescription)
 	s.Equal(ticker.Location.Lat, tickerResponse[0].Location.Lat)
 	s.Equal(ticker.Location.Lon, tickerResponse[0].Location.Lon)
 }

@@ -144,15 +144,13 @@ func (b *TickerBluesky) Reset() {
 }
 
 type TickerSignalGroup struct {
-	ID               int `gorm:"primaryKey"`
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	TickerID         int `gorm:"index"`
-	Active           bool
-	GroupName        string
-	GroupDescription string
-	GroupID          string
-	GroupInviteLink  string
+	ID              int `gorm:"primaryKey"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	TickerID        int `gorm:"index"`
+	Active          bool
+	GroupID         string
+	GroupInviteLink string
 }
 
 func (s *TickerSignalGroup) Connected() bool {
@@ -161,8 +159,6 @@ func (s *TickerSignalGroup) Connected() bool {
 
 func (s *TickerSignalGroup) Reset() {
 	s.Active = false
-	s.GroupName = ""
-	s.GroupDescription = ""
 	s.GroupID = ""
 	s.GroupInviteLink = ""
 }
