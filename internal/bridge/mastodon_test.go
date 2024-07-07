@@ -8,6 +8,15 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
+func (s *BridgeTestSuite) TestMastodonUpdate() {
+	s.Run("does nothing", func() {
+		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+
+		err := bridge.Update(tickerWithBridges)
+		s.NoError(err)
+	})
+}
+
 func (s *BridgeTestSuite) TestMastodonSend() {
 	s.Run("when mastodon is inactive", func() {
 		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})

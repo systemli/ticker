@@ -12,6 +12,23 @@ type MockBridge struct {
 	mock.Mock
 }
 
+func (_m *MockBridge) Update(ticker storage.Ticker) error {
+	ret := _m.Called(ticker)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(storage.Ticker) error); ok {
+		r0 = rf(ticker)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Delete provides a mock function with given fields: ticker, message
 func (_m *MockBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
 	ret := _m.Called(ticker, message)

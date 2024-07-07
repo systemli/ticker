@@ -22,6 +22,10 @@ type BlueskyBridge struct {
 	storage storage.Storage
 }
 
+func (bb *BlueskyBridge) Update(ticker storage.Ticker) error {
+	return nil
+}
+
 func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	if !ticker.Bluesky.Connected() || !ticker.Bluesky.Active {
 		return nil

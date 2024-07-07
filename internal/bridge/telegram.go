@@ -11,6 +11,10 @@ type TelegramBridge struct {
 	storage storage.Storage
 }
 
+func (tb *TelegramBridge) Update(ticker storage.Ticker) error {
+	return nil
+}
+
 func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	if ticker.Telegram.ChannelName == "" || !tb.config.Telegram.Enabled() || !ticker.Telegram.Active {
 		return nil

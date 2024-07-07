@@ -84,6 +84,13 @@ func (h *handler) PutTicker(c *gin.Context) {
 		return
 	}
 
+	err = h.bridges.Update(ticker)
+	if err != nil {
+		log.WithError(err).Error("failed to update ticker in bridges")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.BridgeError))
+		return
+	}
+
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
@@ -304,16 +311,12 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	if body.GroupName != "" && body.GroupDescription != "" {
-		ticker.SignalGroup.GroupName = body.GroupName
-		ticker.SignalGroup.GroupDescription = body.GroupDescription
-		groupClient := signal.NewGroupClient(h.config)
-		err = groupClient.CreateOrUpdateGroup(&ticker.SignalGroup)
-		if err != nil {
-			log.WithError(err).Error("failed to create or update group")
-			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
-			return
-		}
+	groupClient := signal.NewGroupClient(h.config)
+	err = groupClient.CreateOrUpdateGroup(&ticker)
+	if err != nil {
+		log.WithError(err).Error("failed to create or update group")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
+		return
 	}
 	ticker.SignalGroup.Active = body.Active
 

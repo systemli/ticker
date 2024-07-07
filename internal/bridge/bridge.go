@@ -9,6 +9,7 @@ import (
 var log = logrus.WithField("package", "bridge")
 
 type Bridge interface {
+	Update(ticker storage.Ticker) error
 	Send(ticker storage.Ticker, message *storage.Message) error
 	Delete(ticker storage.Ticker, message *storage.Message) error
 }
@@ -22,6 +23,18 @@ func RegisterBridges(config config.Config, storage storage.Storage) Bridges {
 	signalGroup := SignalGroupBridge{config, storage}
 
 	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup}
+}
+
+func (b *Bridges) Update(ticker storage.Ticker) error {
+	var err error
+	for name, bridge := range *b {
+		err := bridge.Update(ticker)
+		if err != nil {
+			log.WithError(err).WithField("bridge_name", name).Error("failed to update ticker")
+		}
+	}
+
+	return err
 }
 
 func (b *Bridges) Send(ticker storage.Ticker, message *storage.Message) error {
