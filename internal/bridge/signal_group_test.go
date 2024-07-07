@@ -8,11 +8,11 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func (s *BridgeTestSuite) TestSignalGroupUpdateTicker() {
+func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 	s.Run("when signalGroup is inactive", func() {
 		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
 
-		err := bridge.UpdateTicker(tickerWithoutBridges)
+		err := bridge.Update(tickerWithoutBridges)
 		s.NoError(err)
 	})
 
@@ -28,7 +28,7 @@ func (s *BridgeTestSuite) TestSignalGroupUpdateTicker() {
 			Post("/api/v1/rpc").
 			Reply(500)
 
-		err := bridge.UpdateTicker(tickerWithBridges)
+		err := bridge.Update(tickerWithBridges)
 		s.Error(err)
 		s.True(gock.IsDone())
 	})
@@ -72,7 +72,7 @@ func (s *BridgeTestSuite) TestSignalGroupUpdateTicker() {
 				"id": 1,
 			})
 
-		err := bridge.UpdateTicker(tickerWithBridges)
+		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
 		s.True(gock.IsDone())
 	})

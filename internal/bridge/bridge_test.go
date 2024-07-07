@@ -100,14 +100,14 @@ func (s *BridgeTestSuite) SetupTest() {
 	}
 }
 
-func (s *BridgeTestSuite) TestUpdateTicker() {
+func (s *BridgeTestSuite) TestUpdate() {
 	s.Run("when successful", func() {
 		ticker := storage.Ticker{}
 		bridge := MockBridge{}
-		bridge.On("UpdateTicker", ticker).Return(nil).Once()
+		bridge.On("Update", ticker).Return(nil).Once()
 
 		bridges := Bridges{"mock": &bridge}
-		err := bridges.UpdateTicker(ticker)
+		err := bridges.Update(ticker)
 		s.NoError(err)
 		s.True(bridge.AssertExpectations(s.T()))
 	})
@@ -115,10 +115,10 @@ func (s *BridgeTestSuite) TestUpdateTicker() {
 	s.Run("when failed", func() {
 		ticker := storage.Ticker{}
 		bridge := MockBridge{}
-		bridge.On("UpdateTicker", ticker).Return(errors.New("failed to update ticker")).Once()
+		bridge.On("Update", ticker).Return(errors.New("failed to update ticker")).Once()
 
 		bridges := Bridges{"mock": &bridge}
-		_ = bridges.UpdateTicker(ticker)
+		_ = bridges.Update(ticker)
 		s.True(bridge.AssertExpectations(s.T()))
 	})
 }

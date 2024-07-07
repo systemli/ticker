@@ -12,11 +12,11 @@ type MockBridge struct {
 	mock.Mock
 }
 
-func (_m *MockBridge) UpdateTicker(ticker storage.Ticker) error {
+func (_m *MockBridge) Update(ticker storage.Ticker) error {
 	ret := _m.Called(ticker)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateTicker")
+		panic("no return value specified for Update")
 	}
 
 	var r0 error

@@ -21,7 +21,7 @@ type SignalGroupResponse struct {
 	Timestamp int `json:"timestamp"`
 }
 
-func (sb *SignalGroupBridge) UpdateTicker(ticker storage.Ticker) error {
+func (sb *SignalGroupBridge) Update(ticker storage.Ticker) error {
 	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() {
 		return nil
 	}

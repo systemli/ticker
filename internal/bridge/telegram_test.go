@@ -9,11 +9,11 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func (s *BridgeTestSuite) TestTelegramUpdateTicker() {
+func (s *BridgeTestSuite) TestTelegramUpdate() {
 	s.Run("does nothing", func() {
 		bridge := s.telegramBridge(config.Config{}, &storage.MockStorage{})
 
-		err := bridge.UpdateTicker(tickerWithBridges)
+		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
 	})
 }

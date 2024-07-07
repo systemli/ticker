@@ -84,7 +84,7 @@ func (h *handler) PutTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.bridges.UpdateTicker(ticker)
+	err = h.bridges.Update(ticker)
 	if err != nil {
 		log.WithError(err).Error("failed to update ticker in bridges")
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.BridgeError))

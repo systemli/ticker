@@ -14,7 +14,7 @@ type MastodonBridge struct {
 	storage storage.Storage
 }
 
-func (mb *MastodonBridge) UpdateTicker(ticker storage.Ticker) error {
+func (mb *MastodonBridge) Update(ticker storage.Ticker) error {
 	return nil
 }
 

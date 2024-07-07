@@ -22,7 +22,7 @@ type BlueskyBridge struct {
 	storage storage.Storage
 }
 
-func (bb *BlueskyBridge) UpdateTicker(ticker storage.Ticker) error {
+func (bb *BlueskyBridge) Update(ticker storage.Ticker) error {
 	return nil
 }
 

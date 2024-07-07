@@ -8,11 +8,11 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func (s *BridgeTestSuite) TestBlueskyUpdateTicker() {
+func (s *BridgeTestSuite) TestBlueskyUpdate() {
 	s.Run("does nothing", func() {
 		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
 
-		err := bridge.UpdateTicker(tickerWithBridges)
+		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
 	})
 }

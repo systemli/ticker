@@ -11,7 +11,7 @@ type TelegramBridge struct {
 	storage storage.Storage
 }
 
-func (tb *TelegramBridge) UpdateTicker(ticker storage.Ticker) error {
+func (tb *TelegramBridge) Update(ticker storage.Ticker) error {
 	return nil
 }
 
