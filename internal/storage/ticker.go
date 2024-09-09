@@ -55,6 +55,7 @@ func (t *Ticker) AsMap() map[string]interface{} {
 		"facebook":    t.Information.Facebook,
 		"telegram":    t.Information.Telegram,
 		"bluesky":     t.Information.Bluesky,
+		"mastodon":    t.Information.Mastodon,
 		"lat":         t.Location.Lat,
 		"lon":         t.Location.Lon,
 	}
