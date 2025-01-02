@@ -59,7 +59,7 @@ func (s *BridgeTestSuite) SetupTest() {
 		},
 	}
 	messageWithoutBridges = storage.Message{
-		Text: "Hello World",
+		Text: "Hello World https://example.com",
 		Attachments: []storage.Attachment{
 			{
 				UUID: "123",

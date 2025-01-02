@@ -15,6 +15,7 @@ import (
 	"github.com/systemli/ticker/internal/bluesky"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
+	"github.com/systemli/ticker/internal/util"
 )
 
 type BlueskyBridge struct {
@@ -40,6 +41,26 @@ func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) e
 	post := &bsky.FeedPost{
 		Text:      message.Text,
 		CreatedAt: time.Now().Local().Format(time.RFC3339),
+		Facets:    []*bsky.RichtextFacet{},
+	}
+
+	links := util.ExtractURLs(message.Text)
+	for _, link := range links {
+		startIndex := strings.Index(message.Text, link)
+		endIndex := startIndex + len(link)
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Link: &bsky.RichtextFacet_Link{
+						Uri: link,
+					},
+				},
+			},
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: int64(startIndex),
+				ByteEnd:   int64(endIndex),
+			},
+		})
 	}
 
 	if len(message.Attachments) > 0 {
@@ -76,6 +97,7 @@ func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) e
 		if post.Embed == nil {
 			post.Embed = &bsky.FeedPost_Embed{}
 		}
+
 		post.Embed.EmbedImages = &bsky.EmbedImages{
 			Images: images,
 		}
