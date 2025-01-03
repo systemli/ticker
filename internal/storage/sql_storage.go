@@ -189,7 +189,36 @@ func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
 	return s.DB.Session(&gorm.Session{FullSaveAssociations: true}).Model(ticker).Updates(ticker.AsMap()).Error
 }
 
+// DeleteTicker deletes a ticker and all associated data.
 func (s *SqlStorage) DeleteTicker(ticker Ticker) error {
+	if err := s.DeleteTickerUsers(&ticker); err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker users")
+	}
+
+	if err := s.DeleteUploadsByTicker(ticker); err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker uploads")
+	}
+
+	if err := s.DeleteMessages(ticker); err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker messages")
+	}
+
+	if err := s.DB.Delete(TickerMastodon{}, "ticker_id = ?", ticker.ID).Error; err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete mastodon settings")
+	}
+
+	if err := s.DB.Delete(TickerTelegram{}, "ticker_id = ?", ticker.ID).Error; err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete telegram settings")
+	}
+
+	if err := s.DB.Delete(TickerBluesky{}, "ticker_id = ?", ticker.ID).Error; err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete bluesky settings")
+	}
+
+	if err := s.DB.Delete(TickerSignalGroup{}, "ticker_id = ?", ticker.ID).Error; err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete signal group settings")
+	}
+
 	return s.DB.Delete(&ticker).Error
 }
 
