@@ -1,3 +1,0 @@
-ignore:
-  - "**/mock_*.go"
-  - "internal/legacy/**"
