@@ -663,6 +663,125 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 		s.NoError(err)
 		s.Equal(int64(0), count)
 	})
+
+	s.Run("when ticker exists with user", func() {
+		user := User{Email: "user@example.com"}
+		err := s.db.Create(&user).Error
+		s.NoError(err)
+
+		ticker := Ticker{ID: 1, Users: []User{user}}
+		err = s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTicker(ticker)
+		s.NoError(err)
+
+		var tickerCount int64
+		err = s.db.Model(&Ticker{}).Count(&tickerCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), tickerCount)
+
+		var userCount int64
+		err = s.db.Model(&User{}).Count(&userCount).Error
+		s.NoError(err)
+		s.Equal(int64(1), userCount)
+	})
+
+	s.Run("when ticker exists with uploads", func() {
+		ticker := Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		upload := Upload{TickerID: ticker.ID}
+		err = s.db.Create(&upload).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTicker(ticker)
+		s.NoError(err)
+
+		var tickerCount int64
+		err = s.db.Model(&Ticker{}).Count(&tickerCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), tickerCount)
+
+		var uploadCount int64
+		err = s.db.Model(&Upload{}).Count(&uploadCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), uploadCount)
+	})
+
+	s.Run("when ticker exists with messages", func() {
+		ticker := Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		message := Message{TickerID: ticker.ID}
+		err = s.db.Create(&message).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTicker(ticker)
+		s.NoError(err)
+
+		var tickerCount int64
+		err = s.db.Model(&Ticker{}).Count(&tickerCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), tickerCount)
+
+		var messageCount int64
+		err = s.db.Model(&Message{}).Count(&messageCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), messageCount)
+	})
+
+	s.Run("when ticker exists with integrations", func() {
+		ticker := Ticker{ID: 1}
+		err := s.db.Create(&ticker).Error
+		s.NoError(err)
+
+		mastodon := TickerMastodon{TickerID: ticker.ID}
+		err = s.db.Create(&mastodon).Error
+		s.NoError(err)
+
+		telegram := TickerTelegram{TickerID: ticker.ID}
+		err = s.db.Create(&telegram).Error
+		s.NoError(err)
+
+		bluesky := TickerBluesky{TickerID: ticker.ID}
+		err = s.db.Create(&bluesky).Error
+		s.NoError(err)
+
+		signalGroup := TickerSignalGroup{TickerID: ticker.ID}
+		err = s.db.Create(&signalGroup).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTicker(ticker)
+		s.NoError(err)
+
+		var tickerCount int64
+		err = s.db.Model(&Ticker{}).Count(&tickerCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), tickerCount)
+
+		var mastodonCount int64
+		err = s.db.Model(&TickerMastodon{}).Count(&mastodonCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), mastodonCount)
+
+		var telegramCount int64
+		err = s.db.Model(&TickerTelegram{}).Count(&telegramCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), telegramCount)
+
+		var blueskyCount int64
+		err = s.db.Model(&TickerBluesky{}).Count(&blueskyCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), blueskyCount)
+
+		var signalGroupCount int64
+		err = s.db.Model(&TickerSignalGroup{}).Count(&signalGroupCount).Error
+		s.NoError(err)
+		s.Equal(int64(0), signalGroupCount)
+	})
 }
 
 func (s *SqlStorageTestSuite) TestFindUploadByUUID() {
