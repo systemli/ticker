@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -13,7 +15,7 @@ type User struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Email             string `gorm:"uniqueIndex;not null"`
-	EncryptedPassword string
+	EncryptedPassword string `gorm:"not null"`
 	IsSuperAdmin      bool
 	Tickers           []Ticker `gorm:"many2many:ticker_users;"`
 }
@@ -33,6 +35,20 @@ func NewUser(email, password string) (User, error) {
 	user.EncryptedPassword = pw
 
 	return user, nil
+}
+
+// BeforeSave is a gorm hook that is called before saving a user
+// It checks if the email and encrypted password are set
+func (u *User) BeforeSave(tx *gorm.DB) error {
+	if u.Email == "" {
+		return errors.New("email is required")
+	}
+
+	if u.EncryptedPassword == "" {
+		return errors.New("encrypted password is required")
+	}
+
+	return nil
 }
 
 func (u *User) Authenticate(password string) bool {
