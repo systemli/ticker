@@ -494,7 +494,7 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	var body struct {
 		Domain      string `json:"domain" binding:"required"`
 		Title       string `json:"title" binding:"required"`
-		Description string `json:"description" binding:"required"`
+		Description string `json:"description"`
 		Active      bool   `json:"active"`
 		Information struct {
 			Author   string `json:"author"`
