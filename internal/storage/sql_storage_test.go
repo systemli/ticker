@@ -696,16 +696,167 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 	})
 }
 
+func (s *SqlStorageTestSuite) TestDeleteIntegrations() {
+	s.Run("when ticker is resetting integrations", func() {
+		var telegramCount, mastodonCount, blueskyCount, signalGroupCount int64
+
+		ticker := Ticker{}
+		ticker.Telegram = TickerTelegram{Active: true, ChannelName: "channel"}
+		ticker.Mastodon = TickerMastodon{Active: true, Server: "server", Token: "token", AccessToken: "access_token"}
+		ticker.Bluesky = TickerBluesky{Active: true, AppKey: "app_key"}
+		ticker.SignalGroup = TickerSignalGroup{Active: true, GroupID: "group_id", GroupInviteLink: "group_invite_link"}
+
+		err := s.store.SaveTicker(&ticker)
+		s.NoError(err)
+
+		s.store.DB.Model(&TickerTelegram{}).Where("ticker_id = ?", ticker.ID).Count(&telegramCount)
+		s.store.DB.Model(&TickerMastodon{}).Where("ticker_id = ?", ticker.ID).Count(&mastodonCount)
+		s.store.DB.Model(&TickerBluesky{}).Where("ticker_id = ?", ticker.ID).Count(&blueskyCount)
+		s.store.DB.Model(&TickerSignalGroup{}).Where("ticker_id = ?", ticker.ID).Count(&signalGroupCount)
+
+		s.Equal(int64(1), telegramCount)
+		s.Equal(int64(1), mastodonCount)
+		s.Equal(int64(1), blueskyCount)
+		s.Equal(int64(1), signalGroupCount)
+
+		s.True(ticker.Telegram.Active)
+		s.Equal("channel", ticker.Telegram.ChannelName)
+		s.True(ticker.Mastodon.Active)
+		s.Equal("server", ticker.Mastodon.Server)
+		s.Equal("token", ticker.Mastodon.Token)
+		s.Equal("access_token", ticker.Mastodon.AccessToken)
+		s.True(ticker.Bluesky.Active)
+		s.Equal("app_key", ticker.Bluesky.AppKey)
+		s.True(ticker.SignalGroup.Active)
+		s.Equal("group_id", ticker.SignalGroup.GroupID)
+		s.Equal("group_invite_link", ticker.SignalGroup.GroupInviteLink)
+
+		err = s.store.DeleteIntegrations(&ticker)
+		s.NoError(err)
+
+		s.False(ticker.Telegram.Active)
+		s.Empty(ticker.Telegram.ChannelName)
+		s.False(ticker.Mastodon.Active)
+		s.Empty(ticker.Mastodon.Server)
+		s.Empty(ticker.Mastodon.Token)
+		s.Empty(ticker.Mastodon.AccessToken)
+		s.False(ticker.Bluesky.Active)
+		s.Empty(ticker.Bluesky.AppKey)
+		s.False(ticker.SignalGroup.Active)
+		s.Empty(ticker.SignalGroup.GroupID)
+		s.Empty(ticker.SignalGroup.GroupInviteLink)
+
+		s.store.DB.Model(&TickerTelegram{}).Where("ticker_id = ?", ticker.ID).Count(&telegramCount)
+		s.store.DB.Model(&TickerMastodon{}).Where("ticker_id = ?", ticker.ID).Count(&mastodonCount)
+		s.store.DB.Model(&TickerBluesky{}).Where("ticker_id = ?", ticker.ID).Count(&blueskyCount)
+		s.store.DB.Model(&TickerSignalGroup{}).Where("ticker_id = ?", ticker.ID).Count(&signalGroupCount)
+		s.Equal(int64(0), telegramCount)
+		s.Equal(int64(0), mastodonCount)
+		s.Equal(int64(0), blueskyCount)
+		s.Equal(int64(0), signalGroupCount)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestResetTicker() {
+	ticker := &Ticker{
+		Title:       "title",
+		Domain:      "example.org",
+		Active:      true,
+		Description: "description",
+		Information: TickerInformation{
+			Author:   "author",
+			Email:    "email",
+			Twitter:  "twitter",
+			Facebook: "facebook",
+			Telegram: "telegram",
+			Mastodon: "mastodon",
+			Bluesky:  "bluesky",
+		},
+		Location: TickerLocation{
+			Lat: 1,
+			Lon: 1,
+		},
+	}
+
+	err := s.store.SaveTicker(ticker)
+	s.NoError(err)
+	s.NotZero(ticker.ID)
+
+	s.Run("basic reset", func() {
+		err = s.store.ResetTicker(ticker)
+
+		s.NoError(err)
+		s.Equal("Ticker", ticker.Title)
+		s.Equal("example.org", ticker.Domain)
+		s.False(ticker.Active)
+		s.Empty(ticker.Description)
+		s.Empty(ticker.Information.Author)
+		s.Empty(ticker.Information.Email)
+		s.Empty(ticker.Information.Twitter)
+		s.Empty(ticker.Information.Facebook)
+		s.Empty(ticker.Information.Telegram)
+		s.Empty(ticker.Information.Mastodon)
+		s.Empty(ticker.Information.Bluesky)
+		s.Zero(ticker.Location.Lat)
+		s.Zero(ticker.Location.Lon)
+	})
+
+	s.Run("with integrations", func() {
+		var telegramCount, mastodonCount, blueskyCount, signalGroupCount int64
+		ticker.Telegram = TickerTelegram{Active: true, ChannelName: "channel"}
+		ticker.Mastodon = TickerMastodon{Active: true, Server: "server", Token: "token", AccessToken: "access_token"}
+		ticker.Bluesky = TickerBluesky{Active: true, AppKey: "app_key"}
+		ticker.SignalGroup = TickerSignalGroup{Active: true, GroupID: "group_id", GroupInviteLink: "group_invite_link"}
+
+		err = s.store.SaveTicker(ticker)
+		s.NoError(err)
+
+		s.store.DB.Model(&TickerTelegram{}).Where("ticker_id = ?", ticker.ID).Count(&telegramCount)
+		s.store.DB.Model(&TickerMastodon{}).Where("ticker_id = ?", ticker.ID).Count(&mastodonCount)
+		s.store.DB.Model(&TickerBluesky{}).Where("ticker_id = ?", ticker.ID).Count(&blueskyCount)
+		s.store.DB.Model(&TickerSignalGroup{}).Where("ticker_id = ?", ticker.ID).Count(&signalGroupCount)
+
+		s.Equal(int64(1), telegramCount)
+		s.Equal(int64(1), mastodonCount)
+		s.Equal(int64(1), blueskyCount)
+		s.Equal(int64(1), signalGroupCount)
+
+		err = s.store.ResetTicker(ticker)
+		s.NoError(err)
+		s.False(ticker.Telegram.Active)
+		s.False(ticker.Mastodon.Active)
+		s.False(ticker.Bluesky.Active)
+		s.False(ticker.SignalGroup.Active)
+		s.Empty(ticker.Telegram.ChannelName)
+		s.Empty(ticker.Mastodon.Server)
+		s.Empty(ticker.Mastodon.Token)
+		s.Empty(ticker.Mastodon.AccessToken)
+		s.Empty(ticker.Bluesky.AppKey)
+		s.Empty(ticker.SignalGroup.GroupID)
+		s.Empty(ticker.SignalGroup.GroupInviteLink)
+
+		s.store.DB.Model(&TickerTelegram{}).Where("ticker_id = ?", ticker.ID).Count(&telegramCount)
+		s.store.DB.Model(&TickerMastodon{}).Where("ticker_id = ?", ticker.ID).Count(&mastodonCount)
+		s.store.DB.Model(&TickerBluesky{}).Where("ticker_id = ?", ticker.ID).Count(&blueskyCount)
+		s.store.DB.Model(&TickerSignalGroup{}).Where("ticker_id = ?", ticker.ID).Count(&signalGroupCount)
+
+		s.Equal(int64(0), telegramCount)
+		s.Equal(int64(0), mastodonCount)
+		s.Equal(int64(0), blueskyCount)
+		s.Equal(int64(0), signalGroupCount)
+	})
+}
+
 func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	s.Run("when ticker does not exist", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.store.DeleteTicker(ticker)
 		s.NoError(err)
 	})
 
 	s.Run("when ticker exists", func() {
-		ticker := Ticker{ID: 1}
-		err := s.db.Create(&ticker).Error
+		ticker := &Ticker{ID: 1}
+		err := s.db.Create(ticker).Error
 		s.NoError(err)
 
 		err = s.store.DeleteTicker(ticker)
@@ -724,7 +875,7 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 		err = s.db.Create(&user).Error
 		s.NoError(err)
 
-		ticker := Ticker{ID: 1, Users: []User{user}}
+		ticker := &Ticker{ID: 1, Users: []User{user}}
 		err = s.db.Create(&ticker).Error
 		s.NoError(err)
 
@@ -743,7 +894,7 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	})
 
 	s.Run("when ticker exists with uploads", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.db.Create(&ticker).Error
 		s.NoError(err)
 
@@ -766,7 +917,7 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	})
 
 	s.Run("when ticker exists with messages", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.db.Create(&ticker).Error
 		s.NoError(err)
 
@@ -789,7 +940,7 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	})
 
 	s.Run("when ticker exists with integrations", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.db.Create(&ticker).Error
 		s.NoError(err)
 
@@ -952,13 +1103,13 @@ func (s *SqlStorageTestSuite) TestDeleteUploads() {
 
 func (s *SqlStorageTestSuite) TestDeleteUploadsByTicker() {
 	s.Run("when uploads do not exist", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.store.DeleteUploadsByTicker(ticker)
 		s.NoError(err)
 	})
 
 	s.Run("when uploads exist", func() {
-		ticker := Ticker{ID: 1}
+		ticker := &Ticker{ID: 1}
 		err := s.db.Create(&ticker).Error
 		s.NoError(err)
 
@@ -1172,7 +1323,7 @@ func (s *SqlStorageTestSuite) TestDeleteMessage() {
 }
 
 func (s *SqlStorageTestSuite) TestDeleteMessages() {
-	ticker := Ticker{ID: 1}
+	ticker := &Ticker{ID: 1}
 	err := s.db.Create(&ticker).Error
 	s.NoError(err)
 
@@ -1181,7 +1332,7 @@ func (s *SqlStorageTestSuite) TestDeleteMessages() {
 	s.NoError(err)
 
 	s.Run("when messages do not exist", func() {
-		err := s.store.DeleteMessages(Ticker{ID: 2})
+		err := s.store.DeleteMessages(&Ticker{ID: 2})
 		s.NoError(err)
 	})
 

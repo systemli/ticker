@@ -190,36 +190,95 @@ func (s *SqlStorage) SaveTicker(ticker *Ticker) error {
 }
 
 // DeleteTicker deletes a ticker and all associated data.
-func (s *SqlStorage) DeleteTicker(ticker Ticker) error {
-	if err := s.DeleteTickerUsers(&ticker); err != nil {
+func (s *SqlStorage) DeleteTicker(ticker *Ticker) error {
+	if err := s.deleteTickerAssociations(ticker); err != nil {
+		return err
+	}
+
+	return s.DB.Delete(&ticker).Error
+}
+
+func (s *SqlStorage) ResetTicker(ticker *Ticker) error {
+	if err := s.deleteTickerAssociations(ticker); err != nil {
+		return err
+	}
+
+	ticker.Active = false
+	ticker.Title = "Ticker"
+	ticker.Description = ""
+	ticker.Information = TickerInformation{}
+	ticker.Location = TickerLocation{}
+	ticker.Users = make([]User, 0)
+
+	return s.DB.Save(&ticker).Error
+}
+
+func (s *SqlStorage) deleteTickerAssociations(ticker *Ticker) error {
+	if err := s.DeleteTickerUsers(ticker); err != nil {
 		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker users")
+		return err
 	}
 
 	if err := s.DeleteUploadsByTicker(ticker); err != nil {
 		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker uploads")
+		return err
 	}
 
 	if err := s.DeleteMessages(ticker); err != nil {
 		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker messages")
+		return err
 	}
 
-	if err := s.DB.Delete(TickerMastodon{}, "ticker_id = ?", ticker.ID).Error; err != nil {
-		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete mastodon settings")
+	if err := s.DeleteIntegrations(ticker); err != nil {
+		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker integrations")
+		return err
 	}
 
-	if err := s.DB.Delete(TickerTelegram{}, "ticker_id = ?", ticker.ID).Error; err != nil {
-		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete telegram settings")
+	return nil
+}
+
+func (s *SqlStorage) DeleteIntegrations(ticker *Ticker) error {
+	if err := s.DeleteMastodon(ticker); err != nil {
+		return err
 	}
 
-	if err := s.DB.Delete(TickerBluesky{}, "ticker_id = ?", ticker.ID).Error; err != nil {
-		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete bluesky settings")
+	if err := s.DeleteTelegram(ticker); err != nil {
+		return err
 	}
 
-	if err := s.DB.Delete(TickerSignalGroup{}, "ticker_id = ?", ticker.ID).Error; err != nil {
-		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete signal group settings")
+	if err := s.DeleteBluesky(ticker); err != nil {
+		return err
 	}
 
-	return s.DB.Delete(&ticker).Error
+	if err := s.DeleteSignalGroup(ticker); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SqlStorage) DeleteMastodon(ticker *Ticker) error {
+	ticker.Mastodon = TickerMastodon{}
+
+	return s.DB.Delete(TickerMastodon{}, "ticker_id = ?", ticker.ID).Error
+}
+
+func (s *SqlStorage) DeleteTelegram(ticker *Ticker) error {
+	ticker.Telegram = TickerTelegram{}
+
+	return s.DB.Delete(TickerTelegram{}, "ticker_id = ?", ticker.ID).Error
+}
+
+func (s *SqlStorage) DeleteBluesky(ticker *Ticker) error {
+	ticker.Bluesky = TickerBluesky{}
+
+	return s.DB.Delete(TickerBluesky{}, "ticker_id = ?", ticker.ID).Error
+}
+
+func (s *SqlStorage) DeleteSignalGroup(ticker *Ticker) error {
+	ticker.SignalGroup = TickerSignalGroup{}
+
+	return s.DB.Delete(TickerSignalGroup{}, "ticker_id = ?", ticker.ID).Error
 }
 
 func (s *SqlStorage) FindUploadByUUID(uuid string) (Upload, error) {
@@ -267,7 +326,7 @@ func (s *SqlStorage) DeleteUploads(uploads []Upload) {
 	}
 }
 
-func (s *SqlStorage) DeleteUploadsByTicker(ticker Ticker) error {
+func (s *SqlStorage) DeleteUploadsByTicker(ticker *Ticker) error {
 	uploads := make([]Upload, 0)
 	s.DB.Model(&Upload{}).Where("ticker_id = ?", ticker.ID).Find(&uploads)
 
@@ -332,7 +391,7 @@ func (s *SqlStorage) DeleteMessage(message Message) error {
 	return s.DB.Delete(&message).Error
 }
 
-func (s *SqlStorage) DeleteMessages(ticker Ticker) error {
+func (s *SqlStorage) DeleteMessages(ticker *Ticker) error {
 	var msgIds []int
 	err := s.DB.Model(&Message{}).Where("ticker_id = ?", ticker.ID).Pluck("id", &msgIds).Error
 	if err != nil {

@@ -25,19 +25,25 @@ type Storage interface {
 	FindTickerByDomain(domain string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	SaveTicker(ticker *Ticker) error
-	DeleteTicker(ticker Ticker) error
+	DeleteTicker(ticker *Ticker) error
+	ResetTicker(ticker *Ticker) error
+	DeleteIntegrations(ticker *Ticker) error
+	DeleteMastodon(ticker *Ticker) error
+	DeleteTelegram(ticker *Ticker) error
+	DeleteBluesky(ticker *Ticker) error
+	DeleteSignalGroup(ticker *Ticker) error
 	SaveUpload(upload *Upload) error
 	FindUploadByUUID(uuid string) (Upload, error)
 	FindUploadsByIDs(ids []int) ([]Upload, error)
 	DeleteUpload(upload Upload) error
 	DeleteUploads(uploads []Upload)
-	DeleteUploadsByTicker(ticker Ticker) error
+	DeleteUploadsByTicker(ticker *Ticker) error
 	FindMessage(tickerID, messageID int, opts ...func(*gorm.DB) *gorm.DB) (Message, error)
 	FindMessagesByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error)
 	FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error)
 	SaveMessage(message *Message) error
 	DeleteMessage(message Message) error
-	DeleteMessages(ticker Ticker) error
+	DeleteMessages(ticker *Ticker) error
 	GetInactiveSettings() InactiveSettings
 	GetRefreshIntervalSettings() RefreshIntervalSettings
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error

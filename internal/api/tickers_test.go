@@ -327,7 +327,7 @@ func (s *TickerTestSuite) TestDeleteTickerTelegram() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.On("DeleteTelegram", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerTelegram(s.ctx)
 
@@ -337,7 +337,7 @@ func (s *TickerTestSuite) TestDeleteTickerTelegram() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.On("DeleteTelegram", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerTelegram(s.ctx)
 
@@ -428,7 +428,7 @@ func (s *TickerTestSuite) TestDeleteTickerMastodon() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.On("DeleteMastodon", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerMastodon(s.ctx)
 
@@ -438,7 +438,7 @@ func (s *TickerTestSuite) TestDeleteTickerMastodon() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.On("DeleteMastodon", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerMastodon(s.ctx)
 
@@ -555,7 +555,7 @@ func (s *TickerTestSuite) TestDeleteTickerBluesky() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.On("DeleteBluesky", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerBluesky(s.ctx)
 
@@ -565,7 +565,7 @@ func (s *TickerTestSuite) TestDeleteTickerBluesky() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.On("DeleteBluesky", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerBluesky(s.ctx)
 
@@ -982,7 +982,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 		})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.On("DeleteSignalGroup", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerSignalGroup(s.ctx)
 
@@ -1061,7 +1061,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 		})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.On("DeleteSignalGroup", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerSignalGroup(s.ctx)
 
@@ -1156,21 +1156,17 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteMessages", mock.Anything).Return(errors.New("storage error"))
-		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(errors.New("storage error"))
 		s.store.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
 		h := s.handler()
 		h.DeleteTicker(s.ctx)
 
-		s.Equal(http.StatusNotFound, s.w.Code)
+		s.Equal(http.StatusInternalServerError, s.w.Code)
 		s.store.AssertExpectations(s.T())
 	})
 
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
-		s.store.On("DeleteMessages", mock.Anything).Return(nil)
-		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(nil)
 		s.store.On("DeleteTicker", mock.Anything).Return(nil)
 		h := s.handler()
 		h.DeleteTicker(s.ctx)
@@ -1246,22 +1242,7 @@ func (s *TickerTestSuite) TestResetTicker() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteMessages", mock.Anything).Return(errors.New("storage error")).Once()
-		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(errors.New("storage error")).Once()
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
-		h := s.handler()
-		h.ResetTicker(s.ctx)
-
-		s.Equal(http.StatusInternalServerError, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
-
-	s.Run("when deleting users fails", func() {
-		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteMessages", mock.Anything).Return(nil).Once()
-		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(nil).Once()
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
-		s.store.On("DeleteTickerUsers", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.On("ResetTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.ResetTicker(s.ctx)
 
@@ -1272,10 +1253,7 @@ func (s *TickerTestSuite) TestResetTicker() {
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
-		s.store.On("DeleteMessages", mock.Anything).Return(nil).Once()
-		s.store.On("DeleteUploadsByTicker", mock.Anything).Return(nil).Once()
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
-		s.store.On("DeleteTickerUsers", mock.Anything).Return(nil).Once()
+		s.store.On("ResetTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.ResetTicker(s.ctx)
 

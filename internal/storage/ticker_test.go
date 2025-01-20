@@ -38,32 +38,6 @@ func TestTickerSignalGroupConnect(t *testing.T) {
 	assert.True(t, ticker.SignalGroup.Connected())
 }
 
-func TestTickerReset(t *testing.T) {
-	ticker.Active = true
-	ticker.Description = "Description"
-	ticker.Information.Author = "Author"
-	ticker.Information.Email = "Email"
-	ticker.Information.Twitter = "Twitter"
-	ticker.Telegram.Active = true
-	ticker.Telegram.ChannelName = "ChannelName"
-	ticker.SignalGroup.Active = true
-	ticker.SignalGroup.GroupID = "GroupID"
-	ticker.Location.Lat = 1
-	ticker.Location.Lon = 2
-
-	ticker.Reset()
-
-	assert.False(t, ticker.Active)
-	assert.False(t, ticker.Telegram.Active)
-	assert.Empty(t, ticker.Description)
-	assert.Empty(t, ticker.Information.Author)
-	assert.Empty(t, ticker.Information.Email)
-	assert.Empty(t, ticker.Information.Twitter)
-	assert.Empty(t, ticker.Telegram.ChannelName)
-	assert.Empty(t, ticker.SignalGroup.GroupID)
-	assert.Empty(t, ticker.Location)
-}
-
 func TestNewTickerFilter(t *testing.T) {
 	filter := NewTickerFilter(nil)
 	assert.Nil(t, filter.Active)

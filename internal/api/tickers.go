@@ -165,9 +165,7 @@ func (h *handler) DeleteTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	ticker.Telegram.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
+	err = h.storage.DeleteTelegram(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -233,9 +231,7 @@ func (h *handler) DeleteTickerMastodon(c *gin.Context) {
 		return
 	}
 
-	ticker.Mastodon.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
+	err = h.storage.DeleteMastodon(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -286,9 +282,7 @@ func (h *handler) DeleteTickerBluesky(c *gin.Context) {
 		return
 	}
 
-	ticker.Bluesky.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
+	err = h.storage.DeleteBluesky(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -352,9 +346,7 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	ticker.SignalGroup.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
+	err = h.storage.DeleteSignalGroup(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -398,17 +390,9 @@ func (h *handler) DeleteTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteMessages(ticker)
+	err = h.storage.DeleteTicker(&ticker)
 	if err != nil {
-		log.WithError(err).Error("failed to delete message for ticker")
-	}
-	err = h.storage.DeleteUploadsByTicker(ticker)
-	if err != nil {
-		log.WithError(err).Error("failed to delete uploads for ticker")
-	}
-	err = h.storage.DeleteTicker(ticker)
-	if err != nil {
-		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.StorageError))
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
@@ -452,24 +436,7 @@ func (h *handler) ResetTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteMessages(ticker)
-	if err != nil {
-		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting messages")
-	}
-	err = h.storage.DeleteUploadsByTicker(ticker)
-	if err != nil {
-		log.WithError(err).WithField("ticker", ticker.ID).Error("error while deleting remaining uploads")
-	}
-
-	ticker.Reset()
-
-	err = h.storage.SaveTicker(&ticker)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
-	err = h.storage.DeleteTickerUsers(&ticker)
+	err = h.storage.ResetTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
