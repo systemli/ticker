@@ -75,18 +75,20 @@ func (s *MigrationTestSuite) SetupTest() {
 	}
 
 	s.adminUser = User{
-		ID:           1,
-		Email:        "admin@systemli.org",
-		CreationDate: time.Now(),
-		IsSuperAdmin: true,
+		ID:                1,
+		Email:             "admin@systemli.org",
+		EncryptedPassword: "notempty",
+		CreationDate:      time.Now(),
+		IsSuperAdmin:      true,
 	}
 
 	s.user = User{
-		ID:           2,
-		Email:        "user@systemli.org",
-		CreationDate: time.Now(),
-		IsSuperAdmin: false,
-		Tickers:      []int{161},
+		ID:                2,
+		Email:             "user@systemli.org",
+		EncryptedPassword: "notempty",
+		CreationDate:      time.Now(),
+		IsSuperAdmin:      false,
+		Tickers:           []int{161},
 	}
 
 	s.upload = Upload{

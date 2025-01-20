@@ -54,6 +54,9 @@ func (s *SqlStorageTestSuite) BeforeTest(suiteName, testName string) {
 }
 
 func (s *SqlStorageTestSuite) TestFindUsers() {
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	s.Run("when no users exist", func() {
 		filter := NewUserFilter(nil)
 		users, err := s.store.FindUsers(filter)
@@ -62,7 +65,8 @@ func (s *SqlStorageTestSuite) TestFindUsers() {
 	})
 
 	s.Run("when users exist", func() {
-		err := s.db.Create(&User{Email: "user@example.org", IsSuperAdmin: false, Tickers: []Ticker{{ID: 1}}}).Error
+		user.Tickers = []Ticker{{ID: 1}}
+		err := s.db.Create(&user).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
@@ -106,24 +110,28 @@ func (s *SqlStorageTestSuite) TestFindUsers() {
 }
 
 func (s *SqlStorageTestSuite) TestFindUserByID() {
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	s.Run("when user does not exist", func() {
 		_, err := s.store.FindUserByID(1)
 		s.Error(err)
 	})
 
 	s.Run("when user exists", func() {
-		err := s.db.Create(&User{ID: 1, Tickers: []Ticker{{ID: 1}}}).Error
+		user.Tickers = []Ticker{{ID: 1}}
+		err := s.db.Create(&user).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
-			user, err := s.store.FindUserByID(1)
+			user, err := s.store.FindUserByID(user.ID)
 			s.NoError(err)
 			s.NotNil(user)
 			s.Empty(user.Tickers)
 		})
 
 		s.Run("with preload", func() {
-			user, err := s.store.FindUserByID(1, WithTickers())
+			user, err := s.store.FindUserByID(user.ID, WithTickers())
 			s.NoError(err)
 			s.NotNil(user)
 			s.Len(user.Tickers, 1)
@@ -132,6 +140,9 @@ func (s *SqlStorageTestSuite) TestFindUserByID() {
 }
 
 func (s *SqlStorageTestSuite) TestFindUsersByIDs() {
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	s.Run("when no users exist", func() {
 		users, err := s.store.FindUsersByIDs([]int{1, 2})
 		s.NoError(err)
@@ -139,18 +150,19 @@ func (s *SqlStorageTestSuite) TestFindUsersByIDs() {
 	})
 
 	s.Run("when users exist", func() {
-		err := s.db.Create(&User{ID: 1, Tickers: []Ticker{{ID: 1}}}).Error
+		user.Tickers = []Ticker{{ID: 1}}
+		err := s.db.Create(&user).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
-			users, err := s.store.FindUsersByIDs([]int{1})
+			users, err := s.store.FindUsersByIDs([]int{user.ID})
 			s.NoError(err)
 			s.Len(users, 1)
 			s.Empty(users[0].Tickers)
 		})
 
 		s.Run("with preload", func() {
-			users, err := s.store.FindUsersByIDs([]int{1}, WithTickers())
+			users, err := s.store.FindUsersByIDs([]int{user.ID}, WithTickers())
 			s.NoError(err)
 			s.Len(users, 1)
 			s.Len(users[0].Tickers, 1)
@@ -159,24 +171,29 @@ func (s *SqlStorageTestSuite) TestFindUsersByIDs() {
 }
 
 func (s *SqlStorageTestSuite) TestFindUserByEmail() {
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	s.Run("when user does not exist", func() {
-		_, err := s.store.FindUserByEmail("user@systemli.org")
+		_, err := s.store.FindUserByEmail("user@example.org")
 		s.Error(err)
 	})
 
 	s.Run("when user exists", func() {
-		err := s.db.Create(&User{Email: "user@systemli.org", Tickers: []Ticker{{ID: 1}}}).Error
+		user.Tickers = []Ticker{{ID: 1}}
+		err := s.db.Create(&user).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
-			user, err := s.store.FindUserByEmail("user@systemli.org")
+			user, err := s.store.FindUserByEmail("user@example.org")
 			s.NoError(err)
 			s.NotNil(user)
 			s.Empty(user.Tickers)
 		})
 
 		s.Run("with preload", func() {
-			user, err := s.store.FindUserByEmail("user@systemli.org", WithTickers())
+			user.Tickers = []Ticker{{ID: 1}}
+			user, err := s.store.FindUserByEmail("user@example.org", WithTickers())
 			s.NoError(err)
 			s.NotNil(user)
 			s.Len(user.Tickers, 1)
@@ -185,6 +202,9 @@ func (s *SqlStorageTestSuite) TestFindUserByEmail() {
 }
 
 func (s *SqlStorageTestSuite) TestFindUsersByTicker() {
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	s.Run("when no users exist", func() {
 		users, err := s.store.FindUsersByTicker(Ticker{ID: 1})
 		s.NoError(err)
@@ -192,7 +212,8 @@ func (s *SqlStorageTestSuite) TestFindUsersByTicker() {
 	})
 
 	s.Run("when users exist", func() {
-		err := s.db.Create(&User{Tickers: []Ticker{{ID: 1}}}).Error
+		user.Tickers = []Ticker{{ID: 1}}
+		err := s.db.Create(&user).Error
 		s.NoError(err)
 
 		s.Run("without preload", func() {
@@ -212,7 +233,7 @@ func (s *SqlStorageTestSuite) TestFindUsersByTicker() {
 }
 
 func (s *SqlStorageTestSuite) TestSaveUser() {
-	user, err := NewUser("user@systemli.org", "password")
+	user, err := NewUser("user@example.org", "password")
 	s.NoError(err)
 
 	s.Run("when user is new", func() {
@@ -225,8 +246,21 @@ func (s *SqlStorageTestSuite) TestSaveUser() {
 		s.Equal(int64(1), count)
 	})
 
+	s.Run("when email is empty", func() {
+		user.Email = ""
+		err = s.store.SaveUser(&user)
+		s.Error(err)
+	})
+
+	s.Run("when encrypted password is empty", func() {
+		user := User{Email: "user@example.org"}
+		user.EncryptedPassword = ""
+		err = s.store.SaveUser(&user)
+		s.Error(err)
+	})
+
 	s.Run("when user is existing", func() {
-		user.Email = "update@systemli.org"
+		user.Email = "update@example.org"
 
 		err = s.store.SaveUser(&user)
 		s.NoError(err)
@@ -265,8 +299,10 @@ func (s *SqlStorageTestSuite) TestDeleteUser() {
 	})
 
 	s.Run("when user exists", func() {
-		user := User{ID: 1}
-		err := s.db.Create(&user).Error
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
+		err = s.db.Create(&user).Error
 		s.NoError(err)
 
 		err = s.store.DeleteUser(user)
@@ -294,7 +330,9 @@ func (s *SqlStorageTestSuite) TestDeleteTickerUsers() {
 		count := s.db.Model(&ticker).Association("Users").Count()
 		s.Equal(int64(0), count)
 
-		user := User{ID: 1}
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
 		err = s.db.Create(&user).Error
 		s.NoError(err)
 
@@ -325,7 +363,9 @@ func (s *SqlStorageTestSuite) TestDeleteTickerUser() {
 		err := s.db.Create(&ticker).Error
 		s.NoError(err)
 
-		user := User{ID: 1}
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
 		err = s.db.Create(&user).Error
 		s.NoError(err)
 
@@ -348,7 +388,9 @@ func (s *SqlStorageTestSuite) TestAddTickerUser() {
 	err := s.db.Create(&ticker).Error
 	s.NoError(err)
 
-	user := User{Email: "user@systemli.org"}
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
 	err = s.db.Create(&user).Error
 	s.NoError(err)
 
@@ -375,7 +417,9 @@ func (s *SqlStorageTestSuite) TestFindTickerByID() {
 	})
 
 	s.Run("when ticker exists with users", func() {
-		user := User{Email: "user@systemli.org"}
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
 		err = s.db.Create(&user).Error
 		s.NoError(err)
 
@@ -405,8 +449,11 @@ func (s *SqlStorageTestSuite) TestFindTickersByIDs() {
 	})
 
 	s.Run("when tickers exist with users", func() {
-		user := User{Email: "user@systemli.org"}
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
 		err = s.db.Create(&user).Error
+		s.NoError(err)
 
 		err = s.db.Model(&Ticker{ID: 1}).Association("Users").Append(&user)
 		s.NoError(err)
@@ -457,8 +504,10 @@ func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 		s.Empty(tickers)
 	})
 
-	user := User{Email: "user@systemli.org"}
-	err := s.db.Create(&user).Error
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
+	err = s.db.Create(&user).Error
 	s.NoError(err)
 
 	ticker := Ticker{Users: []User{user}, Active: false, Domain: "localhost", Title: "title"}
@@ -521,8 +570,10 @@ func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 }
 
 func (s *SqlStorageTestSuite) TestFindTickerByUserAndID() {
-	user := User{Email: "user@systemli.org"}
-	err := s.db.Create(&user).Error
+	user, err := NewUser("user@example.org", "password")
+	s.NoError(err)
+
+	err = s.db.Create(&user).Error
 	s.NoError(err)
 
 	ticker := Ticker{Users: []User{user}}
@@ -619,8 +670,10 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 	})
 
 	s.Run("when ticker is existing with users", func() {
-		user := User{Email: "user@systemli.org"}
-		err := s.db.Create(&user).Error
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
+		err = s.db.Create(&user).Error
 		s.NoError(err)
 
 		ticker.Users = append(ticker.Users, user)
@@ -665,8 +718,10 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	})
 
 	s.Run("when ticker exists with user", func() {
-		user := User{Email: "user@example.com"}
-		err := s.db.Create(&user).Error
+		user, err := NewUser("user@example.org", "password")
+		s.NoError(err)
+
+		err = s.db.Create(&user).Error
 		s.NoError(err)
 
 		ticker := Ticker{ID: 1, Users: []User{user}}
