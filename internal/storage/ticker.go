@@ -27,18 +27,6 @@ func NewTicker() Ticker {
 	return Ticker{}
 }
 
-func (t *Ticker) Reset() {
-	t.Active = false
-	t.Description = ""
-	t.Information = TickerInformation{}
-	t.Location = TickerLocation{}
-
-	t.Telegram.Reset()
-	t.Mastodon.Reset()
-	t.Bluesky.Reset()
-	t.SignalGroup.Reset()
-}
-
 func (t *Ticker) AsMap() map[string]interface{} {
 	return map[string]interface{}{
 		"id":          t.ID,
@@ -81,11 +69,6 @@ type TickerTelegram struct {
 	ChannelName string
 }
 
-func (tg *TickerTelegram) Reset() {
-	tg.Active = false
-	tg.ChannelName = ""
-}
-
 func (tg *TickerTelegram) Connected() bool {
 	return tg.ChannelName != ""
 }
@@ -113,15 +96,6 @@ func (m *TickerMastodon) Connected() bool {
 	return m.Token != "" && m.Secret != "" && m.AccessToken != ""
 }
 
-func (m *TickerMastodon) Reset() {
-	m.Active = false
-	m.Server = ""
-	m.Token = ""
-	m.Secret = ""
-	m.AccessToken = ""
-	m.User = MastodonUser{}
-}
-
 type TickerBluesky struct {
 	ID        int `gorm:"primaryKey"`
 	CreatedAt time.Time
@@ -138,12 +112,6 @@ func (b *TickerBluesky) Connected() bool {
 	return b.Handle != "" && b.AppKey != ""
 }
 
-func (b *TickerBluesky) Reset() {
-	b.Active = false
-	b.Handle = ""
-	b.AppKey = ""
-}
-
 type TickerSignalGroup struct {
 	ID              int `gorm:"primaryKey"`
 	CreatedAt       time.Time
@@ -156,12 +124,6 @@ type TickerSignalGroup struct {
 
 func (s *TickerSignalGroup) Connected() bool {
 	return s.GroupID != ""
-}
-
-func (s *TickerSignalGroup) Reset() {
-	s.Active = false
-	s.GroupID = ""
-	s.GroupInviteLink = ""
 }
 
 type TickerLocation struct {
