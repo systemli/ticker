@@ -211,6 +211,42 @@ func (_m *MockStorage) DeleteTickerUsers(ticker *Ticker) error {
 	return r0
 }
 
+// DeleteTickerWebsite provides a mock function with given fields: ticker, origin
+func (_m *MockStorage) DeleteTickerWebsite(ticker *Ticker, origin string) error {
+	ret := _m.Called(ticker, origin)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTickerWebsite")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*Ticker, string) error); ok {
+		r0 = rf(ticker, origin)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteTickerWebsites provides a mock function with given fields: ticker
+func (_m *MockStorage) DeleteTickerWebsites(ticker *Ticker) error {
+	ret := _m.Called(ticker)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTickerWebsites")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*Ticker) error); ok {
+		r0 = rf(ticker)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteUpload provides a mock function with given fields: upload
 func (_m *MockStorage) DeleteUpload(upload Upload) error {
 	ret := _m.Called(upload)
@@ -379,41 +415,6 @@ func (_m *MockStorage) FindMessagesByTickerAndPagination(ticker Ticker, _a1 pagi
 	return r0, r1
 }
 
-// FindTickerByDomain provides a mock function with given fields: domain, opts
-func (_m *MockStorage) FindTickerByDomain(domain string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, domain)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindTickerByDomain")
-	}
-
-	var r0 Ticker
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) *gorm.DB) (Ticker, error)); ok {
-		return rf(domain, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) *gorm.DB) Ticker); ok {
-		r0 = rf(domain, opts...)
-	} else {
-		r0 = ret.Get(0).(Ticker)
-	}
-
-	if rf, ok := ret.Get(1).(func(string, ...func(*gorm.DB) *gorm.DB) error); ok {
-		r1 = rf(domain, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // FindTickerByID provides a mock function with given fields: id, opts
 func (_m *MockStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
 	_va := make([]interface{}, len(opts))
@@ -442,6 +443,41 @@ func (_m *MockStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (
 
 	if rf, ok := ret.Get(1).(func(int, ...func(*gorm.DB) *gorm.DB) error); ok {
 		r1 = rf(id, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindTickerByOrigin provides a mock function with given fields: origin, opts
+func (_m *MockStorage) FindTickerByOrigin(origin string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, origin)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindTickerByOrigin")
+	}
+
+	var r0 Ticker
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) *gorm.DB) (Ticker, error)); ok {
+		return rf(origin, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(string, ...func(*gorm.DB) *gorm.DB) Ticker); ok {
+		r0 = rf(origin, opts...)
+	} else {
+		r0 = ret.Get(0).(Ticker)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, ...func(*gorm.DB) *gorm.DB) error); ok {
+		r1 = rf(origin, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -916,6 +952,24 @@ func (_m *MockStorage) SaveTicker(ticker *Ticker) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*Ticker) error); ok {
 		r0 = rf(ticker)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SaveTickerWebsite provides a mock function with given fields: ticker, origin
+func (_m *MockStorage) SaveTickerWebsite(ticker *Ticker, origin string) error {
+	ret := _m.Called(ticker, origin)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveTickerWebsite")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*Ticker, string) error); ok {
+		r0 = rf(ticker, origin)
 	} else {
 		r0 = ret.Error(0)
 	}

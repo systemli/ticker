@@ -116,7 +116,7 @@ func CachePage(cache *cache.Cache, expires time.Duration, handle gin.HandlerFunc
 }
 
 func CreateKey(c *gin.Context) string {
-	domain, err := helper.GetDomain(c)
+	domain, err := helper.GetOrigin(c)
 	if err != nil {
 		domain = "unknown"
 	}

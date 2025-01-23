@@ -130,6 +130,61 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(ticker.Users)}))
 }
 
+func (h *handler) PostTickerWebsite(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body struct {
+		Origin string `json:"origin" binding:"required,http_url"`
+	}
+
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
+		return
+	}
+
+	err = h.storage.SaveTickerWebsite(&ticker, body.Origin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	h.ClearTickerCache(&ticker)
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerWebsite(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body struct {
+		Origin string `json:"origin" binding:"required"`
+	}
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
+		return
+	}
+
+	err = h.storage.DeleteTickerWebsite(&ticker, body.Origin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	h.ClearTickerCache(&ticker)
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
 func (h *handler) PutTickerTelegram(c *gin.Context) {
 	ticker, err := helper.Ticker(c)
 	if err != nil {
@@ -450,8 +505,10 @@ func (h *handler) ResetTicker(c *gin.Context) {
 // ClearTickerCache clears the cache for the init endpoint of a ticker
 func (h *handler) ClearTickerCache(ticker *storage.Ticker) {
 	h.cache.Range(func(key, value interface{}) bool {
-		if strings.HasPrefix(key.(string), fmt.Sprintf("response:%s:/v1/init", ticker.Domain)) {
-			h.cache.Delete(key)
+		for _, website := range ticker.Websites {
+			if strings.HasPrefix(key.(string), fmt.Sprintf("response:%s:/v1/init", website.Origin)) {
+				h.cache.Delete(key)
+			}
 		}
 		return true
 	})
@@ -459,7 +516,6 @@ func (h *handler) ClearTickerCache(ticker *storage.Ticker) {
 
 func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	var body struct {
-		Domain      string `json:"domain" binding:"required"`
 		Title       string `json:"title" binding:"required"`
 		Description string `json:"description"`
 		Active      bool   `json:"active"`
@@ -484,10 +540,6 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 		return err
 	}
 
-	me, _ := helper.Me(c)
-	if me.IsSuperAdmin {
-		t.Domain = body.Domain
-	}
 	t.Title = body.Title
 	t.Description = body.Description
 	t.Active = body.Active

@@ -32,13 +32,13 @@ func PrefetchTicker(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.Hand
 
 func PrefetchTickerFromRequest(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		domain, err := helper.GetDomain(c)
+		origin, err := helper.GetOrigin(c)
 		if err != nil {
 			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 			return
 		}
 
-		ticker, err := s.FindTickerByDomain(domain, opts...)
+		ticker, err := s.FindTickerByOrigin(origin, opts...)
 		if err != nil {
 			c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 			return

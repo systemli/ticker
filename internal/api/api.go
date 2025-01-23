@@ -67,6 +67,8 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 		admin.GET(`/tickers/:tickerID`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.GetTicker)
 		admin.POST(`/tickers`, user.NeedAdmin(), handler.PostTicker)
 		admin.PUT(`/tickers/:tickerID`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTicker)
+		admin.DELETE(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerWebsite)
+		admin.POST(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PostTickerWebsite)
 		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerTelegram)
 		admin.DELETE(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerTelegram)
 		admin.PUT(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerMastodon)

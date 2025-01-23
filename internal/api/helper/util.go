@@ -2,14 +2,13 @@ package helper
 
 import (
 	"errors"
-	"net/url"
-	"strings"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/storage"
+	"net/url"
 )
 
-func GetDomain(c *gin.Context) (string, error) {
+func GetOrigin(c *gin.Context) (string, error) {
 	origin := c.Request.URL.Query().Get("origin")
 	if origin != "" {
 		return origin, nil
@@ -25,13 +24,11 @@ func GetDomain(c *gin.Context) (string, error) {
 		return "", err
 	}
 
-	domain := strings.TrimPrefix(u.Host, "www.")
-	if strings.Contains(domain, ":") {
-		parts := strings.Split(domain, ":")
-		domain = parts[0]
+	if u.Scheme == "" || u.Host == "" {
+		return "", errors.New("invalid origin")
 	}
 
-	return domain, nil
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
 }
 
 func Me(c *gin.Context) (storage.User, error) {

@@ -84,7 +84,7 @@ func (s *TickerTestSuite) TestPrefetchTickerFromRequest() {
 		c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		c.Request.Header.Set("Origin", "https://demoticker.org")
 		store := &storage.MockStorage{}
-		store.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
+		store.On("FindTickerByOrigin", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 		mw := PrefetchTickerFromRequest(store)
 
 		mw(c)
@@ -101,7 +101,7 @@ func (s *TickerTestSuite) TestPrefetchTickerFromRequest() {
 		c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		c.Request.Header.Set("Origin", "https://demoticker.org")
 		store := &storage.MockStorage{}
-		store.On("FindTickerByDomain", mock.Anything).Return(storage.Ticker{}, nil)
+		store.On("FindTickerByOrigin", mock.Anything).Return(storage.Ticker{}, nil)
 		mw := PrefetchTickerFromRequest(store)
 
 		mw(c)

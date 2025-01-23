@@ -35,7 +35,6 @@ func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 
 	s.Equal(ticker.ID, response.ID)
 	s.Equal(ticker.CreatedAt, response.CreatedAt)
-	s.Equal(ticker.Domain, response.Domain)
 	s.Equal(ticker.Title, response.Title)
 	s.Equal(ticker.Description, response.Description)
 	s.Equal(ticker.Information.Author, response.Information.Author)

@@ -32,6 +32,11 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 			Mastodon: "https://systemli.social/@example",
 			Bluesky:  "https://example.com",
 		},
+		Websites: []storage.TickerWebsite{
+			{
+				Origin: "example.com",
+			},
+		},
 		Telegram: storage.TickerTelegram{
 			Active:      true,
 			ChannelName: "example",
@@ -69,7 +74,6 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(1, len(tickerResponse))
 	s.Equal(ticker.ID, tickerResponse[0].ID)
 	s.Equal(ticker.CreatedAt, tickerResponse[0].CreatedAt)
-	s.Equal(ticker.Domain, tickerResponse[0].Domain)
 	s.Equal(ticker.Title, tickerResponse[0].Title)
 	s.Equal(ticker.Description, tickerResponse[0].Description)
 	s.Equal(ticker.Active, tickerResponse[0].Active)
@@ -81,6 +85,8 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(ticker.Information.Telegram, tickerResponse[0].Information.Telegram)
 	s.Equal(ticker.Information.Mastodon, tickerResponse[0].Information.Mastodon)
 	s.Equal(ticker.Information.Bluesky, tickerResponse[0].Information.Bluesky)
+	s.Equal(1, len(ticker.Websites))
+	s.Equal(ticker.Websites[0].Origin, tickerResponse[0].Websites[0].Origin)
 	s.Equal(ticker.Telegram.Active, tickerResponse[0].Telegram.Active)
 	s.Equal(ticker.Telegram.Connected(), tickerResponse[0].Telegram.Connected)
 	s.Equal(config.Telegram.User.UserName, tickerResponse[0].Telegram.BotUsername)
