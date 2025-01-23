@@ -6,7 +6,6 @@ toolchain go1.22.2
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.1
-	github.com/asdine/storm v2.1.2+incompatible
 	github.com/bluesky-social/indigo v0.0.0-20240425170844-efe2ce5ca2e1
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.3
@@ -33,7 +32,6 @@ require (
 )
 
 require (
-	github.com/Sereal/Sereal/Go/sereal v0.0.0-20231009093132-b9187f1a92c6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.12.6 // indirect
 	github.com/bytedance/sonic/loader v0.2.1 // indirect
@@ -107,9 +105,7 @@ require (
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/whyrusleeping/cbor-gen v0.1.1-0.20240311221002-68b9f235c302 // indirect
-	go.etcd.io/bbolt v1.3.7 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
 	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect

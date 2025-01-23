@@ -60,7 +60,6 @@ func initConfig() {
 
 func Execute() {
 	rootCmd.AddCommand(runCmd)
-	rootCmd.AddCommand(dbCmd)
 	rootCmd.AddCommand(userCmd)
 	rootCmd.AddCommand(versionCmd)
 
