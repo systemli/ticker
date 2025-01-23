@@ -1,8 +1,8 @@
 module github.com/systemli/ticker
 
-go 1.22
+go 1.23
 
-toolchain go1.22.2
+toolchain go1.23.4
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.1
