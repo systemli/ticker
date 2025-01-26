@@ -143,7 +143,7 @@ type TickerLocation struct {
 }
 
 type TickerFilter struct {
-	Domain  *string
+	Origin  *string
 	Title   *string
 	Active  *bool
 	OrderBy string
@@ -161,7 +161,7 @@ func NewTickerFilter(req *http.Request) TickerFilter {
 	}
 
 	if req.URL.Query().Get("order_by") != "" {
-		opts := []string{"id", "created_at", "updated_at", "domain", "title", "active"}
+		opts := []string{"id", "created_at", "updated_at", "origin", "title", "active"}
 		for _, opt := range opts {
 			if req.URL.Query().Get("order_by") == opt {
 				filter.OrderBy = req.URL.Query().Get("order_by")
@@ -176,9 +176,9 @@ func NewTickerFilter(req *http.Request) TickerFilter {
 		filter.Sort = "desc"
 	}
 
-	domain := req.URL.Query().Get("domain")
-	if domain != "" {
-		filter.Domain = &domain
+	origin := req.URL.Query().Get("origin")
+	if origin != "" {
+		filter.Origin = &origin
 	}
 
 	title := req.URL.Query().Get("title")
