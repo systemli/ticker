@@ -993,13 +993,13 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 	})
 }
 
-func (s *SqlStorageTestSuite) TestSaveTickerWebsite() {
+func (s *SqlStorageTestSuite) TestSaveTickerWebsites() {
 	ticker := Ticker{}
 	err := s.db.Create(&ticker).Error
 	s.NoError(err)
 
 	s.Run("when ticker website is new", func() {
-		err = s.store.SaveTickerWebsite(&ticker, "example.org")
+		err = s.store.SaveTickerWebsites(&ticker, []TickerWebsite{{Origin: "http://localhost"}})
 		s.NoError(err)
 
 		var count int64
@@ -1009,59 +1009,22 @@ func (s *SqlStorageTestSuite) TestSaveTickerWebsite() {
 	})
 
 	s.Run("when ticker website is existing", func() {
-		ticker.Websites = []TickerWebsite{{Origin: "example.com"}}
+		ticker.Websites = []TickerWebsite{{Origin: "http://localhost:3000"}}
 		err := s.db.Save(&ticker).Error
 		s.NoError(err)
 
-		err = s.store.SaveTickerWebsite(&ticker, "example.com")
-		s.Error(err)
-	})
-}
-
-func (s *SqlStorageTestSuite) TestDeleteTickerWebsite() {
-	ticker := Ticker{}
-	err := s.db.Create(&ticker).Error
-	s.NoError(err)
-
-	s.Run("when ticker website does not exist", func() {
-		err := s.store.DeleteTickerWebsite(&ticker, "http://example.org")
+		err = s.store.SaveTickerWebsites(&ticker, ticker.Websites)
 		s.NoError(err)
 	})
 
-	s.Run("when ticker website exists", func() {
-		ticker.Websites = []TickerWebsite{{Origin: "http://example.org"}}
-		err := s.db.Save(&ticker).Error
-		s.NoError(err)
-
-		err = s.store.DeleteTickerWebsite(&ticker, "http://example.org")
+	s.Run("when ticker website is removed", func() {
+		err = s.store.SaveTickerWebsites(&ticker, []TickerWebsite{})
 		s.NoError(err)
 
 		var count int64
 		err = s.db.Model(&TickerWebsite{}).Count(&count).Error
 		s.NoError(err)
 		s.Equal(int64(0), count)
-	})
-}
-
-func (s *SqlStorageTestSuite) TestFindTickerWebsites() {
-	s.Run("when no websites exist", func() {
-		ticker := Ticker{ID: 1}
-		err := s.store.findTickerWebsites(&ticker)
-		s.NoError(err)
-	})
-
-	s.Run("when websites exist", func() {
-		err := s.db.Create(&Ticker{Websites: []TickerWebsite{{Origin: "example.org"}}}).Error
-		s.NoError(err)
-
-		var ticker Ticker
-		s.db.Model(&Ticker{}).Find(&ticker)
-
-		s.Nil(ticker.Websites)
-
-		err = s.store.findTickerWebsites(&ticker)
-		s.NoError(err)
-		s.Len(ticker.Websites, 1)
 	})
 }
 

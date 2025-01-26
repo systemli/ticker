@@ -42,6 +42,15 @@ type TickerLocationParam struct {
 	Lon float64 `json:"lon"`
 }
 
+type TickerWebsitesParam struct {
+	Websites []TickerWebsiteParam `json:"websites" binding:"required"`
+}
+
+type TickerWebsiteParam struct {
+	ID     int    `json:"id"`
+	Origin string `json:"origin" binding:"required"`
+}
+
 func (h *handler) GetTickers(c *gin.Context) {
 	me, err := helper.Me(c)
 	if err != nil {
@@ -157,24 +166,33 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(ticker.Users)}))
 }
 
-func (h *handler) PostTickerWebsite(c *gin.Context) {
+func (h *handler) PutTickerWebsites(c *gin.Context) {
 	ticker, err := helper.Ticker(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
-	var body struct {
-		Origin string `json:"origin" binding:"required,http_url"`
-	}
-
+	var body TickerWebsitesParam
 	err = c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
-	err = h.storage.SaveTickerWebsite(&ticker, body.Origin)
+	websites := make([]storage.TickerWebsite, 0)
+	for _, website := range body.Websites {
+		websites = append(websites, storage.TickerWebsite{
+			ID:     website.ID,
+			Origin: website.Origin,
+		})
+	}
+
+	if len(websites) == 0 {
+		err = h.storage.DeleteTickerWebsites(&ticker)
+	} else {
+		err = h.storage.SaveTickerWebsites(&ticker, websites)
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -185,23 +203,14 @@ func (h *handler) PostTickerWebsite(c *gin.Context) {
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
-func (h *handler) DeleteTickerWebsite(c *gin.Context) {
+func (h *handler) DeleteTickerWebsites(c *gin.Context) {
 	ticker, err := helper.Ticker(c)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
 	}
 
-	var body struct {
-		Origin string `json:"origin" binding:"required"`
-	}
-	err = c.Bind(&body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
-		return
-	}
-
-	err = h.storage.DeleteTickerWebsite(&ticker, body.Origin)
+	err = h.storage.DeleteTickerWebsites(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return

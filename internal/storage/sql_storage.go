@@ -206,26 +206,34 @@ func (s *SqlStorage) DeleteTicker(ticker *Ticker) error {
 	return s.DB.Delete(&ticker).Error
 }
 
-func (s *SqlStorage) SaveTickerWebsite(ticker *Ticker, domain string) error {
-	err := s.DB.Create(&TickerWebsite{
-		TickerID: ticker.ID,
-		Origin:   domain,
-	}).Error
-
-	if err != nil {
+// SaveTickerWebsites saves the websites for a ticker.
+// It will fetch all existing websites and compare them with the new websites.
+// If a website is not in the new websites, it will be deleted.
+// If a website is in the new websites, it will be updated.
+// If a website is not in the existing websites, it will be created.
+func (s *SqlStorage) SaveTickerWebsites(ticker *Ticker, websites []TickerWebsite) error {
+	var existingWebsites []TickerWebsite
+	if err := s.DB.Model(ticker).Association("Websites").Find(&existingWebsites); err != nil {
 		return err
 	}
 
-	return s.findTickerWebsites(ticker)
-}
+	for _, existingWebsite := range existingWebsites {
+		var found bool
+		for _, website := range websites {
+			if existingWebsite.Origin == website.Origin {
+				found = true
+				break
+			}
+		}
 
-func (s *SqlStorage) DeleteTickerWebsite(ticker *Ticker, domain string) error {
-	err := s.DB.Delete(TickerWebsite{}, "ticker_id = ? AND origin = ?", ticker.ID, domain).Error
-	if err != nil {
-		return err
+		if !found {
+			if err := s.DB.Delete(&existingWebsite).Error; err != nil {
+				return err
+			}
+		}
 	}
 
-	return s.findTickerWebsites(ticker)
+	return s.DB.Model(ticker).Association("Websites").Replace(websites)
 }
 
 func (s *SqlStorage) DeleteTickerWebsites(ticker *Ticker) error {
@@ -233,10 +241,6 @@ func (s *SqlStorage) DeleteTickerWebsites(ticker *Ticker) error {
 		return err
 	}
 
-	return s.findTickerWebsites(ticker)
-}
-
-func (s *SqlStorage) findTickerWebsites(ticker *Ticker) error {
 	var websites []TickerWebsite
 
 	if err := s.DB.Model(&ticker).Association("Websites").Find(&websites); err != nil {
