@@ -26,8 +26,7 @@ type Storage interface {
 	FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	SaveTicker(ticker *Ticker) error
 	DeleteTicker(ticker *Ticker) error
-	SaveTickerWebsite(ticker *Ticker, origin string) error
-	DeleteTickerWebsite(ticker *Ticker, origin string) error
+	SaveTickerWebsites(ticker *Ticker, websites []TickerWebsite) error
 	DeleteTickerWebsites(ticker *Ticker) error
 	ResetTicker(ticker *Ticker) error
 	DeleteIntegrations(ticker *Ticker) error

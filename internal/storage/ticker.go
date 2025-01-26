@@ -67,7 +67,7 @@ type TickerWebsite struct {
 	ID        int `gorm:"primaryKey"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	TickerID  int    `gorm:"index"`
+	TickerID  int    `gorm:"index;not null"`
 	Origin    string `gorm:"unique;not null"`
 }
 

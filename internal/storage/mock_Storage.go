@@ -211,24 +211,6 @@ func (_m *MockStorage) DeleteTickerUsers(ticker *Ticker) error {
 	return r0
 }
 
-// DeleteTickerWebsite provides a mock function with given fields: ticker, origin
-func (_m *MockStorage) DeleteTickerWebsite(ticker *Ticker, origin string) error {
-	ret := _m.Called(ticker, origin)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteTickerWebsite")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*Ticker, string) error); ok {
-		r0 = rf(ticker, origin)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteTickerWebsites provides a mock function with given fields: ticker
 func (_m *MockStorage) DeleteTickerWebsites(ticker *Ticker) error {
 	ret := _m.Called(ticker)
@@ -959,17 +941,17 @@ func (_m *MockStorage) SaveTicker(ticker *Ticker) error {
 	return r0
 }
 
-// SaveTickerWebsite provides a mock function with given fields: ticker, origin
-func (_m *MockStorage) SaveTickerWebsite(ticker *Ticker, origin string) error {
-	ret := _m.Called(ticker, origin)
+// SaveTickerWebsites provides a mock function with given fields: ticker, websites
+func (_m *MockStorage) SaveTickerWebsites(ticker *Ticker, websites []TickerWebsite) error {
+	ret := _m.Called(ticker, websites)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SaveTickerWebsite")
+		panic("no return value specified for SaveTickerWebsites")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*Ticker, string) error); ok {
-		r0 = rf(ticker, origin)
+	if rf, ok := ret.Get(0).(func(*Ticker, []TickerWebsite) error); ok {
+		r0 = rf(ticker, websites)
 	} else {
 		r0 = ret.Error(0)
 	}
