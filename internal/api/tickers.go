@@ -15,6 +15,33 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
+type TickerParam struct {
+	Title       string `json:"title" binding:"required"`
+	Description string `json:"description"`
+	Active      bool   `json:"active"`
+
+	Information TickerInformationParam `json:"information"`
+	Location    TickerLocationParam    `json:"location"`
+}
+
+type TickerInformationParam struct {
+	Author    string `json:"author"`
+	URL       string `json:"url"`
+	Email     string `json:"email"`
+	Twitter   string `json:"twitter"`
+	Facebook  string `json:"facebook"`
+	Instagram string `json:"instagram"`
+	Threads   string `json:"threads"`
+	Telegram  string `json:"telegram"`
+	Mastodon  string `json:"mastodon"`
+	Bluesky   string `json:"bluesky"`
+}
+
+type TickerLocationParam struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+}
+
 func (h *handler) GetTickers(c *gin.Context) {
 	me, err := helper.Me(c)
 	if err != nil {
@@ -515,26 +542,7 @@ func (h *handler) ClearTickerCache(ticker *storage.Ticker) {
 }
 
 func updateTicker(t *storage.Ticker, c *gin.Context) error {
-	var body struct {
-		Title       string `json:"title" binding:"required"`
-		Description string `json:"description"`
-		Active      bool   `json:"active"`
-		Information struct {
-			Author   string `json:"author"`
-			URL      string `json:"url"`
-			Email    string `json:"email"`
-			Twitter  string `json:"twitter"`
-			Facebook string `json:"facebook"`
-			Telegram string `json:"telegram"`
-			Mastodon string `json:"mastodon"`
-			Bluesky  string `json:"bluesky"`
-		} `json:"information"`
-		Location struct {
-			Lat float64 `json:"lat"`
-			Lon float64 `json:"lon"`
-		}
-	}
-
+	var body TickerParam
 	err := c.Bind(&body)
 	if err != nil {
 		return err
@@ -548,6 +556,8 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	t.Information.Email = body.Information.Email
 	t.Information.Twitter = body.Information.Twitter
 	t.Information.Facebook = body.Information.Facebook
+	t.Information.Instagram = body.Information.Instagram
+	t.Information.Threads = body.Information.Threads
 	t.Information.Telegram = body.Information.Telegram
 	t.Information.Mastodon = body.Information.Mastodon
 	t.Information.Bluesky = body.Information.Bluesky
