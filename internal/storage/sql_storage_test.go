@@ -513,7 +513,7 @@ func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 	err = s.db.Create(&user).Error
 	s.NoError(err)
 
-	ticker := Ticker{Users: []User{user}, Active: false, Domain: "localhost", Title: "title"}
+	ticker := Ticker{Users: []User{user}, Active: false, Title: "title", Websites: []TickerWebsite{{Origin: "http://localhost"}}}
 	err = s.db.Create(&ticker).Error
 	s.NoError(err)
 
@@ -558,14 +558,14 @@ func (s *SqlStorageTestSuite) TestFindTickersByUser() {
 		s.NoError(err)
 		s.Len(tickers, 1)
 
-		domain := "localhost"
-		filter = TickerFilter{OrderBy: "id", Sort: "desc", Domain: &domain}
+		origin := "localhost"
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Origin: &origin}
 		tickers, err = s.store.FindTickersByUser(user, filter)
 		s.NoError(err)
 		s.Len(tickers, 1)
 
-		domain = "systemli.org"
-		filter = TickerFilter{OrderBy: "id", Sort: "desc", Domain: &domain}
+		origin = "systemli.org"
+		filter = TickerFilter{OrderBy: "id", Sort: "desc", Origin: &origin}
 		tickers, err = s.store.FindTickersByUser(user, filter)
 		s.NoError(err)
 		s.Empty(tickers)

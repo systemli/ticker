@@ -41,19 +41,19 @@ func TestTickerSignalGroupConnect(t *testing.T) {
 func TestNewTickerFilter(t *testing.T) {
 	filter := NewTickerFilter(nil)
 	assert.Nil(t, filter.Active)
-	assert.Nil(t, filter.Domain)
+	assert.Nil(t, filter.Origin)
 	assert.Nil(t, filter.Title)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	filter = NewTickerFilter(req)
 	assert.Nil(t, filter.Active)
-	assert.Nil(t, filter.Domain)
+	assert.Nil(t, filter.Origin)
 	assert.Nil(t, filter.Title)
 
-	req = httptest.NewRequest("GET", "/?active=true&domain=example.org&title=Title", nil)
+	req = httptest.NewRequest("GET", "/?active=true&origin=example.org&title=Title", nil)
 	filter = NewTickerFilter(req)
 	assert.True(t, *filter.Active)
-	assert.Equal(t, "example.org", *filter.Domain)
+	assert.Equal(t, "example.org", *filter.Origin)
 	assert.Equal(t, "Title", *filter.Title)
 
 	req = httptest.NewRequest("GET", "/?order_by=created_at&sort=asc", nil)

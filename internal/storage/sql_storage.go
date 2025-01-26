@@ -120,15 +120,16 @@ func (s *SqlStorage) FindTickersByUser(user User, filter TickerFilter, opts ...f
 		db = db.Where("active = ?", *filter.Active)
 	}
 
-	if filter.Domain != nil {
-		db = db.Where("domain LIKE ?", fmt.Sprintf("%%%s%%", *filter.Domain))
+	if filter.Origin != nil {
+		db = db.Joins("JOIN ticker_websites ON tickers.id = ticker_websites.ticker_id").
+			Where("ticker_websites.origin LIKE ?", fmt.Sprintf("%%%s%%", *filter.Origin))
 	}
 
 	if filter.Title != nil {
 		db = db.Where("title LIKE ?", fmt.Sprintf("%%%s%%", *filter.Title))
 	}
 
-	db = db.Order(fmt.Sprintf("%s %s", filter.OrderBy, filter.Sort))
+	db = db.Order(fmt.Sprintf("tickers.%s %s", filter.OrderBy, filter.Sort))
 
 	var err error
 	if user.IsSuperAdmin {
