@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -131,7 +132,7 @@ func (s *TickerTestSuite) TestPostTicker() {
 	})
 
 	s.Run("when storage returns error", func() {
-		body := `{"domain":"localhost","title":"title","description":"description"}`
+		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
@@ -143,10 +144,54 @@ func (s *TickerTestSuite) TestPostTicker() {
 	})
 
 	s.Run("when storage returns ticker", func() {
-		body := `{"domain":"localhost","title":"title","description":"description"}`
-		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
+		param := TickerParam{
+			Title:       "title",
+			Description: "description",
+			Active:      true,
+			Information: TickerInformationParam{
+				Author:    "author",
+				URL:       "https://example.org",
+				Email:     "author@example.org",
+				Twitter:   "author",
+				Facebook:  "author",
+				Instagram: "author",
+				Threads:   "author",
+				Telegram:  "author",
+				Mastodon:  "https://example.org/@author",
+				Bluesky:   "https://author.bsky.social",
+			},
+			Location: TickerLocationParam{
+				Lat: 1,
+				Lon: 1,
+			},
+		}
+		b, err := json.Marshal(param)
+		s.NoError(err)
+
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", bytes.NewReader(b))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		ticker := storage.Ticker{
+			Title:       "title",
+			Description: "description",
+			Active:      true,
+			Information: storage.TickerInformation{
+				Author:    "author",
+				URL:       "https://example.org",
+				Email:     "author@example.org",
+				Twitter:   "author",
+				Facebook:  "author",
+				Instagram: "author",
+				Threads:   "author",
+				Telegram:  "author",
+				Mastodon:  "https://example.org/@author",
+				Bluesky:   "https://author.bsky.social",
+			},
+			Location: storage.TickerLocation{
+				Lat: 1,
+				Lon: 1,
+			},
+		}
+		s.store.On("SaveTicker", &ticker).Return(nil).Once()
 		h := s.handler()
 		h.PostTicker(s.ctx)
 

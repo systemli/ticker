@@ -51,14 +51,16 @@ func (t *Ticker) AsMap() map[string]interface{} {
 }
 
 type TickerInformation struct {
-	Author   string
-	URL      string
-	Email    string
-	Twitter  string
-	Facebook string
-	Telegram string
-	Mastodon string
-	Bluesky  string
+	Author    string
+	URL       string
+	Email     string
+	Twitter   string
+	Facebook  string
+	Instagram string
+	Threads   string
+	Telegram  string
+	Mastodon  string
+	Bluesky   string
 }
 
 type TickerWebsite struct {

@@ -23,14 +23,16 @@ type Ticker struct {
 }
 
 type Information struct {
-	Author   string `json:"author"`
-	URL      string `json:"url"`
-	Email    string `json:"email"`
-	Twitter  string `json:"twitter"`
-	Facebook string `json:"facebook"`
-	Telegram string `json:"telegram"`
-	Mastodon string `json:"mastodon"`
-	Bluesky  string `json:"bluesky"`
+	Author    string `json:"author"`
+	URL       string `json:"url"`
+	Email     string `json:"email"`
+	Twitter   string `json:"twitter"`
+	Facebook  string `json:"facebook"`
+	Instagram string `json:"instagram"`
+	Threads   string `json:"threads"`
+	Telegram  string `json:"telegram"`
+	Mastodon  string `json:"mastodon"`
+	Bluesky   string `json:"bluesky"`
 }
 
 type Website struct {
@@ -91,14 +93,16 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 		Description: t.Description,
 		Active:      t.Active,
 		Information: Information{
-			Author:   t.Information.Author,
-			URL:      t.Information.URL,
-			Email:    t.Information.Email,
-			Twitter:  t.Information.Twitter,
-			Facebook: t.Information.Facebook,
-			Telegram: t.Information.Telegram,
-			Mastodon: t.Information.Mastodon,
-			Bluesky:  t.Information.Bluesky,
+			Author:    t.Information.Author,
+			URL:       t.Information.URL,
+			Email:     t.Information.Email,
+			Twitter:   t.Information.Twitter,
+			Facebook:  t.Information.Facebook,
+			Instagram: t.Information.Instagram,
+			Threads:   t.Information.Threads,
+			Telegram:  t.Information.Telegram,
+			Mastodon:  t.Information.Mastodon,
+			Bluesky:   t.Information.Bluesky,
 		},
 		Websites: websites,
 		Telegram: Telegram{
