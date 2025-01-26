@@ -9,7 +9,6 @@ import (
 type InitTicker struct {
 	ID          int                   `json:"id"`
 	CreatedAt   time.Time             `json:"createdAt"`
-	Domain      string                `json:"domain"`
 	Title       string                `json:"title"`
 	Description string                `json:"description"`
 	Information InitTickerInformation `json:"information"`
@@ -30,7 +29,6 @@ func InitTickerResponse(ticker storage.Ticker) InitTicker {
 	return InitTicker{
 		ID:          ticker.ID,
 		CreatedAt:   ticker.CreatedAt,
-		Domain:      ticker.Domain,
 		Title:       ticker.Title,
 		Description: ticker.Description,
 		Information: InitTickerInformation{

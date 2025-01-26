@@ -10,11 +10,11 @@ import (
 type Ticker struct {
 	ID          int         `json:"id"`
 	CreatedAt   time.Time   `json:"createdAt"`
-	Domain      string      `json:"domain"`
 	Title       string      `json:"title"`
 	Description string      `json:"description"`
 	Active      bool        `json:"active"`
 	Information Information `json:"information"`
+	Websites    []Website   `json:"websites"`
 	Telegram    Telegram    `json:"telegram"`
 	Mastodon    Mastodon    `json:"mastodon"`
 	Bluesky     Bluesky     `json:"bluesky"`
@@ -31,6 +31,12 @@ type Information struct {
 	Telegram string `json:"telegram"`
 	Mastodon string `json:"mastodon"`
 	Bluesky  string `json:"bluesky"`
+}
+
+type Website struct {
+	ID        int       `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	Origin    string    `json:"origin"`
 }
 
 type Telegram struct {
@@ -69,10 +75,18 @@ type Location struct {
 }
 
 func TickerResponse(t storage.Ticker, config config.Config) Ticker {
+	websites := make([]Website, 0)
+	for _, website := range t.Websites {
+		websites = append(websites, Website{
+			ID:        website.ID,
+			CreatedAt: website.CreatedAt,
+			Origin:    website.Origin,
+		})
+	}
+
 	return Ticker{
 		ID:          t.ID,
 		CreatedAt:   t.CreatedAt,
-		Domain:      t.Domain,
 		Title:       t.Title,
 		Description: t.Description,
 		Active:      t.Active,
@@ -86,6 +100,7 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Mastodon: t.Information.Mastodon,
 			Bluesky:  t.Information.Bluesky,
 		},
+		Websites: websites,
 		Telegram: Telegram{
 			Active:      t.Telegram.Active,
 			Connected:   t.Telegram.Connected(),

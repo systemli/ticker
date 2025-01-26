@@ -12,13 +12,13 @@ func (h *handler) GetInit(c *gin.Context) {
 	settings := response.Settings{
 		RefreshInterval: h.storage.GetRefreshIntervalSettings().RefreshInterval,
 	}
-	domain, err := helper.GetDomain(c)
+	origin, err := helper.GetOrigin(c)
 	if err != nil {
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))
 		return
 	}
 
-	ticker, err := h.storage.FindTickerByDomain(domain)
+	ticker, err := h.storage.FindTickerByOrigin(origin)
 	if err != nil || !ticker.Active {
 		settings.InactiveSettings = h.storage.GetInactiveSettings()
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))

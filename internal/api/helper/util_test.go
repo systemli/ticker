@@ -14,29 +14,38 @@ type UtilTestSuite struct {
 	suite.Suite
 }
 
-func (s *UtilTestSuite) TestGetDomain() {
+func (s *UtilTestSuite) TestGetOrigin() {
 	s.Run("when origin is empty", func() {
 		c := s.buildContext(url.URL{}, http.Header{})
-		domain, err := GetDomain(c)
-		s.Equal("", domain)
+		origin, err := GetOrigin(c)
+		s.Equal("", origin)
 		s.Equal("origin header not found", err.Error())
+	})
+
+	s.Run("when origin is not a valid URL", func() {
+		c := s.buildContext(url.URL{}, http.Header{
+			"Origin": []string{"localhost"},
+		})
+		origin, err := GetOrigin(c)
+		s.Equal("", origin)
+		s.Error(err)
 	})
 
 	s.Run("when origin is localhost", func() {
 		c := s.buildContext(url.URL{}, http.Header{
-			"Origin": []string{"http://localhost/"},
+			"Origin": []string{"http://localhost"},
 		})
-		domain, err := GetDomain(c)
-		s.Equal("localhost", domain)
+		origin, err := GetOrigin(c)
+		s.Equal("http://localhost", origin)
 		s.NoError(err)
 	})
 
 	s.Run("when origin is localhost with port", func() {
 		c := s.buildContext(url.URL{}, http.Header{
-			"Origin": []string{"http://localhost:3000/"},
+			"Origin": []string{"http://localhost:3000"},
 		})
-		domain, err := GetDomain(c)
-		s.Equal("localhost", domain)
+		origin, err := GetOrigin(c)
+		s.Equal("http://localhost:3000", origin)
 		s.NoError(err)
 	})
 
@@ -44,17 +53,17 @@ func (s *UtilTestSuite) TestGetDomain() {
 		c := s.buildContext(url.URL{}, http.Header{
 			"Origin": []string{"http://www.demoticker.org/"},
 		})
-		domain, err := GetDomain(c)
-		s.Equal("demoticker.org", domain)
+		origin, err := GetOrigin(c)
+		s.Equal("http://www.demoticker.org", origin)
 		s.NoError(err)
 	})
 
 	s.Run("when query param is set", func() {
-		c := s.buildContext(url.URL{RawQuery: "origin=another.demoticker.org"}, http.Header{
+		c := s.buildContext(url.URL{RawQuery: "origin=http://another.demoticker.org"}, http.Header{
 			"Origin": []string{"http://www.demoticker.org/"},
 		})
-		domain, err := GetDomain(c)
-		s.Equal("another.demoticker.org", domain)
+		domain, err := GetOrigin(c)
+		s.Equal("http://another.demoticker.org", domain)
 		s.NoError(err)
 	})
 }

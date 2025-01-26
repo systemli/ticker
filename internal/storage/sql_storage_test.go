@@ -31,6 +31,7 @@ func (s *SqlStorageTestSuite) SetupTest() {
 		&TickerMastodon{},
 		&TickerBluesky{},
 		&TickerSignalGroup{},
+		&TickerWebsite{},
 		&User{},
 		&Message{},
 		&Upload{},
@@ -49,6 +50,7 @@ func (s *SqlStorageTestSuite) BeforeTest(suiteName, testName string) {
 	s.NoError(s.db.Exec("DELETE FROM ticker_telegrams").Error)
 	s.NoError(s.db.Exec("DELETE FROM ticker_blueskies").Error)
 	s.NoError(s.db.Exec("DELETE FROM ticker_signal_groups").Error)
+	s.NoError(s.db.Exec("DELETE FROM ticker_websites").Error)
 	s.NoError(s.db.Exec("DELETE FROM settings").Error)
 	s.NoError(s.db.Exec("DELETE FROM uploads").Error)
 }
@@ -465,18 +467,18 @@ func (s *SqlStorageTestSuite) TestFindTickersByIDs() {
 	})
 }
 
-func (s *SqlStorageTestSuite) TestFindTickerByDomain() {
+func (s *SqlStorageTestSuite) TestFindTickerByOrigin() {
 	s.Run("when ticker does not exist", func() {
-		_, err := s.store.FindTickerByDomain("systemli.org")
+		_, err := s.store.FindTickerByOrigin("https://systemli.org")
 		s.Error(err)
 	})
 
-	ticker := Ticker{Domain: "systemli.org"}
+	ticker := Ticker{Websites: []TickerWebsite{{Origin: "https://systemli.org"}}}
 	err := s.db.Create(&ticker).Error
 	s.NoError(err)
 
 	s.Run("when ticker exists", func() {
-		ticker, err := s.store.FindTickerByDomain("systemli.org")
+		ticker, err := s.store.FindTickerByOrigin("https://systemli.org")
 		s.NoError(err)
 		s.NotNil(ticker)
 	})
@@ -488,11 +490,12 @@ func (s *SqlStorageTestSuite) TestFindTickerByDomain() {
 		err = s.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&ticker).Error
 		s.NoError(err)
 
-		ticker, err := s.store.FindTickerByDomain("systemli.org", WithPreload())
+		ticker, err := s.store.FindTickerByOrigin("https://systemli.org", WithPreload())
 		s.NoError(err)
 		s.NotNil(ticker)
 		s.True(ticker.Mastodon.Active)
 		s.True(ticker.Telegram.Active)
+		s.Equal("https://systemli.org", ticker.Websites[0].Origin)
 	})
 }
 
@@ -987,6 +990,78 @@ func (s *SqlStorageTestSuite) TestDeleteTicker() {
 		err = s.db.Model(&TickerSignalGroup{}).Count(&signalGroupCount).Error
 		s.NoError(err)
 		s.Equal(int64(0), signalGroupCount)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveTickerWebsite() {
+	ticker := Ticker{}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
+
+	s.Run("when ticker website is new", func() {
+		err = s.store.SaveTickerWebsite(&ticker, "example.org")
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&TickerWebsite{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+	})
+
+	s.Run("when ticker website is existing", func() {
+		ticker.Websites = []TickerWebsite{{Origin: "example.com"}}
+		err := s.db.Save(&ticker).Error
+		s.NoError(err)
+
+		err = s.store.SaveTickerWebsite(&ticker, "example.com")
+		s.Error(err)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestDeleteTickerWebsite() {
+	ticker := Ticker{}
+	err := s.db.Create(&ticker).Error
+	s.NoError(err)
+
+	s.Run("when ticker website does not exist", func() {
+		err := s.store.DeleteTickerWebsite(&ticker, "http://example.org")
+		s.NoError(err)
+	})
+
+	s.Run("when ticker website exists", func() {
+		ticker.Websites = []TickerWebsite{{Origin: "http://example.org"}}
+		err := s.db.Save(&ticker).Error
+		s.NoError(err)
+
+		err = s.store.DeleteTickerWebsite(&ticker, "http://example.org")
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&TickerWebsite{}).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(0), count)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestFindTickerWebsites() {
+	s.Run("when no websites exist", func() {
+		ticker := Ticker{ID: 1}
+		err := s.store.findTickerWebsites(&ticker)
+		s.NoError(err)
+	})
+
+	s.Run("when websites exist", func() {
+		err := s.db.Create(&Ticker{Websites: []TickerWebsite{{Origin: "example.org"}}}).Error
+		s.NoError(err)
+
+		var ticker Ticker
+		s.db.Model(&Ticker{}).Find(&ticker)
+
+		s.Nil(ticker.Websites)
+
+		err = s.store.findTickerWebsites(&ticker)
+		s.NoError(err)
+		s.Len(ticker.Websites, 1)
 	})
 }
 

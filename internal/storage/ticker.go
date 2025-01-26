@@ -10,7 +10,7 @@ type Ticker struct {
 	ID          int `gorm:"primaryKey"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Domain      string `gorm:"unique,index"`
+	Domain      string
 	Title       string
 	Description string
 	Active      bool
@@ -20,7 +20,8 @@ type Ticker struct {
 	Mastodon    TickerMastodon
 	Bluesky     TickerBluesky
 	SignalGroup TickerSignalGroup
-	Users       []User `gorm:"many2many:ticker_users;"`
+	Websites    []TickerWebsite `gorm:"foreignKey:TickerID;"`
+	Users       []User          `gorm:"many2many:ticker_users;"`
 }
 
 func NewTicker() Ticker {
@@ -58,6 +59,14 @@ type TickerInformation struct {
 	Telegram string
 	Mastodon string
 	Bluesky  string
+}
+
+type TickerWebsite struct {
+	ID        int `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TickerID  int    `gorm:"index"`
+	Origin    string `gorm:"unique;not null"`
 }
 
 type TickerTelegram struct {

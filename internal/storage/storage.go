@@ -22,10 +22,13 @@ type Storage interface {
 	FindTickersByUser(user User, filter TickerFilter, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error)
 	FindTickerByUserAndID(user User, id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error)
-	FindTickerByDomain(domain string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
+	FindTickerByOrigin(origin string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error)
 	SaveTicker(ticker *Ticker) error
 	DeleteTicker(ticker *Ticker) error
+	SaveTickerWebsite(ticker *Ticker, origin string) error
+	DeleteTickerWebsite(ticker *Ticker, origin string) error
+	DeleteTickerWebsites(ticker *Ticker) error
 	ResetTicker(ticker *Ticker) error
 	DeleteIntegrations(ticker *Ticker) error
 	DeleteMastodon(ticker *Ticker) error

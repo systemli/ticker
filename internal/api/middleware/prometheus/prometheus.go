@@ -47,7 +47,7 @@ func prepareHandler(h string) string {
 }
 
 func prepareOrigin(c *gin.Context) string {
-	domain, err := helper.GetDomain(c)
+	domain, err := helper.GetOrigin(c)
 	if err != nil {
 		return ""
 	}

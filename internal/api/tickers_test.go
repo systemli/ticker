@@ -177,7 +177,7 @@ func (s *TickerTestSuite) TestPutTicker() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		body := `{"domain":"localhost","title":"title","description":"description"}`
+		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
@@ -188,28 +188,11 @@ func (s *TickerTestSuite) TestPutTicker() {
 		s.store.AssertExpectations(s.T())
 	})
 
-	s.Run("user tries to update the domain", func() {
-		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
-		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
-		s.ctx.Set("me", storage.User{IsSuperAdmin: false})
-		body := `{"domain":"new_domain","title":"title","description":"description"}`
-		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
-		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		ticker := &storage.Ticker{Domain: "localhost", Title: "title", Description: "description"}
-		s.store.On("SaveTicker", ticker).Return(nil).Once()
-		h := s.handler()
-		h.PutTicker(s.ctx)
-
-		s.Equal(http.StatusOK, s.w.Code)
-		s.Nil(s.cache.Get("response:localhost:/v1/init"))
-		s.store.AssertExpectations(s.T())
-	})
-
 	s.Run("happy path", func() {
-		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "localhost"}}})
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
-		body := `{"domain":"localhost","title":"title","description":"description"}`
+		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
@@ -266,6 +249,120 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *TickerTestSuite) TestPostTickerWebsite() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.PostTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body is invalid", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers/1/websites", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PostTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body does not contain valid origin", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"origin":"example.org"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers/1/websites", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PostTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"origin":"https://example.org"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers/1/websites", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTickerWebsite", mock.Anything, "https://example.org").Return(errors.New("storage error")).Once()
+
+		h := s.handler()
+		h.PostTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		s.cache.Set("response:https://example.org:/v1/init", true, time.Minute)
+		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "https://example.org"}}})
+		body := `{"origin":"https://example.org"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers/1/websites", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTickerWebsite", mock.Anything, "https://example.org").Return(nil).Once()
+
+		h := s.handler()
+		h.PostTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+		s.Nil(s.cache.Get("response:https://example.org:/v1/init"))
+	})
+}
+
+func (s *TickerTestSuite) TestDeleteTickerWebsite() {
+	s.Run("when ticker not found", func() {
+		h := s.handler()
+		h.DeleteTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when body is invalid", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/websites", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.DeleteTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"origin":"http://example.org"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/websites/https://example.org", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("DeleteTickerWebsite", mock.Anything, "http://example.org").Return(errors.New("storage error")).Once()
+
+		h := s.handler()
+		h.DeleteTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns ticker", func() {
+		s.cache.Set("response:http://example.org:/v1/init", true, time.Minute)
+		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "http://example.org"}}})
+		body := `{"origin":"http://example.org"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/websites/https://example.org", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("DeleteTickerWebsite", mock.Anything, "http://example.org").Return(nil).Once()
+
+		h := s.handler()
+		h.DeleteTickerWebsite(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+		s.Nil(s.cache.Get("response:http://example.org:/v1/init"))
 	})
 }
 
@@ -1166,13 +1263,15 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
-		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
+		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "localhost"}}})
 		s.store.On("DeleteTicker", mock.Anything).Return(nil)
 		h := s.handler()
 		h.DeleteTicker(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
-		s.Nil(s.cache.Get("response:localhost:/v1/init"))
+		item, found := s.cache.Get("response:localhost:/v1/init")
+		s.Nil(item)
+		s.False(found)
 		s.store.AssertExpectations(s.T())
 	})
 }
@@ -1252,13 +1351,15 @@ func (s *TickerTestSuite) TestResetTicker() {
 
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
-		s.ctx.Set("ticker", storage.Ticker{Domain: "localhost"})
+		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "localhost"}}})
 		s.store.On("ResetTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.ResetTicker(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
-		s.Nil(s.cache.Get("response:localhost:/v1/init"))
+		item, found := s.cache.Get("response:localhost:/v1/init")
+		s.Nil(item)
+		s.False(found)
 		s.store.AssertExpectations(s.T())
 	})
 }

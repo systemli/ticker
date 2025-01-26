@@ -85,7 +85,7 @@ func (s *ResponseCacheTestSuite) TestCachePage() {
 
 		inMemoryCache := cache.NewCache(time.Minute)
 		defer inMemoryCache.Close()
-		inMemoryCache.Set("response:localhost:/ping:", responseCache{
+		inMemoryCache.Set("response:http://localhost:/ping:", responseCache{
 			Status: http.StatusOK,
 			Header: http.Header{
 				"DNT": []string{"1"},

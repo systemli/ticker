@@ -39,48 +39,48 @@ func (s *InitTestSuite) TestGetInit() {
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.Equal(`{"data":{"settings":{"refreshInterval":10000},"ticker":null},"status":"success","error":{}}`, s.w.Body.String())
-		s.store.AssertNotCalled(s.T(), "FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything)
+		s.store.AssertNotCalled(s.T(), "FindTickerByOrigin", "", mock.Anything)
 		s.store.AssertExpectations(s.T())
 	})
 
 	s.Run("when database returns error", func() {
-		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
-		s.store.On("FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything).Return(storage.Ticker{}, errors.New("storage error")).Once()
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=https://demoticker.org", nil)
+		s.store.On("FindTickerByOrigin", "https://demoticker.org", mock.Anything).Return(storage.Ticker{}, errors.New("storage error")).Once()
 		s.store.On("GetInactiveSettings").Return(storage.DefaultInactiveSettings()).Once()
 		h := s.handler()
 		h.GetInit(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.Contains(s.w.Body.String(), `"ticker":null`)
-		s.store.AssertCalled(s.T(), "FindTickerByDomain", "demoticker.org", mock.Anything)
+		s.store.AssertCalled(s.T(), "FindTickerByOrigin", "https://demoticker.org", mock.Anything)
 		s.store.AssertExpectations(s.T())
 	})
 
 	s.Run("when database returns an inactive ticker", func() {
-		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=https://demoticker.org", nil)
 		ticker := storage.NewTicker()
 		ticker.Active = false
-		s.store.On("FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything).Return(ticker, nil).Once()
+		s.store.On("FindTickerByOrigin", "https://demoticker.org", mock.Anything).Return(ticker, nil).Once()
 		s.store.On("GetInactiveSettings").Return(storage.DefaultInactiveSettings()).Once()
 		h := s.handler()
 		h.GetInit(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.Contains(s.w.Body.String(), `"ticker":null`)
-		s.store.AssertCalled(s.T(), "FindTickerByDomain", "demoticker.org", mock.Anything)
+		s.store.AssertCalled(s.T(), "FindTickerByOrigin", "https://demoticker.org", mock.Anything)
 	})
 
 	s.Run("when database returns an active ticker", func() {
-		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=demoticker.org", nil)
+		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/init?origin=https://demoticker.org", nil)
 		ticker := storage.NewTicker()
 		ticker.Active = true
-		s.store.On("FindTickerByDomain", mock.AnythingOfType("string"), mock.Anything).Return(ticker, nil).Once()
+		s.store.On("FindTickerByOrigin", "https://demoticker.org", mock.Anything).Return(ticker, nil).Once()
 		s.store.On("GetInactiveSettings").Return(storage.DefaultInactiveSettings()).Once()
 		h := s.handler()
 		h.GetInit(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
-		s.store.AssertCalled(s.T(), "FindTickerByDomain", "demoticker.org", mock.Anything)
+		s.store.AssertCalled(s.T(), "FindTickerByOrigin", "https://demoticker.org", mock.Anything)
 	})
 }
 
