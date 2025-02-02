@@ -151,6 +151,12 @@ func (s *SqlStorageTestSuite) TestFindUsersByIDs() {
 		s.Empty(users)
 	})
 
+	s.Run("when empty ids", func() {
+		users, err := s.store.FindUsersByIDs([]int{})
+		s.NoError(err)
+		s.Empty(users)
+	})
+
 	s.Run("when users exist", func() {
 		user.Tickers = []Ticker{{ID: 1}}
 		err := s.db.Create(&user).Error

@@ -42,6 +42,12 @@ type TickerLocationParam struct {
 	Lon float64 `json:"lon"`
 }
 
+type TickerUsersParam struct {
+	Users []struct {
+		ID int `json:"id"`
+	} `json:"users" binding:"required"`
+}
+
 type TickerWebsitesParam struct {
 	Websites []TickerWebsiteParam `json:"websites" binding:"required"`
 }
@@ -145,18 +151,24 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 		return
 	}
 
-	var body struct {
-		Users []storage.User `json:"users" binding:"required"`
-	}
-
+	var body TickerUsersParam
 	err = c.Bind(&body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
 	}
 
-	ticker.Users = body.Users
+	userIds := make([]int, 0)
+	for _, user := range body.Users {
+		userIds = append(userIds, user.ID)
+	}
+	users, err := h.storage.FindUsersByIDs(userIds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
 
+	ticker.Users = users
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))

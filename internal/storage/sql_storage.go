@@ -54,6 +54,11 @@ func (s *SqlStorage) FindUserByID(id int, opts ...func(*gorm.DB) *gorm.DB) (User
 
 func (s *SqlStorage) FindUsersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
 	users := make([]User, 0)
+
+	if len(ids) == 0 {
+		return users, nil
+	}
+
 	db := s.prepareDb(opts...)
 	err := db.Find(&users, ids).Error
 

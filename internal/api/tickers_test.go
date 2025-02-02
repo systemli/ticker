@@ -270,11 +270,25 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 		s.store.AssertExpectations(s.T())
 	})
 
+	s.Run("when find users not working", func() {
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("FindUsersByIDs", mock.Anything).Return(nil, errors.New("storage error")).Once()
+		h := s.handler()
+		h.PutTickerUsers(s.ctx)
+
+		s.Equal(http.StatusInternalServerError, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
 		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
 		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTickerUsers(s.ctx)
@@ -288,6 +302,7 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
 		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutTickerUsers(s.ctx)
