@@ -20,14 +20,16 @@ func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 		Title:       "Example",
 		Description: "Example",
 		Information: storage.TickerInformation{
-			Author:   "Example",
-			URL:      "https://example.com",
-			Email:    "contact@example.com",
-			Twitter:  "example",
-			Facebook: "example",
-			Telegram: "example",
-			Mastodon: "example",
-			Bluesky:  "example",
+			Author:    "Example",
+			URL:       "https://example.com",
+			Email:     "contact@example.com",
+			Twitter:   "example",
+			Facebook:  "example",
+			Instagram: "example",
+			Threads:   "example",
+			Telegram:  "example",
+			Mastodon:  "example",
+			Bluesky:   "example",
 		},
 	}
 
@@ -42,6 +44,8 @@ func (s *InitTickerResponseTestSuite) TestInitTickerResponse() {
 	s.Equal(ticker.Information.Email, response.Information.Email)
 	s.Equal(ticker.Information.Twitter, response.Information.Twitter)
 	s.Equal(ticker.Information.Facebook, response.Information.Facebook)
+	s.Equal(ticker.Information.Instagram, response.Information.Instagram)
+	s.Equal(ticker.Information.Threads, response.Information.Threads)
 	s.Equal(ticker.Information.Telegram, response.Information.Telegram)
 	s.Equal(ticker.Information.Mastodon, response.Information.Mastodon)
 	s.Equal(ticker.Information.Bluesky, response.Information.Bluesky)
