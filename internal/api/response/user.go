@@ -9,6 +9,7 @@ import (
 type User struct {
 	ID           int          `json:"id"`
 	CreatedAt    time.Time    `json:"createdAt"`
+	LastLogin    time.Time    `json:"lastLogin"`
 	Email        string       `json:"email"`
 	Role         string       `json:"role"`
 	Tickers      []UserTicker `json:"tickers"`
@@ -25,6 +26,7 @@ func UserResponse(user storage.User) User {
 	return User{
 		ID:           user.ID,
 		CreatedAt:    user.CreatedAt,
+		LastLogin:    user.LastLogin,
 		Email:        user.Email,
 		IsSuperAdmin: user.IsSuperAdmin,
 		Tickers:      UserTickersResponse(user.Tickers),

@@ -55,6 +55,11 @@ func Authenticator(s storage.Storage) func(c *gin.Context) (interface{}, error) 
 		}
 
 		if user.Authenticate(form.Password) {
+			user.LastLogin = time.Now()
+			if err = s.SaveUser(&user); err != nil {
+				log.WithError(err).Error("failed to save user")
+			}
+
 			return user, nil
 		}
 

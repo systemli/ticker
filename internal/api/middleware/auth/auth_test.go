@@ -56,6 +56,7 @@ func (s *AuthTestSuite) TestAuthenticator() {
 
 		mockStorage := &storage.MockStorage{}
 		mockStorage.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		mockStorage.On("SaveUser", mock.Anything).Return(nil)
 		authenticator := Authenticator(mockStorage)
 
 		s.Run("with correct password", func() {
