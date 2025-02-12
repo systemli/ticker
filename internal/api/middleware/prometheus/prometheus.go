@@ -13,10 +13,9 @@ import (
 
 var (
 	requestDurationHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "http_request_duration_seconds",
-		Help:    "The HTTP requests latency in seconds",
-		Buckets: []float64{0.5, 0.9, 0.95, 0.99},
-	}, []string{"handler", "origin", "code"})
+		Name: "http_request_duration_seconds",
+		Help: "The HTTP requests latency in seconds",
+	}, []string{"method", "path", "origin", "code"})
 )
 
 func NewPrometheus() gin.HandlerFunc {
@@ -31,26 +30,20 @@ func NewPrometheus() gin.HandlerFunc {
 
 		c.Next()
 
-		handler := prepareHandler(c.HandlerName())
+		method := c.Request.Method
+		path := c.FullPath()
 		origin := prepareOrigin(c)
 		code := strconv.Itoa(c.Writer.Status())
-		elapsed := float64(time.Since(start)) / float64(time.Second)
 
-		requestDurationHistogram.WithLabelValues(handler, origin, code).Observe(elapsed)
+		requestDurationHistogram.WithLabelValues(method, path, origin, code).Observe(time.Since(start).Seconds())
 	}
 }
 
-func prepareHandler(h string) string {
-	s := strings.Split(h, ".")
-
-	return strings.TrimSuffix(s[len(s)-1], "-fm")
-}
-
 func prepareOrigin(c *gin.Context) string {
-	domain, err := helper.GetOrigin(c)
+	origin, err := helper.GetOrigin(c)
 	if err != nil {
 		return ""
 	}
 
-	return domain
+	return strings.Split(origin, "://")[1]
 }
