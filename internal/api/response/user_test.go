@@ -17,6 +17,7 @@ func (s *UsersResponseTestSuite) TestUsersResponse() {
 		{
 			ID:           1,
 			CreatedAt:    time.Now(),
+			LastLogin:    time.Now(),
 			Email:        "user@systemli.org",
 			IsSuperAdmin: true,
 			Tickers: []storage.Ticker{
@@ -33,6 +34,7 @@ func (s *UsersResponseTestSuite) TestUsersResponse() {
 	s.Equal(1, len(usersResponse))
 	s.Equal(users[0].ID, usersResponse[0].ID)
 	s.Equal(users[0].CreatedAt, usersResponse[0].CreatedAt)
+	s.Equal(users[0].LastLogin, usersResponse[0].LastLogin)
 	s.Equal(users[0].Email, usersResponse[0].Email)
 	s.Equal(users[0].IsSuperAdmin, usersResponse[0].IsSuperAdmin)
 	s.Equal(1, len(usersResponse[0].Tickers))

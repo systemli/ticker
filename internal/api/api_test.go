@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -75,6 +76,7 @@ func (s *APITestSuite) TestLogin() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
 		s.store.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.store.On("SaveUser", mock.Anything).Return(nil)
 		r := API(s.cfg, s.store, s.logger)
 
 		body := `{"username":"louis@systemli.org","password":"password"}`
@@ -95,6 +97,23 @@ func (s *APITestSuite) TestLogin() {
 		s.NotNil(res.Expire)
 		s.NotNil(res.Token)
 		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when save user fails", func() {
+		user, err := storage.NewUser("user@systemli.org", "password")
+		s.NoError(err)
+		s.store.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.store.On("SaveUser", mock.Anything).Return(errors.New("failed to save user"))
+
+		r := API(s.cfg, s.store, s.logger)
+
+		body := `{"username":"louis@systemli.org","password":"password"}`
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
+		req.Header.Add("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		s.Equal(http.StatusOK, w.Code)
 	})
 }
 

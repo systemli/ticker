@@ -14,6 +14,7 @@ type User struct {
 	ID                int `gorm:"primaryKey"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	LastLogin         time.Time
 	Email             string `gorm:"uniqueIndex;not null"`
 	EncryptedPassword string `gorm:"not null"`
 	IsSuperAdmin      bool
@@ -70,6 +71,7 @@ func (u *User) AsMap() map[string]interface{} {
 		"id":                 u.ID,
 		"created_at":         u.CreatedAt,
 		"updated_at":         u.UpdatedAt,
+		"last_login":         u.LastLogin,
 		"email":              u.Email,
 		"encrypted_password": u.EncryptedPassword,
 		"is_super_admin":     u.IsSuperAdmin,
@@ -102,7 +104,7 @@ func NewUserFilter(req *http.Request) UserFilter {
 	}
 
 	if req.URL.Query().Get("order_by") != "" {
-		opts := []string{"id", "created_at", "updated_at", "email", "is_super_admin"}
+		opts := []string{"id", "created_at", "last_login", "email", "is_super_admin"}
 		for _, opt := range opts {
 			if req.URL.Query().Get("order_by") == opt {
 				filter.OrderBy = req.URL.Query().Get("order_by")
