@@ -53,7 +53,7 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when password is wrong", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		r := API(s.cfg, s.store, s.logger)
 
 		body := `{"username":"louis@systemli.org","password":"WRONG"}`
@@ -75,7 +75,7 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when login is successful", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		s.store.On("SaveUser", mock.Anything).Return(nil)
 		r := API(s.cfg, s.store, s.logger)
 
@@ -102,7 +102,7 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when save user fails", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything).Return(user, nil)
+		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		s.store.On("SaveUser", mock.Anything).Return(errors.New("failed to save user"))
 
 		r := API(s.cfg, s.store, s.logger)
