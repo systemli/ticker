@@ -48,7 +48,7 @@ func Authenticator(s storage.Storage) func(c *gin.Context) (interface{}, error) 
 			return "", jwt.ErrMissingLoginValues
 		}
 
-		user, err := s.FindUserByEmail(form.Username)
+		user, err := s.FindUserByEmail(form.Username, storage.WithPreload())
 		if err != nil {
 			log.WithError(err).Debug("user not found")
 			return "", err
