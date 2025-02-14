@@ -25,12 +25,12 @@ func (s *ResponseCacheTestSuite) TestCreateKey() {
 		c := gin.Context{
 			Request: &http.Request{
 				Method: "GET",
-				URL:    &url.URL{Path: "/api/v1/settings", RawQuery: "origin=localhost"},
+				URL:    &url.URL{Path: "/api/v1/settings", RawQuery: "origin=http://localhost"},
 			},
 		}
 
 		key := CreateKey(&c)
-		s.Equal("response:localhost:/api/v1/settings:origin=localhost", key)
+		s.Equal("response:http://localhost:/api/v1/settings:origin=http%3A%2F%2Flocalhost", key)
 	})
 
 	s.Run("create cache key without origin", func() {
