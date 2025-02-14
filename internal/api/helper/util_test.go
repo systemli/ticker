@@ -19,7 +19,7 @@ func (s *UtilTestSuite) TestGetOrigin() {
 		c := s.buildContext(url.URL{}, http.Header{})
 		origin, err := GetOrigin(c)
 		s.Equal("", origin)
-		s.Equal("origin header not found", err.Error())
+		s.Equal("invalid origin", err.Error())
 	})
 
 	s.Run("when origin is not a valid URL", func() {

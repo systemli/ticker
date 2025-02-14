@@ -1,8 +1,8 @@
 package prometheus
 
 import (
+	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -45,5 +45,7 @@ func prepareOrigin(c *gin.Context) string {
 		return ""
 	}
 
-	return strings.Split(origin, "://")[1]
+	re := regexp.MustCompile(`^https?://`)
+
+	return re.ReplaceAllString(origin, "")
 }

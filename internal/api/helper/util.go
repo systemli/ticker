@@ -9,14 +9,11 @@ import (
 )
 
 func GetOrigin(c *gin.Context) (string, error) {
-	origin := c.Request.URL.Query().Get("origin")
-	if origin != "" {
-		return origin, nil
-	}
-
-	origin = c.Request.Header.Get("Origin")
-	if origin == "" {
-		return "", errors.New("origin header not found")
+	var origin string
+	if c.Request.URL.Query().Has("origin") {
+		origin = c.Request.URL.Query().Get("origin")
+	} else {
+		origin = c.Request.Header.Get("Origin")
 	}
 
 	u, err := url.Parse(origin)
