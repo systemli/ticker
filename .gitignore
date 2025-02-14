@@ -3,3 +3,4 @@ dist/
 *.db
 site/
 uploads/
+ticker
