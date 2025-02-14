@@ -207,7 +207,8 @@ func (s *BridgeTestSuite) TestBlueskyDelete() {
 
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.repo.deleteRecord").
-			Reply(200)
+			Reply(200).
+			JSON(map[string]string{})
 
 		err := bridge.Delete(tickerWithBridges, &messageWithBridges)
 		s.NoError(err)
