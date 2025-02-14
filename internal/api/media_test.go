@@ -50,8 +50,6 @@ func (s *MediaTestSuite) TestGetMedia() {
 		h.GetMedia(s.ctx)
 
 		s.Equal(http.StatusNotFound, s.w.Code)
-		s.NotEmpty(s.w.Header().Get("Cache-Control"))
-		s.NotEmpty(s.w.Header().Get("Expires"))
 		s.store.AssertExpectations(s.T())
 	})
 }

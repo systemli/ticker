@@ -152,7 +152,7 @@ func (bb *BlueskyBridge) Delete(ticker storage.Ticker, message *storage.Message)
 	rkey := parts[len(parts)-1]
 	schema := parts[len(parts)-2]
 
-	err = comatproto.RepoDeleteRecord(context.TODO(), client, &comatproto.RepoDeleteRecord_Input{
+	_, err = comatproto.RepoDeleteRecord(context.TODO(), client, &comatproto.RepoDeleteRecord_Input{
 		Repo:       client.Auth.Did,
 		Collection: schema,
 		Rkey:       rkey,
