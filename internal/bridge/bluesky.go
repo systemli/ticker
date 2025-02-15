@@ -63,6 +63,25 @@ func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) e
 		})
 	}
 
+	hashtags := util.ExtractHashtags(message.Text)
+	for _, hashtag := range hashtags {
+		startIndex := strings.Index(message.Text, hashtag)
+		endIndex := startIndex + len(hashtag)
+		post.Facets = append(post.Facets, &bsky.RichtextFacet{
+			Features: []*bsky.RichtextFacet_Features_Elem{
+				{
+					RichtextFacet_Tag: &bsky.RichtextFacet_Tag{
+						Tag: hashtag[1:],
+					},
+				},
+			},
+			Index: &bsky.RichtextFacet_ByteSlice{
+				ByteStart: int64(startIndex),
+				ByteEnd:   int64(endIndex),
+			},
+		})
+	}
+
 	if len(message.Attachments) > 0 {
 		var images []*bsky.EmbedImages_Image
 
