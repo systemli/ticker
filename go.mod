@@ -1,11 +1,10 @@
 module github.com/systemli/ticker
 
 go 1.23
-
 toolchain go1.23.6
 
 require (
-	github.com/appleboy/gin-jwt/v2 v2.10.1
+	github.com/appleboy/gin-jwt/v2 v2.10.2
 	github.com/bluesky-social/indigo v0.0.0-20250213180039-81637f14cdd4
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.3
@@ -15,15 +14,15 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/h2non/gock v1.2.0
 	github.com/paulmach/go.geojson v1.5.0
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.0
 	github.com/sethvargo/go-password v0.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.12.0
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	github.com/ybbus/jsonrpc/v3 v3.1.6
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
@@ -34,12 +33,11 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/sonic v1.12.8 // indirect
+	github.com/bytedance/sonic v1.12.9 // indirect
 	github.com/bytedance/sonic/loader v0.2.3 // indirect
 	github.com/carlmjohnson/versioninfo v0.22.5 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
@@ -48,7 +46,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.24.0 // indirect
+	github.com/go-playground/validator/v10 v10.25.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
@@ -107,6 +105,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/whyrusleeping/cbor-gen v0.2.1-0.20241030202151-b7a6831be65e // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
 	go.opentelemetry.io/otel v1.34.0 // indirect
