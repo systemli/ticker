@@ -1,8 +1,7 @@
 module github.com/systemli/ticker
 
 go 1.23
-
-toolchain go1.23.6
+toolchain go1.24.1
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.1
@@ -23,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/toorop/gin-logrus v0.0.0-20210225092905-2c785434f26f
 	github.com/ybbus/jsonrpc/v3 v3.1.6
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
