@@ -6,10 +6,10 @@ import (
 
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
 	"github.com/bluesky-social/indigo/xrpc"
-	"github.com/sirupsen/logrus"
+	"github.com/systemli/ticker/internal/logger"
 )
 
-var log = logrus.WithField("package", "bluesky")
+var log = logger.GetWithPackage("bluesky")
 
 func Authenticate(handle, password string) (*xrpc.Client, error) {
 	client := &xrpc.Client{

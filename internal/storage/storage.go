@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/systemli/ticker/internal/api/pagination"
+	"github.com/systemli/ticker/internal/logger"
 	"gorm.io/gorm"
 )
 
-var log = logrus.WithField("package", "storage")
+var log = logger.GetWithPackage("storage")
 
 type Storage interface {
 	FindUsers(filter UserFilter, opts ...func(*gorm.DB) *gorm.DB) ([]User, error)

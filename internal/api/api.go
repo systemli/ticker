@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/systemli/ticker/internal/api/middleware/auth"
 	"github.com/systemli/ticker/internal/api/middleware/cors"
-	"github.com/systemli/ticker/internal/api/middleware/logger"
+	loggerMiddleware "github.com/systemli/ticker/internal/api/middleware/logger"
 	"github.com/systemli/ticker/internal/api/middleware/me"
 	"github.com/systemli/ticker/internal/api/middleware/message"
 	"github.com/systemli/ticker/internal/api/middleware/prometheus"
@@ -19,10 +19,11 @@ import (
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/cache"
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-var log = logrus.New().WithField("package", "api")
+var log = logger.GetWithPackage("api")
 
 type handler struct {
 	config  config.Config
@@ -44,7 +45,7 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
-	r.Use(logger.Logger(log))
+	r.Use(loggerMiddleware.Logger(log))
 	r.Use(gin.Recovery())
 	r.Use(cors.NewCORS())
 	r.Use(prometheus.NewPrometheus())

@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/systemli/ticker/internal/logger"
 )
 
-var log = logrus.WithField("package", "cache")
+var log = logger.GetWithPackage("cache")
 
 // Cache is a simple in-memory cache with expiration.
 type Cache struct {

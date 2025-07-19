@@ -1,5 +1,5 @@
 package renderer
 
-import "github.com/sirupsen/logrus"
+import "github.com/systemli/ticker/internal/logger"
 
-var log = logrus.WithField("package", "renderer")
+var log = logger.GetWithPackage("renderer")

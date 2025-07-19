@@ -35,6 +35,10 @@ func init() {
 
 func initConfig() {
 	cfg = config.LoadConfig(configPath)
+
+	// Initialize the global logger with configuration
+	log = logger.Initialize(cfg.LogLevel, cfg.LogFormat)
+
 	//TODO: Improve startup routine
 	if cfg.Telegram.Enabled() {
 		user, err := bridge.BotUser(cfg.Telegram.Token)
@@ -44,8 +48,6 @@ func initConfig() {
 			cfg.Telegram.User = user
 		}
 	}
-
-	log = logger.NewLogrus(cfg.LogLevel, cfg.LogFormat)
 
 	var err error
 	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
