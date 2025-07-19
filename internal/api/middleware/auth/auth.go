@@ -6,12 +6,12 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-var log = logrus.WithField("package", "auth")
+var log = logger.GetWithPackage("auth")
 
 func AuthMiddleware(s storage.Storage, secret string) *jwt.GinJWTMiddleware {
 	config := &jwt.GinJWTMiddleware{
@@ -81,7 +81,7 @@ func Authorizator(s storage.Storage) func(data interface{}, c *gin.Context) bool
 }
 
 func Unauthorized(c *gin.Context, code int, message string) {
-	log.WithFields(logrus.Fields{"code": code, "message": message, "url": c.Request.URL.String()}).Debug("unauthorized")
+	log.WithFields(map[string]interface{}{"code": code, "message": message, "url": c.Request.URL.String()}).Debug("unauthorized")
 	c.JSON(code, response.ErrorResponse(response.CodeBadCredentials, response.Unauthorized))
 }
 

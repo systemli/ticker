@@ -1,12 +1,12 @@
 package bridge
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-var log = logrus.WithField("package", "bridge")
+var log = logger.GetWithPackage("bridge")
 
 type Bridge interface {
 	Update(ticker storage.Ticker) error

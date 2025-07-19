@@ -6,12 +6,12 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sethvargo/go-password/password"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
+	"github.com/systemli/ticker/internal/logger"
 	"gopkg.in/yaml.v3"
 )
 
-var log = logrus.WithField("package", "config")
+var log = logger.GetWithPackage("config")
 
 type Config struct {
 	Listen        string      `yaml:"listen"`
