@@ -8,7 +8,6 @@ import (
 
 var (
 	instance *logrus.Logger
-	once     sync.Once
 	mu       sync.RWMutex
 )
 
@@ -18,7 +17,24 @@ func Initialize(level, format string) *logrus.Logger {
 	mu.Lock()
 	defer mu.Unlock()
 
-	instance = NewLogrus(level, format)
+	if instance == nil {
+		instance = NewLogrus(level, format)
+	} else {
+		// Reconfigure existing instance
+		lvl, err := logrus.ParseLevel(level)
+		if err != nil {
+			lvl = logrus.InfoLevel
+		}
+		instance.SetLevel(lvl)
+
+		switch format {
+		case "json":
+			instance.SetFormatter(&logrus.JSONFormatter{})
+		default:
+			instance.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+		}
+	}
+
 	return instance
 }
 
