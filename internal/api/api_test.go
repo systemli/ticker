@@ -16,14 +16,12 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/config"
-	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
 )
 
 type APITestSuite struct {
-	cfg    config.Config
-	store  *storage.MockStorage
-	logger *logrus.Logger
+	cfg   config.Config
+	store *storage.MockStorage
 	suite.Suite
 }
 
@@ -33,17 +31,13 @@ func (s *APITestSuite) SetupTest() {
 
 	s.cfg = config.LoadConfig("")
 	s.store = &storage.MockStorage{}
-
-	logger := logger.NewLogrus("debug", "text")
-	logger.SetOutput(io.Discard)
-	s.logger = logger
 }
 
 func (s *APITestSuite) TestHealthz() {
-	r := API(s.cfg, s.store, s.logger)
+	server := API(s.cfg, s.store)
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	server.Router.ServeHTTP(w, req)
 
 	s.Equal(http.StatusOK, w.Code)
 	s.store.AssertExpectations(s.T())
@@ -54,13 +48,13 @@ func (s *APITestSuite) TestLogin() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
 		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
-		r := API(s.cfg, s.store, s.logger)
+		server := API(s.cfg, s.store)
 
 		body := `{"username":"louis@systemli.org","password":"WRONG"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
 		req.Header.Add("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
+		server.Router.ServeHTTP(w, req)
 
 		var res response.Response
 		err = json.Unmarshal(w.Body.Bytes(), &res)
@@ -77,13 +71,13 @@ func (s *APITestSuite) TestLogin() {
 		s.NoError(err)
 		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		s.store.On("SaveUser", mock.Anything).Return(nil)
-		r := API(s.cfg, s.store, s.logger)
+		server := API(s.cfg, s.store)
 
 		body := `{"username":"louis@systemli.org","password":"password"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
 		req.Header.Add("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
+		server.Router.ServeHTTP(w, req)
 
 		var res struct {
 			Code   int       `json:"code"`
@@ -105,13 +99,13 @@ func (s *APITestSuite) TestLogin() {
 		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		s.store.On("SaveUser", mock.Anything).Return(errors.New("failed to save user"))
 
-		r := API(s.cfg, s.store, s.logger)
+		server := API(s.cfg, s.store)
 
 		body := `{"username":"louis@systemli.org","password":"password"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
 		req.Header.Add("Content-Type", "application/json")
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
+		server.Router.ServeHTTP(w, req)
 
 		s.Equal(http.StatusOK, w.Code)
 	})

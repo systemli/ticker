@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/systemli/ticker/internal/api/realtime"
 	"github.com/systemli/ticker/internal/cache"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
@@ -210,9 +211,10 @@ func (s *MessagesTestSuite) TestDeleteMessage() {
 
 func (s *MessagesTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
-		cache:   s.cache,
+		storage:  s.store,
+		config:   s.cfg,
+		cache:    s.cache,
+		realtime: realtime.New(),
 	}
 }
 
