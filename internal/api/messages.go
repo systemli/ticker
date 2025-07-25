@@ -9,6 +9,7 @@ import (
 	geojson "github.com/paulmach/go.geojson"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/pagination"
+	"github.com/systemli/ticker/internal/api/realtime"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -27,7 +28,7 @@ func (h *handler) GetMessages(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"messages": response.MessagesResponse(messages, h.config)}
+	data := map[string]any{"messages": response.MessagesResponse(messages, h.config)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -38,7 +39,7 @@ func (h *handler) GetMessage(c *gin.Context) {
 		return
 	}
 
-	data := map[string]interface{}{"message": response.MessageResponse(message, h.config)}
+	data := map[string]any{"message": response.MessageResponse(message, h.config)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -83,7 +84,16 @@ func (h *handler) PostMessage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"message": response.MessageResponse(message, h.config)}))
+	serializedMessage := response.MessageResponse(message, h.config)
+	h.realtime.Broadcast(realtime.Message{
+		Type:     "message_created",
+		TickerID: ticker.ID,
+		Data: map[string]any{
+			"message": serializedMessage,
+		},
+	})
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]any{"message": serializedMessage}))
 }
 
 func (h *handler) DeleteMessage(c *gin.Context) {
@@ -109,12 +119,20 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 
 	h.ClearMessagesCache(&ticker)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
+	h.realtime.Broadcast(realtime.Message{
+		Type:     "message_deleted",
+		TickerID: ticker.ID,
+		Data: map[string]any{
+			"messageId": message.ID,
+		},
+	})
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]any{}))
 }
 
 // ClearMessagesCache clears the cache for the timeline endpoint of a ticker
 func (h *handler) ClearMessagesCache(ticker *storage.Ticker) {
-	h.cache.Range(func(key, value interface{}) bool {
+	h.cache.Range(func(key, value any) bool {
 		if strings.HasPrefix(key.(string), fmt.Sprintf("response:%s:/v1/timeline", ticker.Domain)) {
 			h.cache.Delete(key)
 		}

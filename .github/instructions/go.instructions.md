@@ -1,6 +1,6 @@
 ---
-description: 'Instructions for writing Go code following idiomatic Go practices and community standards'
-applyTo: '**/*.go,**/go.mod,**/go.sum'
+description: "Instructions for writing Go code following idiomatic Go practices and community standards"
+applyTo: "**/*.go,**/go.mod,**/go.sum"
 ---
 
 # Go Development Instructions
@@ -210,18 +210,63 @@ Follow idiomatic Go practices and community standards when writing Go code. Thes
 
 ### Writing Tests
 
-- Use table-driven tests for multiple test cases
+#### Simple Unit Tests
+
+- For straightforward unit tests, use Go's built-in `testing` library directly
+- Use `github.com/stretchr/testify/assert` for assertions when helpful
 - Name tests descriptively using `Test_functionName_scenario`
-- Use subtests with `t.Run` for better organization
+- Use table-driven tests for multiple test cases with similar structure
+
+#### Complex Test Logic and Integration Tests
+
+- For complex test scenarios with setup/teardown, state management, or grouping related tests, use `github.com/stretchr/testify/suite`
+- Create test suites that embed `suite.Suite` to group related test cases
+- Implement `SetupTest()` and `TearDownTest()` methods for consistent test environment setup
+- Use descriptive suite names that clearly indicate what functionality is being tested
+- Run suites using `suite.Run(t, new(YourTestSuite))` in a standard test function
+
+Example of simple test:
+
+```go
+func TestContains(t *testing.T) {
+    slice := []int{1, 2}
+    assert.True(t, Contains(slice, 1))
+    assert.False(t, Contains(slice, 3))
+}
+```
+
+Example of test suite:
+
+```go
+type FeaturesTestSuite struct {
+    suite.Suite
+}
+
+func (s *FeaturesTestSuite) SetupTest() {
+    gin.SetMode(gin.TestMode)
+}
+
+func (s *FeaturesTestSuite) TestGetFeatures() {
+    // Test implementation
+}
+
+func TestFeaturesTestSuite(t *testing.T) {
+    suite.Run(t, new(FeaturesTestSuite))
+}
+```
+
+#### General Testing Guidelines
+
 - Test both success and error cases
-- Use `testify` or similar libraries sparingly
+- Use subtests with `t.Run` for better organization within simple tests
+- Choose between simple tests and test suites based on complexity and structure needs
 
 ### Test Helpers
 
 - Mark helper functions with `t.Helper()`
 - Create test fixtures for complex setup
 - Use `testing.TB` interface for functions used in tests and benchmarks
-- Clean up resources using `t.Cleanup()`
+- Clean up resources using `t.Cleanup()` or suite teardown methods
 
 ## Security Best Practices
 

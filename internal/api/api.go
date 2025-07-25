@@ -6,7 +6,6 @@ import (
 
 	limits "github.com/gin-contrib/size"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/systemli/ticker/internal/api/middleware/auth"
 	"github.com/systemli/ticker/internal/api/middleware/cors"
 	loggerMiddleware "github.com/systemli/ticker/internal/api/middleware/logger"
@@ -16,6 +15,7 @@ import (
 	"github.com/systemli/ticker/internal/api/middleware/response_cache"
 	"github.com/systemli/ticker/internal/api/middleware/ticker"
 	"github.com/systemli/ticker/internal/api/middleware/user"
+	"github.com/systemli/ticker/internal/api/realtime"
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/cache"
 	"github.com/systemli/ticker/internal/config"
@@ -25,27 +25,38 @@ import (
 
 var log = logger.GetWithPackage("api")
 
-type handler struct {
-	config  config.Config
-	storage storage.Storage
-	bridges bridge.Bridges
-	cache   *cache.Cache
+// Server wraps the gin engine and realtime engine for graceful shutdown
+type Server struct {
+	Router   *gin.Engine
+	Realtime *realtime.Engine
 }
 
-func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.Engine {
+type handler struct {
+	config   config.Config
+	storage  storage.Storage
+	bridges  bridge.Bridges
+	cache    *cache.Cache
+	realtime *realtime.Engine
+}
+
+func API(config config.Config, store storage.Storage) *Server {
 	inMemoryCache := cache.NewCache(5 * time.Minute)
 
+	ws := realtime.New()
+	go ws.Run()
+
 	handler := handler{
-		config:  config,
-		storage: store,
-		bridges: bridge.RegisterBridges(config, store),
-		cache:   inMemoryCache,
+		config:   config,
+		storage:  store,
+		bridges:  bridge.RegisterBridges(config, store),
+		cache:    inMemoryCache,
+		realtime: ws,
 	}
 
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.New()
-	r.Use(loggerMiddleware.Logger(log))
+	r.Use(loggerMiddleware.Logger(log.Logger))
 	r.Use(gin.Recovery())
 	r.Use(cors.NewCORS())
 	r.Use(prometheus.NewPrometheus())
@@ -111,6 +122,7 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 		public.GET(`/init`, response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetInit))
 		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
 		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
+		public.GET(`/ws`, ticker.PrefetchTickerFromRequest(store), handler.HandleWebSocket)
 	}
 
 	r.GET(`/media/:fileName`, handler.GetMedia)
@@ -119,5 +131,8 @@ func API(config config.Config, store storage.Storage, log *logrus.Logger) *gin.E
 		c.String(http.StatusOK, "OK")
 	})
 
-	return r
+	return &Server{
+		Router:   r,
+		Realtime: ws,
+	}
 }

@@ -33,10 +33,10 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			router := api.API(cfg, store, log)
+			apiServer := api.API(cfg, store)
 			server := &http.Server{
 				Addr:    cfg.Listen,
-				Handler: router,
+				Handler: apiServer.Router,
 			}
 
 			go func() {
@@ -55,6 +55,12 @@ var (
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
+			// Shutdown realtime engine first
+			if err := apiServer.Realtime.Shutdown(ctx); err != nil {
+				log.WithError(err).Warn("Realtime engine shutdown failed")
+			}
+
+			// Shutdown HTTP server
 			if err := server.Shutdown(ctx); err != nil {
 				log.Fatal(err)
 			}

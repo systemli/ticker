@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/config"
@@ -19,7 +18,7 @@ var (
 	db         *gorm.DB
 	store      *storage.SqlStorage
 
-	log = logrus.New()
+	log = logger.GetWithPackage("cmd")
 
 	rootCmd = &cobra.Command{
 		Use:   "ticker",
@@ -37,7 +36,7 @@ func initConfig() {
 	cfg = config.LoadConfig(configPath)
 
 	// Initialize the global logger with configuration
-	log = logger.Initialize(cfg.LogLevel, cfg.LogFormat)
+	loggerInstance := logger.Initialize(cfg.LogLevel, cfg.LogFormat)
 
 	//TODO: Improve startup routine
 	if cfg.Telegram.Enabled() {
@@ -50,7 +49,7 @@ func initConfig() {
 	}
 
 	var err error
-	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, log)
+	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, loggerInstance)
 	if err != nil {
 		log.WithError(err).Fatal("could not connect to database")
 	}
