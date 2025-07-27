@@ -50,14 +50,14 @@ var (
 			signal.Notify(quit, os.Interrupt)
 			<-quit
 
-			log.Infoln("Shutdown Ticker")
+			log.Infoln("shutdown ticker")
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
 			// Shutdown realtime engine first
 			if err := apiServer.Realtime.Shutdown(ctx); err != nil {
-				log.WithError(err).Warn("Realtime engine shutdown failed")
+				log.WithError(err).Warn("realtime engine shutdown failed")
 			}
 
 			// Shutdown HTTP server

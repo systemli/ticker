@@ -42,7 +42,7 @@ func initConfig() {
 	if cfg.Telegram.Enabled() {
 		user, err := bridge.BotUser(cfg.Telegram.Token)
 		if err != nil {
-			log.WithError(err).Error("Unable to retrieve the user information for the Telegram Bot")
+			log.WithError(err).Error("unable to retrieve the user information for the telegram bot")
 		} else {
 			cfg.Telegram.User = user
 		}
