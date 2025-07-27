@@ -21,7 +21,7 @@ var (
 func NewPrometheus() gin.HandlerFunc {
 	err := prometheus.Register(requestDurationHistogram)
 	if err != nil {
-		log.WithError(err).Error(`"requestDurationHistogram" could not be registered in Prometheus`)
+		log.WithError(err).Error(`"requestDurationHistogram" could not be registered in prometheus`)
 		return func(c *gin.Context) {}
 	}
 

@@ -83,10 +83,10 @@ func LoadConfig(path string) Config {
 	if path != "" {
 		bytes, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
-			log.WithError(err).Error("Unable to load config")
+			log.WithError(err).Error("unable to load config")
 		}
 		if err := yaml.Unmarshal(bytes, &c); err != nil {
-			log.WithError(err).Error("Unable to load config")
+			log.WithError(err).Error("unable to load config")
 		}
 	}
 

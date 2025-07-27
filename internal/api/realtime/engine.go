@@ -251,7 +251,7 @@ func (e *Engine) closeAllConnections() {
 	for _, clients := range e.clients {
 		clientCount += len(clients)
 	}
-	log.WithField("client_count", clientCount).Info("closing all WebSocket connections")
+	log.WithField("client_count", clientCount).Info("closing all websocket connections")
 
 	// Send close messages to all clients and close their sending channels
 	for tickerID, clients := range e.clients {
