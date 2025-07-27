@@ -38,7 +38,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Name: "test_websocket_connected_clients",
 			Help: "Test metric for connected clients",
 		},
-		[]string{"ticker_id"},
+		[]string{"origin"},
 	)
 
 	totalConnections = prometheus.NewCounterVec(
@@ -46,7 +46,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Name: "test_websocket_connections_total",
 			Help: "Test metric for total connections",
 		},
-		[]string{"ticker_id"},
+		[]string{"origin"},
 	)
 
 	disconnections = prometheus.NewCounterVec(
@@ -54,7 +54,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Name: "test_websocket_disconnections_total",
 			Help: "Test metric for disconnections",
 		},
-		[]string{"ticker_id", "reason"},
+		[]string{"origin", "reason"},
 	)
 
 	messagesSent = prometheus.NewCounterVec(
@@ -62,7 +62,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Name: "test_websocket_messages_sent_total",
 			Help: "Test metric for messages sent",
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	messagesDropped = prometheus.NewCounterVec(
@@ -70,7 +70,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Name: "test_websocket_messages_dropped_total",
 			Help: "Test metric for messages dropped",
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	broadcastDuration = prometheus.NewHistogramVec(
@@ -79,7 +79,7 @@ func (s *MetricsTestSuite) SetupSuite() {
 			Help:    "Test metric for broadcast duration",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	totalClientsGauge = prometheus.NewGauge(
@@ -111,44 +111,44 @@ func (s *MetricsTestSuite) Run(name string, subtest func()) {
 
 func (s *MetricsTestSuite) TestRecordClientConnected() {
 	s.Run("client connection increments metrics", func() {
-		tickerID := 123
+		origin := "TestRecordClientConnected"
 
-		recordClientConnected(tickerID)
+		recordClientConnected(origin)
 
 		// Check connected clients gauge
-		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues("123")))
+		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues(origin)))
 
 		// Check total connections counter
-		s.Equal(float64(1), testutil.ToFloat64(totalConnections.WithLabelValues("123")))
+		s.Equal(float64(1), testutil.ToFloat64(totalConnections.WithLabelValues(origin)))
 
 		// Check total clients gauge
 		s.Equal(float64(1), testutil.ToFloat64(totalClientsGauge))
 
 		// Connect another client to same ticker
-		recordClientConnected(tickerID)
-		s.Equal(float64(2), testutil.ToFloat64(connectedClients.WithLabelValues("123")))
-		s.Equal(float64(2), testutil.ToFloat64(totalConnections.WithLabelValues("123")))
+		recordClientConnected(origin)
+		s.Equal(float64(2), testutil.ToFloat64(connectedClients.WithLabelValues(origin)))
+		s.Equal(float64(2), testutil.ToFloat64(totalConnections.WithLabelValues(origin)))
 		s.Equal(float64(2), testutil.ToFloat64(totalClientsGauge))
 	})
 }
 
 func (s *MetricsTestSuite) TestRecordClientDisconnected() {
 	s.Run("client disconnection decrements metrics", func() {
-		tickerID := 456
+		origin := "TestRecordClientDisconnected"
 		reason := "normal"
 
 		// First connect a client
-		recordClientConnected(tickerID)
-		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues("456")))
+		recordClientConnected(origin)
+		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues(origin)))
 
 		// Then disconnect
-		recordClientDisconnected(tickerID, reason)
+		recordClientDisconnected(origin, reason)
 
 		// Check connected clients gauge decremented
-		s.Equal(float64(0), testutil.ToFloat64(connectedClients.WithLabelValues("456")))
+		s.Equal(float64(0), testutil.ToFloat64(connectedClients.WithLabelValues(origin)))
 
 		// Check disconnections counter incremented
-		s.Equal(float64(1), testutil.ToFloat64(disconnections.WithLabelValues("456", "normal")))
+		s.Equal(float64(1), testutil.ToFloat64(disconnections.WithLabelValues(origin, "normal")))
 
 		// Check total clients gauge decremented
 		s.Equal(float64(0), testutil.ToFloat64(totalClientsGauge))
@@ -157,38 +157,38 @@ func (s *MetricsTestSuite) TestRecordClientDisconnected() {
 
 func (s *MetricsTestSuite) TestRecordMessageSent() {
 	s.Run("message sent increments counter", func() {
-		tickerID := 789
+		origin := "TestRecordMessageSent"
 		messageType := "message_created"
 
-		recordMessageSent(tickerID, messageType)
-		recordMessageSent(tickerID, messageType)
+		recordMessageSent(origin, messageType)
+		recordMessageSent(origin, messageType)
 
-		s.Equal(float64(2), testutil.ToFloat64(messagesSent.WithLabelValues("789", "message_created")))
+		s.Equal(float64(2), testutil.ToFloat64(messagesSent.WithLabelValues(origin, "message_created")))
 	})
 }
 
 func (s *MetricsTestSuite) TestRecordMessageDropped() {
 	s.Run("message dropped increments counter", func() {
-		tickerID := 101
+		origin := "TestRecordMessageDropped"
 		messageType := "message_deleted"
 
-		recordMessageDropped(tickerID, messageType)
+		recordMessageDropped(origin, messageType)
 
-		s.Equal(float64(1), testutil.ToFloat64(messagesDropped.WithLabelValues("101", "message_deleted")))
+		s.Equal(float64(1), testutil.ToFloat64(messagesDropped.WithLabelValues(origin, "message_deleted")))
 	})
 }
 
 func (s *MetricsTestSuite) TestRecordBroadcastDuration() {
 	s.Run("broadcast duration records histogram", func() {
-		tickerID := 202
+		origin := "TestRecordBroadcastDuration"
 		messageType := "message_created"
 		duration := 50 * time.Millisecond
 
-		recordBroadcastDuration(tickerID, messageType, duration)
+		recordBroadcastDuration(origin, messageType, duration)
 
 		// Check that histogram was updated by getting a metric sample
 		metric := &dto.Metric{}
-		histogram := broadcastDuration.WithLabelValues("202", "message_created")
+		histogram := broadcastDuration.WithLabelValues(origin, "message_created")
 		err := histogram.(prometheus.Histogram).Write(metric)
 		s.NoError(err)
 		s.Equal(uint64(1), metric.GetHistogram().GetSampleCount())
@@ -199,16 +199,16 @@ func (s *MetricsTestSuite) TestRecordBroadcastDuration() {
 func (s *MetricsTestSuite) TestMultipleTickers() {
 	s.Run("metrics work with multiple tickers", func() {
 		// Test metrics with multiple tickers
-		recordClientConnected(1)
-		recordClientConnected(2)
-		recordClientConnected(1) // Second client for ticker 1
+		recordClientConnected("1")
+		recordClientConnected("2")
+		recordClientConnected("1") // Second client for ticker 1
 
 		s.Equal(float64(2), testutil.ToFloat64(connectedClients.WithLabelValues("1")))
 		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues("2")))
 		s.Equal(float64(3), testutil.ToFloat64(totalClientsGauge))
 
 		// Disconnect one client from ticker 1
-		recordClientDisconnected(1, "normal")
+		recordClientDisconnected("1", "normal")
 
 		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues("1")))
 		s.Equal(float64(1), testutil.ToFloat64(connectedClients.WithLabelValues("2")))

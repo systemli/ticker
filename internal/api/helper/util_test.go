@@ -68,6 +68,38 @@ func (s *UtilTestSuite) TestGetOrigin() {
 	})
 }
 
+func (s *UtilTestSuite) TestGetOriginHost() {
+	s.Run("when origin is empty", func() {
+		c := s.buildContext(url.URL{}, http.Header{})
+		origin := GetOriginHost(c)
+		s.Equal("unknown", origin)
+	})
+
+	s.Run("when origin is not a valid URL", func() {
+		c := s.buildContext(url.URL{}, http.Header{
+			"Origin": []string{"localhost"},
+		})
+		origin := GetOriginHost(c)
+		s.Equal("unknown", origin)
+	})
+
+	s.Run("when origin is localhost", func() {
+		c := s.buildContext(url.URL{}, http.Header{
+			"Origin": []string{"http://localhost"},
+		})
+		origin := GetOriginHost(c)
+		s.Equal("localhost", origin)
+	})
+
+	s.Run("when origin is a valid URL", func() {
+		c := s.buildContext(url.URL{}, http.Header{
+			"Origin": []string{"http://www.demoticker.org/"},
+		})
+		origin := GetOriginHost(c)
+		s.Equal("www.demoticker.org", origin)
+	})
+}
+
 func (s *UtilTestSuite) TestMe() {
 	s.Run("when me is not set", func() {
 		c := &gin.Context{}

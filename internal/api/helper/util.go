@@ -3,9 +3,11 @@ package helper
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/storage"
-	"net/url"
 )
 
 func GetOrigin(c *gin.Context) (string, error) {
@@ -26,6 +28,20 @@ func GetOrigin(c *gin.Context) (string, error) {
 	}
 
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host), nil
+}
+
+func GetOriginHost(c *gin.Context) string {
+	origin, err := GetOrigin(c)
+	if err != nil {
+		return "unknown"
+	}
+
+	parts := strings.Split(origin, "://")
+	if len(parts) < 2 {
+		return "unknown"
+	}
+
+	return parts[1]
 }
 
 func Me(c *gin.Context) (storage.User, error) {

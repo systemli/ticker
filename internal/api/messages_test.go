@@ -144,7 +144,7 @@ func (s *MessagesTestSuite) TestPostMessage() {
 		s.True(s.store.AssertExpectations(s.T()))
 	})
 
-	s.Run("when database returns message", func() {
+	s.Run("happy path", func() {
 		ticker := storage.Ticker{ID: 1}
 		s.ctx.Set("ticker", ticker)
 		json := `{"text":"text","attachments":[1]}`
@@ -197,6 +197,8 @@ func (s *MessagesTestSuite) TestDeleteMessage() {
 		ticker := storage.Ticker{ID: 1, Domain: "localhost"}
 		message := storage.Message{ID: 1}
 		s.cache.Set("response:localhost:/v1/timeline", true, time.Minute)
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/tickers/1/messages/1", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.Set("ticker", ticker)
 		s.ctx.Set("message", message)
 		s.store.On("DeleteMessage", message).Return(nil).Once()

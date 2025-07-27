@@ -1,14 +1,12 @@
 package realtime
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// WebSocket Prometheus metrics
 var (
 	// connectedClients tracks the current number of connected WebSocket clients per ticker
 	connectedClients = promauto.NewGaugeVec(
@@ -16,7 +14,7 @@ var (
 			Name: "websocket_connected_clients",
 			Help: "Current number of connected WebSocket clients per ticker",
 		},
-		[]string{"ticker_id"},
+		[]string{"origin"},
 	)
 
 	// totalConnections tracks the total number of WebSocket connections established
@@ -25,7 +23,7 @@ var (
 			Name: "websocket_connections_total",
 			Help: "Total number of WebSocket connections established",
 		},
-		[]string{"ticker_id"},
+		[]string{"origin"},
 	)
 
 	// disconnections tracks the total number of WebSocket disconnections
@@ -34,7 +32,7 @@ var (
 			Name: "websocket_disconnections_total",
 			Help: "Total number of WebSocket disconnections",
 		},
-		[]string{"ticker_id", "reason"},
+		[]string{"origin", "reason"},
 	)
 
 	// messagesSent tracks the total number of messages sent to WebSocket clients
@@ -43,7 +41,7 @@ var (
 			Name: "websocket_messages_sent_total",
 			Help: "Total number of messages sent to WebSocket clients",
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	// messagesDropped tracks messages that couldn't be delivered to clients
@@ -52,7 +50,7 @@ var (
 			Name: "websocket_messages_dropped_total",
 			Help: "Total number of messages dropped due to client unavailability",
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	// broadcastDuration tracks how long it takes to broadcast messages to all clients
@@ -62,7 +60,7 @@ var (
 			Help:    "Time spent broadcasting messages to WebSocket clients",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"ticker_id", "message_type"},
+		[]string{"origin", "message_type"},
 	)
 
 	// totalClientsGauge tracks the total number of connected clients across all tickers
@@ -75,35 +73,30 @@ var (
 )
 
 // recordClientConnected increments connection metrics when a client connects
-func recordClientConnected(tickerID int) {
-	tickerIDStr := strconv.Itoa(tickerID)
-	connectedClients.WithLabelValues(tickerIDStr).Inc()
-	totalConnections.WithLabelValues(tickerIDStr).Inc()
+func recordClientConnected(origin string) {
+	connectedClients.WithLabelValues(origin).Inc()
+	totalConnections.WithLabelValues(origin).Inc()
 	totalClientsGauge.Inc()
 }
 
 // recordClientDisconnected decrements connection metrics when a client disconnects
-func recordClientDisconnected(tickerID int, reason string) {
-	tickerIDStr := strconv.Itoa(tickerID)
-	connectedClients.WithLabelValues(tickerIDStr).Dec()
-	disconnections.WithLabelValues(tickerIDStr, reason).Inc()
+func recordClientDisconnected(origin string, reason string) {
+	connectedClients.WithLabelValues(origin).Dec()
+	disconnections.WithLabelValues(origin, reason).Inc()
 	totalClientsGauge.Dec()
 }
 
 // recordMessageSent increments the messages sent counter
-func recordMessageSent(tickerID int, messageType string) {
-	tickerIDStr := strconv.Itoa(tickerID)
-	messagesSent.WithLabelValues(tickerIDStr, messageType).Inc()
+func recordMessageSent(origin string, messageType string) {
+	messagesSent.WithLabelValues(origin, messageType).Inc()
 }
 
 // recordMessageDropped increments the messages dropped counter
-func recordMessageDropped(tickerID int, messageType string) {
-	tickerIDStr := strconv.Itoa(tickerID)
-	messagesDropped.WithLabelValues(tickerIDStr, messageType).Inc()
+func recordMessageDropped(origin string, messageType string) {
+	messagesDropped.WithLabelValues(origin, messageType).Inc()
 }
 
 // recordBroadcastDuration records the time taken to broadcast a message
-func recordBroadcastDuration(tickerID int, messageType string, duration time.Duration) {
-	tickerIDStr := strconv.Itoa(tickerID)
-	broadcastDuration.WithLabelValues(tickerIDStr, messageType).Observe(duration.Seconds())
+func recordBroadcastDuration(origin string, messageType string, duration time.Duration) {
+	broadcastDuration.WithLabelValues(origin, messageType).Observe(duration.Seconds())
 }

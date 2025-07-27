@@ -88,6 +88,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 	h.realtime.Broadcast(realtime.Message{
 		Type:     "message_created",
 		TickerID: ticker.ID,
+		Origin:   helper.GetOriginHost(c),
 		Data: map[string]any{
 			"message": serializedMessage,
 		},
@@ -122,6 +123,7 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 	h.realtime.Broadcast(realtime.Message{
 		Type:     "message_deleted",
 		TickerID: ticker.ID,
+		Origin:   helper.GetOriginHost(c),
 		Data: map[string]any{
 			"messageId": message.ID,
 		},

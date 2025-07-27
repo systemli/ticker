@@ -26,11 +26,10 @@ func (h *handler) HandleWebSocket(c *gin.Context) {
 		return
 	}
 
-	log.WithField("ticker_id", ticker.ID).Info("New WebSocket connection attempt")
-
+	origin := helper.GetOriginHost(c)
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.WithError(err).WithField("ticker_id", ticker.ID).Error("WebSocket upgrade failed")
+		log.WithError(err).WithField("origin", origin).Error("websocket upgrade failed")
 		return
 	}
 
@@ -39,6 +38,7 @@ func (h *handler) HandleWebSocket(c *gin.Context) {
 		Conn:     conn,
 		Send:     make(chan realtime.Message, 256), // Buffer to prevent blocking
 		TickerID: ticker.ID,
+		Origin:   origin, // Use only the host part of the origin
 	}
 
 	h.realtime.Register(client)
