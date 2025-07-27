@@ -77,6 +77,7 @@ type Engine struct {
 //     when sending messages. The buffer size should be chosen based on expected message
 //     volume and latency requirements.
 //   - TickerID: The ID of the ticker this Client is subscribed to.
+//   - Origin: The origin of the WebSocket connection.
 //   - closed: A flag indicating whether the Client has been closed.
 //   - mu: A mutex to protect concurrent access to the Client's fields.
 //   - unregisterOnce: Ensures unregistration happens only once.
@@ -85,6 +86,7 @@ type Client struct {
 	Conn           *websocket.Conn
 	Send           chan Message
 	TickerID       int
+	Origin         string
 	closed         bool
 	mu             sync.Mutex
 	unregisterOnce sync.Once
@@ -99,6 +101,7 @@ type Client struct {
 //     Additional types may be added as needed.
 //   - TickerID: An integer representing the ID of the ticker associated with the message.
 //   - Data: A flexible field of type `any` that contains additional data related to the message.
+//   - Origin: A string representing the origin of the message, used for logging and metrics.
 //     The structure of this data depends on the `Type` field. For example:
 //   - For "message_created", `Data` might include the content of the new message.
 //   - For "message_deleted", `Data` might include the ID of the deleted message.
@@ -106,6 +109,7 @@ type Message struct {
 	Type     string `json:"type"`
 	TickerID int    `json:"tickerId"`
 	Data     any    `json:"data"`
+	Origin   string `json:"-"` // The origin of the message, used for logging and metrics
 }
 
 // New creates a new realtime messaging engine.
@@ -141,7 +145,7 @@ func (e *Engine) Run() {
 	e.running = true
 	e.mu.Unlock()
 
-	log.Info("WebSocket engine started")
+	log.Info("websocket engine started")
 
 	for {
 		select {
@@ -155,7 +159,7 @@ func (e *Engine) Run() {
 			e.broadcastMessage(message)
 
 		case <-e.shutdown:
-			log.Info("WebSocket engine shutting down")
+			log.Info("websocket engine shutting down")
 			e.mu.Lock()
 			e.shuttingDown = true
 			e.mu.Unlock()
@@ -167,7 +171,7 @@ func (e *Engine) Run() {
 
 // Shutdown gracefully shuts down the engine
 func (e *Engine) Shutdown(ctx context.Context) error {
-	log.Info("Initiating WebSocket engine shutdown")
+	log.Info("initiating websocket engine shutdown")
 
 	e.mu.Lock()
 	isRunning := e.running
@@ -175,20 +179,20 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 
 	if !isRunning {
 		e.mu.Unlock()
-		log.Info("WebSocket engine was not running")
+		log.Info("websocket engine was not running")
 		return nil
 	}
 
 	if isShuttingDown {
 		e.mu.Unlock()
-		log.Info("WebSocket engine already shutting down")
+		log.Info("websocket engine already shutting down")
 		// Wait for the engine to finish shutting down or context timeout
 		select {
 		case <-e.done:
-			log.Info("WebSocket engine shutdown completed")
+			log.Info("websocket engine shutdown completed")
 			return nil
 		case <-ctx.Done():
-			log.Warn("WebSocket engine shutdown timed out")
+			log.Warn("websocket engine shutdown timed out")
 			return ctx.Err()
 		}
 	}
@@ -201,7 +205,7 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
 			// Channel was already closed, that's fine
-			log.Debug("Shutdown channel was already closed")
+			log.Debug("shutdown channel was already closed")
 		}
 	}()
 	close(e.shutdown)
@@ -209,15 +213,15 @@ func (e *Engine) Shutdown(ctx context.Context) error {
 	// Wait for the engine to finish shutting down or context timeout
 	select {
 	case <-e.done:
-		log.Info("WebSocket engine shutdown completed")
+		log.Info("websocket engine shutdown completed")
 		return nil
 	case <-ctx.Done():
-		log.Warn("WebSocket engine shutdown timed out")
+		log.Warn("websocket engine shutdown timed out")
 		// Force close in a separate goroutine to avoid blocking on locks
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					log.WithField("panic", r).Error("Panic during force close")
+					log.WithField("panic", r).Error("panic during force close")
 				}
 			}()
 			e.forceCloseAllConnections()
@@ -247,7 +251,7 @@ func (e *Engine) closeAllConnections() {
 	for _, clients := range e.clients {
 		clientCount += len(clients)
 	}
-	log.WithField("client_count", clientCount).Info("Closing all WebSocket connections")
+	log.WithField("client_count", clientCount).Info("closing all WebSocket connections")
 
 	// Send close messages to all clients and close their sending channels
 	for tickerID, clients := range e.clients {
@@ -257,19 +261,19 @@ func (e *Engine) closeAllConnections() {
 			case client.Send <- Message{
 				Type:     "server_shutdown",
 				TickerID: tickerID,
-				Data:     map[string]any{"message": "Server is shutting down"},
+				Data:     map[string]any{"message": "server is shutting down"},
 			}:
-				recordMessageSent(tickerID, "server_shutdown")
+				recordMessageSent(client.Origin, "server_shutdown")
 			default:
 				// Channel might be full, skip
-				recordMessageDropped(tickerID, "server_shutdown")
+				recordMessageDropped(client.Origin, "server_shutdown")
 			}
 
 			// Close the channel to signal WritePump to send a close message
 			e.safeCloseClient(client)
 
 			// Record disconnection metric
-			recordClientDisconnected(client.TickerID, "server_shutdown")
+			recordClientDisconnected(client.Origin, "server_shutdown")
 		}
 	}
 
@@ -293,9 +297,7 @@ func (e *Engine) forceCloseAllConnections() {
 func (e *Engine) forceCloseAllConnectionsUnsafe() {
 	for _, clients := range e.clients {
 		for client := range clients {
-			if err := client.Conn.Close(); err != nil {
-				log.WithError(err).WithField("ticker_id", client.TickerID).Debug("Error force closing WebSocket connection")
-			}
+			_ = client.Conn.Close()
 		}
 	}
 
@@ -305,12 +307,12 @@ func (e *Engine) forceCloseAllConnectionsUnsafe() {
 
 // Broadcast sends a message to all relevant clients
 func (e *Engine) Broadcast(message Message) {
-	log.WithFields(logrus.Fields{"message_type": message.Type, "ticker_id": message.TickerID}).Debug("Broadcasting message")
+	log.WithFields(logrus.Fields{"message_type": message.Type, "ticker_id": message.TickerID}).Debug("broadcasting message")
 
 	select {
 	case e.broadcast <- message:
 	default:
-		log.WithFields(logrus.Fields{"message_type": message.Type, "ticker_id": message.TickerID}).Warn("Broadcast channel full, dropping message")
+		log.WithFields(logrus.Fields{"message_type": message.Type, "ticker_id": message.TickerID}).Warn("broadcast channel full, dropping message")
 	}
 }
 
@@ -319,13 +321,13 @@ func (e *Engine) Register(client *Client) {
 	select {
 	case e.register <- client:
 	default:
-		log.WithField("ticker_id", client.TickerID).Warn("Register channel full, cannot register client")
+		log.WithField("origin", client.Origin).Warn("register channel full, cannot register client")
 	}
 }
 
 // registerClient handles the actual client registration (called from Run loop)
 func (e *Engine) registerClient(client *Client) {
-	log.WithField("ticker_id", client.TickerID).Debug("Registering client")
+	log.WithField("origin", client.Origin).Debug("registering client")
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -336,7 +338,7 @@ func (e *Engine) registerClient(client *Client) {
 	e.clients[client.TickerID][client] = true
 
 	// Record metrics for new connection
-	recordClientConnected(client.TickerID)
+	recordClientConnected(client.Origin)
 }
 
 // Unregister queues a client for unregistration
@@ -344,7 +346,7 @@ func (e *Engine) Unregister(client *Client) {
 	select {
 	case e.unregister <- client:
 	default:
-		log.WithField("ticker_id", client.TickerID).Warn("Unregister channel full, cannot unregister client")
+		log.WithField("origin", client.Origin).Warn("unregister channel full, cannot unregister client")
 	}
 }
 
@@ -361,7 +363,7 @@ func (e *Engine) unregisterClient(client *Client) {
 			e.safeCloseClient(client)
 
 			// Record metrics for disconnection
-			recordClientDisconnected(client.TickerID, "normal")
+			recordClientDisconnected(client.Origin, "normal")
 
 			// If no more clients exist for this ticker, delete the map
 			if len(clients) == 0 {
@@ -399,7 +401,7 @@ func (e *Engine) broadcastMessage(message Message) {
 		for _, deadClient := range deadClients {
 			delete(clients, deadClient)
 			e.safeCloseClient(deadClient)
-			recordClientDisconnected(deadClient.TickerID, "channel_full")
+			recordClientDisconnected(deadClient.Origin, "channel_full")
 		}
 
 		// Clean up empty client maps
@@ -409,12 +411,12 @@ func (e *Engine) broadcastMessage(message Message) {
 
 		// Record metrics
 		for i := 0; i < sentCount; i++ {
-			recordMessageSent(message.TickerID, message.Type)
+			recordMessageSent(message.Origin, message.Type)
 		}
 		for i := 0; i < droppedCount; i++ {
-			recordMessageDropped(message.TickerID, message.Type)
+			recordMessageDropped(message.Origin, message.Type)
 		}
-		recordBroadcastDuration(message.TickerID, message.Type, time.Since(start))
+		recordBroadcastDuration(message.Origin, message.Type, time.Since(start))
 	}
 }
 
@@ -431,10 +433,7 @@ func (c *Client) WritePump() {
 	defer func() {
 		ticker.Stop()
 		c.unregisterSafely()
-		err := c.Conn.Close()
-		if err != nil {
-			log.WithError(err).WithField("ticker_id", c.TickerID).Error("Error closing WebSocket connection")
-		}
+		_ = c.Conn.Close()
 	}()
 
 	for {
@@ -448,14 +447,14 @@ func (c *Client) WritePump() {
 			}
 
 			if err := c.Conn.WriteJSON(message); err != nil {
-				log.WithError(err).WithField("ticker_id", c.TickerID).Error("Error writing to WebSocket")
+				log.WithError(err).WithField("origin", c.Origin).Warn("error writing to websocket")
 				return
 			}
 
 		case <-ticker.C:
 			_ = c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.WithError(err).WithField("ticker_id", c.TickerID).Debug("Error sending ping")
+				log.WithError(err).WithField("origin", c.Origin).Warn("error sending ping")
 				return
 			}
 		}
@@ -483,11 +482,11 @@ func (c *Client) ReadPump() {
 
 	// Optimized read loop: we only care about connection state, not message content
 	for {
-		// Use NextReader instead of ReadJSON to avoid JSON unmarshaling overhead
+		// Use NextReader instead of ReadJSON to avoid the overhead of JSON unmarshaling.
 		messageType, reader, err := c.Conn.NextReader()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.WithError(err).WithField("ticker_id", c.TickerID).Info("WebSocket connection closed unexpectedly")
+				log.WithError(err).WithField("origin", c.Origin).Info("websocket connection closed unexpectedly")
 			}
 			return
 		}
