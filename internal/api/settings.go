@@ -22,13 +22,6 @@ func (h *handler) GetSetting(c *gin.Context) {
 		return
 	}
 
-	if c.Param("name") == storage.SettingRefreshInterval {
-		setting := h.storage.GetRefreshIntervalSettings()
-		data := map[string]interface{}{"setting": response.RefreshIntervalSettingsResponse(setting)}
-		c.JSON(http.StatusOK, response.SuccessResponse(data))
-		return
-	}
-
 	c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.SettingNotFound))
 }
 
@@ -48,24 +41,5 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 
 	setting := h.storage.GetInactiveSettings()
 	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
-	c.JSON(http.StatusOK, response.SuccessResponse(data))
-}
-
-func (h *handler) PutRefreshInterval(c *gin.Context) {
-	value := storage.RefreshIntervalSettings{}
-	err := c.Bind(&value)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
-		return
-	}
-
-	err = h.storage.SaveRefreshIntervalSettings(storage.RefreshIntervalSettings{RefreshInterval: value.RefreshInterval})
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
-		return
-	}
-
-	setting := h.storage.GetRefreshIntervalSettings()
-	data := map[string]interface{}{"setting": response.RefreshIntervalSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

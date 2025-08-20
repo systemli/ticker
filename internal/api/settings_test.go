@@ -58,26 +58,6 @@ func (s *SettingsTestSuite) TestGetSetting() {
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())
 	})
-
-	s.Run("get refresh interval settings", func() {
-		s.ctx.AddParam("name", storage.SettingRefreshInterval)
-		s.store.On("GetRefreshIntervalSettings").Return(storage.RefreshIntervalSettings{}).Once()
-		h := s.handler()
-		h.GetSetting(s.ctx)
-
-		s.Equal(http.StatusOK, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
-
-	s.Run("when user is no admin", func() {
-		s.ctx.Set("me", storage.User{ID: 1, IsSuperAdmin: false})
-		s.ctx.AddParam("name", storage.SettingRefreshInterval)
-		h := s.handler()
-		h.GetSetting(s.ctx)
-
-		s.Equal(http.StatusForbidden, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
 }
 
 func (s *SettingsTestSuite) TestPutInactiveSetting() {
@@ -112,44 +92,6 @@ func (s *SettingsTestSuite) TestPutInactiveSetting() {
 		s.store.On("GetInactiveSettings").Return(setting)
 		h := s.handler()
 		h.PutInactiveSettings(s.ctx)
-
-		s.Equal(http.StatusOK, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
-}
-
-func (s *SettingsTestSuite) TestPutRefreshIntervalSetting() {
-	s.Run("when body is invalid", func() {
-		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", strings.NewReader(`broken_json`))
-		h := s.handler()
-		h.PutRefreshInterval(s.ctx)
-
-		s.Equal(http.StatusBadRequest, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
-
-	s.Run("when storage returns error", func() {
-		setting := storage.DefaultRefreshIntervalSettings()
-		body, _ := json.Marshal(setting)
-		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
-		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveRefreshIntervalSettings", mock.Anything).Return(errors.New("storage error")).Once()
-		h := s.handler()
-		h.PutRefreshInterval(s.ctx)
-
-		s.Equal(http.StatusBadRequest, s.w.Code)
-		s.store.AssertExpectations(s.T())
-	})
-
-	s.Run("when storage returns settings", func() {
-		setting := storage.DefaultRefreshIntervalSettings()
-		body, _ := json.Marshal(setting)
-		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
-		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveRefreshIntervalSettings", mock.Anything).Return(nil).Once()
-		s.store.On("GetRefreshIntervalSettings").Return(setting)
-		h := s.handler()
-		h.PutRefreshInterval(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())

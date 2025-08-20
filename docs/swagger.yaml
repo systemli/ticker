@@ -12,9 +12,6 @@ definitions:
       data:
         properties:
           settings:
-            properties:
-              refreshInterval:
-                type: integer
             type: object
           ticker:
             properties:
@@ -89,8 +86,7 @@ info:
     email: admin@systemli.org
     name: Systemli Admin Team
     url: https://www.systemli.org/en/contact/
-  description:
-    Service to distribute short messages in support of events, demonstrations,
+  description: Service to distribute short messages in support of events, demonstrations,
     or other time-sensitive events.
   license:
     name: GPLv3

@@ -20,15 +20,6 @@ func (s *SettingsResponseTestSuite) TestInactiveSettingsResponse() {
 	s.Equal(inactiveSettings, setting.Value)
 }
 
-func (s *SettingsResponseTestSuite) TestRefreshIntervalSettingsResponse() {
-	refreshIntervalSettings := storage.DefaultRefreshIntervalSettings()
-
-	setting := RefreshIntervalSettingsResponse(refreshIntervalSettings)
-
-	s.Equal(storage.SettingRefreshInterval, setting.Name)
-	s.Equal(refreshIntervalSettings, setting.Value)
-}
-
 func TestSettingsResponseTestSuite(t *testing.T) {
 	suite.Run(t, new(SettingsResponseTestSuite))
 }

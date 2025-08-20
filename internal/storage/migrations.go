@@ -29,5 +29,10 @@ func MigrateDB(db *gorm.DB) error {
 		}
 	}
 
+	// Remove the setting for refresh_interval
+	if err := db.Delete(&Setting{}, "name = ?", "refresh_interval").Error; err != nil {
+		log.WithError(err).Error("failed to delete the refresh_interval setting")
+	}
+
 	return nil
 }
