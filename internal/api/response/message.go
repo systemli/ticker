@@ -9,15 +9,14 @@ import (
 )
 
 type Message struct {
-	ID             int                 `json:"id"`
-	CreatedAt      time.Time           `json:"createdAt"`
-	Text           string              `json:"text"`
-	Ticker         int                 `json:"ticker"`
-	TelegramURL    string              `json:"telegramUrl,omitempty"`
-	MastodonURL    string              `json:"mastodonUrl,omitempty"`
-	BlueskyURL     string              `json:"blueskyUrl,omitempty"`
-	GeoInformation string              `json:"geoInformation"`
-	Attachments    []MessageAttachment `json:"attachments"`
+	ID          int                 `json:"id"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	Text        string              `json:"text"`
+	Ticker      int                 `json:"ticker"`
+	TelegramURL string              `json:"telegramUrl,omitempty"`
+	MastodonURL string              `json:"mastodonUrl,omitempty"`
+	BlueskyURL  string              `json:"blueskyUrl,omitempty"`
+	Attachments []MessageAttachment `json:"attachments"`
 }
 
 type MessageAttachment struct {
@@ -26,7 +25,6 @@ type MessageAttachment struct {
 }
 
 func MessageResponse(message storage.Message, config config.Config) Message {
-	m, _ := message.GeoInformation.MarshalJSON()
 	var attachments []MessageAttachment
 
 	for _, attachment := range message.Attachments {
@@ -35,15 +33,14 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 	}
 
 	return Message{
-		ID:             message.ID,
-		CreatedAt:      message.CreatedAt,
-		Text:           message.Text,
-		Ticker:         message.TickerID,
-		TelegramURL:    message.TelegramURL(),
-		MastodonURL:    message.MastodonURL(),
-		BlueskyURL:     message.BlueskyURL(),
-		GeoInformation: string(m),
-		Attachments:    attachments,
+		ID:          message.ID,
+		CreatedAt:   message.CreatedAt,
+		Text:        message.Text,
+		Ticker:      message.TickerID,
+		TelegramURL: message.TelegramURL(),
+		MastodonURL: message.MastodonURL(),
+		BlueskyURL:  message.BlueskyURL(),
+		Attachments: attachments,
 	}
 }
 

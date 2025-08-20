@@ -7,21 +7,19 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	geojson "github.com/paulmach/go.geojson"
 )
 
 type Message struct {
-	ID             int `gorm:"primaryKey"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	TickerID       int `gorm:"index"`
-	Text           string
-	Attachments    []Attachment
-	GeoInformation geojson.FeatureCollection `gorm:"serializer:json"`
-	Telegram       TelegramMeta              `gorm:"serializer:json"`
-	Mastodon       MastodonMeta              `gorm:"serializer:json"`
-	Bluesky        BlueskyMeta               `gorm:"serializer:json"`
-	SignalGroup    SignalGroupMeta           `gorm:"serializer:json"`
+	ID          int `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	TickerID    int `gorm:"index"`
+	Text        string
+	Attachments []Attachment
+	Telegram    TelegramMeta    `gorm:"serializer:json"`
+	Mastodon    MastodonMeta    `gorm:"serializer:json"`
+	Bluesky     BlueskyMeta     `gorm:"serializer:json"`
+	SignalGroup SignalGroupMeta `gorm:"serializer:json"`
 }
 
 func NewMessage() Message {
@@ -29,23 +27,21 @@ func NewMessage() Message {
 }
 
 func (m *Message) AsMap() map[string]interface{} {
-	geoInformation, _ := m.GeoInformation.MarshalJSON()
 	telegram, _ := json.Marshal(m.Telegram)
 	mastodon, _ := json.Marshal(m.Mastodon)
 	bluesky, _ := json.Marshal(m.Bluesky)
 	signalGroup, _ := json.Marshal(m.SignalGroup)
 
 	return map[string]interface{}{
-		"id":              m.ID,
-		"created_at":      m.CreatedAt,
-		"updated_at":      m.UpdatedAt,
-		"ticker_id":       m.TickerID,
-		"text":            m.Text,
-		"geo_information": string(geoInformation),
-		"telegram":        telegram,
-		"mastodon":        mastodon,
-		"bluesky":         bluesky,
-		"signal_group":    signalGroup,
+		"id":           m.ID,
+		"created_at":   m.CreatedAt,
+		"updated_at":   m.UpdatedAt,
+		"ticker_id":    m.TickerID,
+		"text":         m.Text,
+		"telegram":     telegram,
+		"mastodon":     mastodon,
+		"bluesky":      bluesky,
+		"signal_group": signalGroup,
 	}
 }
 

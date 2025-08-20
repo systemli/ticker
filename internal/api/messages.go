@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	geojson "github.com/paulmach/go.geojson"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/pagination"
 	"github.com/systemli/ticker/internal/api/realtime"
@@ -51,9 +50,8 @@ func (h *handler) PostMessage(c *gin.Context) {
 	}
 
 	var body struct {
-		Text           string                    `json:"text" binding:"required"`
-		GeoInformation geojson.FeatureCollection `json:"geoInformation"`
-		Attachments    []int                     `json:"attachments"`
+		Text        string `json:"text" binding:"required"`
+		Attachments []int  `json:"attachments"`
 	}
 	err = c.Bind(&body)
 	if err != nil {
@@ -73,7 +71,6 @@ func (h *handler) PostMessage(c *gin.Context) {
 	message := storage.NewMessage()
 	message.Text = body.Text
 	message.TickerID = ticker.ID
-	message.GeoInformation = body.GeoInformation
 	message.AddAttachments(uploads)
 
 	_ = h.bridges.Send(ticker, &message)

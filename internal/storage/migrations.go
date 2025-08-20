@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -23,34 +22,12 @@ func MigrateDB(db *gorm.DB) error {
 		return err
 	}
 
-	// Migrate all Ticker.Origin to TickerWebsite
-	var tickers []Ticker
-	if err := db.Find(&tickers).Error; err != nil {
-		return err
-	}
-
-	for _, ticker := range tickers {
-		if ticker.Domain != "" {
-			if err := db.Create(&TickerWebsite{
-				TickerID: ticker.ID,
-				Origin:   migrateDomain(ticker.Domain),
-			}).Error; err != nil {
-				return err
-			}
-
-			if err := db.Model(&ticker).Update("Domain", "").Error; err != nil {
-				return err
-			}
+	// Drop the column geo_information from Message if it exists
+	if db.Migrator().HasColumn(&Message{}, "geo_information") {
+		if err := db.Migrator().DropColumn(&Message{}, "geo_information"); err != nil {
+			log.WithError(err).Error("failed to drop the column geo_information from Message")
 		}
 	}
 
 	return nil
-}
-
-func migrateDomain(old string) string {
-	if old == "localhost" {
-		return "http://localhost"
-	}
-
-	return fmt.Sprintf("https://%s", old)
 }
