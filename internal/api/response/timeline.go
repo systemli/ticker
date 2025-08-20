@@ -11,11 +11,10 @@ import (
 type Timeline []TimelineEntry
 
 type TimelineEntry struct {
-	ID             int          `json:"id"`
-	CreatedAt      time.Time    `json:"createdAt"`
-	Text           string       `json:"text"`
-	GeoInformation string       `json:"geoInformation"`
-	Attachments    []Attachment `json:"attachments"`
+	ID          int          `json:"id"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	Text        string       `json:"text"`
+	Attachments []Attachment `json:"attachments"`
 }
 
 type Attachment struct {
@@ -26,8 +25,6 @@ type Attachment struct {
 func TimelineResponse(messages []storage.Message, config config.Config) []TimelineEntry {
 	timeline := make([]TimelineEntry, 0)
 	for _, message := range messages {
-		m, _ := message.GeoInformation.MarshalJSON()
-
 		var attachments []Attachment
 		for _, attachment := range message.Attachments {
 			name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
@@ -35,11 +32,10 @@ func TimelineResponse(messages []storage.Message, config config.Config) []Timeli
 		}
 
 		timeline = append(timeline, TimelineEntry{
-			ID:             message.ID,
-			CreatedAt:      message.CreatedAt,
-			Text:           message.Text,
-			GeoInformation: string(m),
-			Attachments:    attachments,
+			ID:          message.ID,
+			CreatedAt:   message.CreatedAt,
+			Text:        message.Text,
+			Attachments: attachments,
 		})
 
 	}

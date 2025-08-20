@@ -20,7 +20,6 @@ func (s *TimelineTestSuite) TestTimelineResponse() {
 	response := TimelineResponse([]storage.Message{message}, config)
 
 	s.Equal(1, len(response))
-	s.Equal(`{"type":"FeatureCollection","features":[]}`, response[0].GeoInformation)
 	s.Equal(1, len(response[0].Attachments))
 
 	attachments := response[0].Attachments
