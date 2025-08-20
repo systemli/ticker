@@ -486,22 +486,6 @@ func (s *SqlStorage) GetInactiveSettings() InactiveSettings {
 	return inactiveSettings
 }
 
-func (s *SqlStorage) GetRefreshIntervalSettings() RefreshIntervalSettings {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingRefreshInterval).Error
-	if err != nil {
-		return DefaultRefreshIntervalSettings()
-	}
-
-	var refreshIntervalSettings RefreshIntervalSettings
-	err = json.Unmarshal([]byte(setting.Value), &refreshIntervalSettings)
-	if err != nil {
-		return DefaultRefreshIntervalSettings()
-	}
-
-	return refreshIntervalSettings
-}
-
 func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) error {
 	var setting Setting
 	err := s.DB.First(&setting, EqualName, SettingInactiveName).Error
@@ -510,22 +494,6 @@ func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) err
 	}
 
 	value, err := json.Marshal(inactiveSettings)
-	if err != nil {
-		return err
-	}
-	setting.Value = string(value)
-
-	return s.DB.Save(&setting).Error
-}
-
-func (s *SqlStorage) SaveRefreshIntervalSettings(refreshInterval RefreshIntervalSettings) error {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingRefreshInterval).Error
-	if err != nil {
-		setting = Setting{Name: SettingRefreshInterval}
-	}
-
-	value, err := json.Marshal(refreshInterval)
 	if err != nil {
 		return err
 	}

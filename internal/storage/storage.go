@@ -47,8 +47,6 @@ type Storage interface {
 	DeleteMessage(message Message) error
 	DeleteMessages(ticker *Ticker) error
 	GetInactiveSettings() InactiveSettings
-	GetRefreshIntervalSettings() RefreshIntervalSettings
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error
-	SaveRefreshIntervalSettings(refreshInterval RefreshIntervalSettings) error
 	UploadPath() string
 }

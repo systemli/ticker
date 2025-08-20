@@ -4,7 +4,6 @@ import "time"
 
 const (
 	SettingInactiveName               = `inactive_settings`
-	SettingRefreshInterval            = `refresh_interval`
 	SettingInactiveHeadline           = `The ticker is currently inactive.`
 	SettingInactiveSubHeadline        = `Please contact us if you want to use it.`
 	SettingInactiveDescription        = `...`
@@ -31,14 +30,6 @@ type InactiveSettings struct {
 	Email       string `json:"email" binding:"required"`
 	Homepage    string `json:"homepage" binding:"required"`
 	Twitter     string `json:"twitter" binding:"required"`
-}
-
-type RefreshIntervalSettings struct {
-	RefreshInterval int `json:"refreshInterval" binding:"required"`
-}
-
-func DefaultRefreshIntervalSettings() RefreshIntervalSettings {
-	return RefreshIntervalSettings{RefreshInterval: SettingDefaultRefreshInterval}
 }
 
 func DefaultInactiveSettings() InactiveSettings {

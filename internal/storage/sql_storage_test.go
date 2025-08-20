@@ -1437,48 +1437,6 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 	})
 }
 
-func (s *SqlStorageTestSuite) TestGetRefreshIntervalSettings() {
-	s.Run("when no settings exist", func() {
-		settings := s.store.GetRefreshIntervalSettings()
-		s.Equal(DefaultRefreshIntervalSettings().RefreshInterval, settings.RefreshInterval)
-	})
-
-	s.Run("when settings exist", func() {
-		setting := Setting{Name: SettingRefreshInterval, Value: `{"refreshInterval":1000}`}
-		err := s.db.Create(&setting).Error
-		s.NoError(err)
-
-		settings := s.store.GetRefreshIntervalSettings()
-		s.Equal(1000, settings.RefreshInterval)
-	})
-}
-
-func (s *SqlStorageTestSuite) TestSaveRefreshIntervalSettings() {
-	settings := RefreshIntervalSettings{RefreshInterval: 1000}
-
-	s.Run("when settings are new", func() {
-		err := s.store.SaveRefreshIntervalSettings(settings)
-		s.NoError(err)
-
-		var count int64
-		err = s.db.Model(&Setting{}).Count(&count).Error
-		s.NoError(err)
-		s.Equal(int64(1), count)
-	})
-
-	s.Run("when settings are existing", func() {
-		settings.RefreshInterval = 2000
-		err := s.store.SaveRefreshIntervalSettings(settings)
-		s.NoError(err)
-
-		var count int64
-		err = s.db.Model(&Setting{}).Count(&count).Error
-		s.NoError(err)
-		s.Equal(int64(1), count)
-		s.Equal(2000, settings.RefreshInterval)
-	})
-}
-
 func TestSqlStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(SqlStorageTestSuite))
 }

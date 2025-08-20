@@ -9,9 +9,7 @@ import (
 )
 
 func (h *handler) GetInit(c *gin.Context) {
-	settings := response.Settings{
-		RefreshInterval: h.storage.GetRefreshIntervalSettings().RefreshInterval,
-	}
+	settings := response.Settings{}
 	origin, err := helper.GetOrigin(c)
 	if err != nil {
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))

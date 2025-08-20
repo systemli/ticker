@@ -27,7 +27,6 @@ func (s *InitTestSuite) SetupTest() {
 	s.w = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.w)
 	s.store = &storage.MockStorage{}
-	s.store.On("GetRefreshIntervalSettings").Return(storage.DefaultRefreshIntervalSettings())
 	s.cfg = config.LoadConfig("")
 }
 
@@ -38,7 +37,7 @@ func (s *InitTestSuite) TestGetInit() {
 		h.GetInit(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
-		s.Equal(`{"data":{"settings":{"refreshInterval":10000},"ticker":null},"status":"success","error":{}}`, s.w.Body.String())
+		s.Equal(`{"data":{"settings":{},"ticker":null},"status":"success","error":{}}`, s.w.Body.String())
 		s.store.AssertNotCalled(s.T(), "FindTickerByOrigin", "", mock.Anything)
 		s.store.AssertExpectations(s.T())
 	})
