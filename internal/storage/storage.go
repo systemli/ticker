@@ -48,5 +48,7 @@ type Storage interface {
 	DeleteMessages(ticker *Ticker) error
 	GetInactiveSettings() InactiveSettings
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error
+	GetTelegramSettings() TelegramSettings
+	SaveTelegramSettings(telegramSettings TelegramSettings) error
 	UploadPath() string
 }

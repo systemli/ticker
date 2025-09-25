@@ -2033,6 +2033,50 @@ func (_c *MockStorage_GetInactiveSettings_Call) RunAndReturn(run func() Inactive
 	return _c
 }
 
+// GetTelegramSettings provides a mock function for the type MockStorage
+func (_mock *MockStorage) GetTelegramSettings() TelegramSettings {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTelegramSettings")
+	}
+
+	var r0 TelegramSettings
+	if returnFunc, ok := ret.Get(0).(func() TelegramSettings); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(TelegramSettings)
+	}
+	return r0
+}
+
+// MockStorage_GetTelegramSettings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTelegramSettings'
+type MockStorage_GetTelegramSettings_Call struct {
+	*mock.Call
+}
+
+// GetTelegramSettings is a helper method to define mock.On call
+func (_e *MockStorage_Expecter) GetTelegramSettings() *MockStorage_GetTelegramSettings_Call {
+	return &MockStorage_GetTelegramSettings_Call{Call: _e.mock.On("GetTelegramSettings")}
+}
+
+func (_c *MockStorage_GetTelegramSettings_Call) Run(run func()) *MockStorage_GetTelegramSettings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockStorage_GetTelegramSettings_Call) Return(telegramSettings TelegramSettings) *MockStorage_GetTelegramSettings_Call {
+	_c.Call.Return(telegramSettings)
+	return _c
+}
+
+func (_c *MockStorage_GetTelegramSettings_Call) RunAndReturn(run func() TelegramSettings) *MockStorage_GetTelegramSettings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResetTicker provides a mock function for the type MockStorage
 func (_mock *MockStorage) ResetTicker(ticker *Ticker) error {
 	ret := _mock.Called(ticker)
@@ -2182,6 +2226,57 @@ func (_c *MockStorage_SaveMessage_Call) Return(err error) *MockStorage_SaveMessa
 }
 
 func (_c *MockStorage_SaveMessage_Call) RunAndReturn(run func(message *Message) error) *MockStorage_SaveMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveTelegramSettings provides a mock function for the type MockStorage
+func (_mock *MockStorage) SaveTelegramSettings(telegramSettings TelegramSettings) error {
+	ret := _mock.Called(telegramSettings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveTelegramSettings")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(TelegramSettings) error); ok {
+		r0 = returnFunc(telegramSettings)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStorage_SaveTelegramSettings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveTelegramSettings'
+type MockStorage_SaveTelegramSettings_Call struct {
+	*mock.Call
+}
+
+// SaveTelegramSettings is a helper method to define mock.On call
+//   - telegramSettings TelegramSettings
+func (_e *MockStorage_Expecter) SaveTelegramSettings(telegramSettings interface{}) *MockStorage_SaveTelegramSettings_Call {
+	return &MockStorage_SaveTelegramSettings_Call{Call: _e.mock.On("SaveTelegramSettings", telegramSettings)}
+}
+
+func (_c *MockStorage_SaveTelegramSettings_Call) Run(run func(telegramSettings TelegramSettings)) *MockStorage_SaveTelegramSettings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 TelegramSettings
+		if args[0] != nil {
+			arg0 = args[0].(TelegramSettings)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_SaveTelegramSettings_Call) Return(err error) *MockStorage_SaveTelegramSettings_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStorage_SaveTelegramSettings_Call) RunAndReturn(run func(telegramSettings TelegramSettings) error) *MockStorage_SaveTelegramSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }

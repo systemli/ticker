@@ -22,6 +22,13 @@ func (h *handler) GetSetting(c *gin.Context) {
 		return
 	}
 
+	if c.Param("name") == storage.SettingTelegramName {
+		setting := h.storage.GetTelegramSettings()
+		data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
+		c.JSON(http.StatusOK, response.SuccessResponse(data))
+		return
+	}
+
 	c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.SettingNotFound))
 }
 
@@ -41,5 +48,24 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 
 	setting := h.storage.GetInactiveSettings()
 	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
+}
+
+func (h *handler) PutTelegramSettings(c *gin.Context) {
+	value := storage.TelegramSettings{}
+	err := c.Bind(&value)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
+		return
+	}
+
+	err = h.storage.SaveTelegramSettings(value)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	setting := h.storage.GetTelegramSettings()
+	data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

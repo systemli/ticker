@@ -112,6 +112,7 @@ func API(config config.Config, store storage.Storage) *Server {
 
 		admin.GET(`/settings/:name`, user.NeedAdmin(), handler.GetSetting)
 		admin.PUT(`/settings/inactive_settings`, user.NeedAdmin(), handler.PutInactiveSettings)
+		admin.PUT(`/settings/telegram_settings`, user.NeedAdmin(), handler.PutTelegramSettings)
 	}
 
 	public := r.Group("/v1").Use()

@@ -20,14 +20,29 @@ func (s *BridgeTestSuite) TestTelegramUpdate() {
 
 func (s *BridgeTestSuite) TestTelegramSend() {
 	s.Run("when telegram is inactive", func() {
-		bridge := s.telegramBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		// No expectation for GetTelegramSettings since ChannelName is empty
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		err := bridge.Send(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
+	})
+
+	s.Run("when telegram is active but token is empty", func() {
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
+
+		err := bridge.Send(tickerWithBridges, &messageWithoutBridges)
+		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when telegram is active but bot api fails", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -36,10 +51,13 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 		err := bridge.Send(tickerWithBridges, &storage.Message{})
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when telegram is active but send message fails", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -59,7 +77,9 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 	})
 
 	s.Run("when telegram is active without attachments", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -83,13 +103,15 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 		s.NoError(err)
 		s.Equal(123, messageWithBridges.Telegram.Messages[0].MessageID)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when telegram is active with attachments", func() {
 		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
 		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{UUID: "123", ContentType: "image/gif"}, nil).Once()
 		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{UUID: "456", ContentType: "image/jpeg"}, nil).Once()
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, mockStorage)
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -119,9 +141,10 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 
 	s.Run("when telegram is active but send media group fails", func() {
 		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
 		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{UUID: "123", ContentType: "image/gif"}, nil).Once()
 		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{UUID: "456", ContentType: "image/jpeg"}, nil).Once()
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, mockStorage)
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -143,9 +166,10 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 
 	s.Run("when telegram is active but find upload fails", func() {
 		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
 		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
 		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, mockStorage)
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -164,21 +188,39 @@ func (s *BridgeTestSuite) TestTelegramSend() {
 
 func (s *BridgeTestSuite) TestTelegramDelete() {
 	s.Run("when telegram is inactive", func() {
-		bridge := s.telegramBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		// No expectation for GetTelegramSettings since ChannelName is empty
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
-	s.Run("when message has no telegram meta", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+	s.Run("when token is empty", func() {
+		mockStorage := &storage.MockStorage{}
+		// No GetTelegramSettings expectation because ChannelName is empty, causing early return
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
+	})
+
+	s.Run("when message has no telegram meta", func() {
+		mockStorage := &storage.MockStorage{}
+		// No GetTelegramSettings expectation because message has no Telegram metadata, causing early return
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
+
+		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
+		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when telegram is active but bot api fails", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -187,10 +229,13 @@ func (s *BridgeTestSuite) TestTelegramDelete() {
 		err := bridge.Delete(tickerWithBridges, &messageWithBridges)
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when telegram is active but delete message fails", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -209,7 +254,9 @@ func (s *BridgeTestSuite) TestTelegramDelete() {
 	})
 
 	s.Run("when telegram is active and deletion is successful", func() {
-		bridge := s.telegramBridge(config.Config{Telegram: config.Telegram{Token: "123"}}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "123"})
+		bridge := s.telegramBridge(config.Config{}, mockStorage)
 
 		gock.New("https://api.telegram.org").
 			Post("/bot123/getMe").
@@ -229,6 +276,7 @@ func (s *BridgeTestSuite) TestTelegramDelete() {
 		err := bridge.Delete(tickerWithBridges, &messageWithBridges)
 		s.NoError(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 }
 

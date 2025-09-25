@@ -1437,6 +1437,82 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 	})
 }
 
+func (s *SqlStorageTestSuite) TestGetTelegramSettings() {
+	s.Run("when no settings exist", func() {
+		settings := s.store.GetTelegramSettings()
+		s.Equal(DefaultTelegramSettings().Token, settings.Token)
+		s.Equal("", settings.Token) // Default should be empty
+	})
+
+	s.Run("when settings exist", func() {
+		setting := Setting{Name: SettingTelegramName, Value: `{"token":"123456789:ABCdefGHIjklMNOpqrsTUVwxyz"}`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetTelegramSettings()
+		s.Equal("123456789:ABCdefGHIjklMNOpqrsTUVwxyz", settings.Token)
+
+		// Cleanup for next sub-test
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+
+	s.Run("when settings have invalid JSON", func() {
+		setting := Setting{Name: SettingTelegramName, Value: `invalid json`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetTelegramSettings()
+		s.Equal("", settings.Token) // Should be default empty token for invalid JSON
+
+		// Cleanup
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
+	settings := TelegramSettings{Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"}
+
+	s.Run("when settings are new", func() {
+		err := s.store.SaveTelegramSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingTelegramName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		// Verify the setting was saved correctly
+		var savedSetting Setting
+		err = s.db.Where("name = ?", SettingTelegramName).First(&savedSetting).Error
+		s.NoError(err)
+		s.Contains(savedSetting.Value, "123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
+	})
+
+	s.Run("when settings are existing", func() {
+		settings.Token = "987654321:ZYXwvuTSRqponMLKjihGFeDcba"
+		err := s.store.SaveTelegramSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingTelegramName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count) // Should still be only one record
+
+		// Verify the setting was updated correctly
+		retrievedSettings := s.store.GetTelegramSettings()
+		s.Equal("987654321:ZYXwvuTSRqponMLKjihGFeDcba", retrievedSettings.Token)
+	})
+
+	s.Run("when saving empty token", func() {
+		emptySettings := TelegramSettings{Token: ""}
+		err := s.store.SaveTelegramSettings(emptySettings)
+		s.NoError(err)
+
+		retrievedSettings := s.store.GetTelegramSettings()
+		s.Equal("", retrievedSettings.Token)
+	})
+}
+
 func TestSqlStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(SqlStorageTestSuite))
 }

@@ -27,7 +27,6 @@ func (s *ConfigTestSuite) SetupTest() {
 		"TICKER_METRICS_LISTEN": ":9191",
 		"TICKER_UPLOAD_PATH":    "/data/uploads",
 		"TICKER_UPLOAD_URL":     "https://example.com",
-		"TICKER_TELEGRAM_TOKEN": "token",
 	}
 }
 
@@ -45,8 +44,6 @@ func (s *ConfigTestSuite) TestConfig() {
 				s.Equal(":8181", c.MetricsListen)
 				s.Equal("uploads", c.Upload.Path)
 				s.Equal("http://localhost:8080", c.Upload.URL)
-				s.Empty(c.Telegram.Token)
-				s.False(c.Telegram.Enabled())
 				s.Empty(c.SignalGroup.ApiUrl)
 				s.Empty(c.SignalGroup.Account)
 				s.False(c.SignalGroup.Enabled())
@@ -68,10 +65,8 @@ func (s *ConfigTestSuite) TestConfig() {
 				s.Equal(s.envs["TICKER_METRICS_LISTEN"], c.MetricsListen)
 				s.Equal(s.envs["TICKER_UPLOAD_PATH"], c.Upload.Path)
 				s.Equal(s.envs["TICKER_UPLOAD_URL"], c.Upload.URL)
-				s.Equal(s.envs["TICKER_TELEGRAM_TOKEN"], c.Telegram.Token)
 				s.Equal(s.envs["TICKER_SIGNAL_GROUP_API_URL"], c.SignalGroup.ApiUrl)
 				s.Equal(s.envs["TICKER_SIGNAL_GROUP_ACCOUNT"], c.SignalGroup.Account)
-				s.True(c.Telegram.Enabled())
 
 				for key := range s.envs {
 					os.Unsetenv(key)

@@ -71,7 +71,7 @@ func (h *handler) GetTickers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"tickers": response.TickersResponse(tickers, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"tickers": response.TickersResponse(tickers, h.getBotUsername())}))
 }
 
 func (h *handler) GetTicker(c *gin.Context) {
@@ -81,7 +81,7 @@ func (h *handler) GetTicker(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) GetTickerUsers(c *gin.Context) {
@@ -110,7 +110,7 @@ func (h *handler) PostTicker(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTicker(c *gin.Context) {
@@ -141,7 +141,7 @@ func (h *handler) PutTicker(c *gin.Context) {
 
 	h.ClearTickerCache(&ticker)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerUsers(c *gin.Context) {
@@ -212,7 +212,7 @@ func (h *handler) PutTickerWebsites(c *gin.Context) {
 
 	h.ClearTickerCache(&ticker)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) DeleteTickerWebsites(c *gin.Context) {
@@ -230,7 +230,7 @@ func (h *handler) DeleteTickerWebsites(c *gin.Context) {
 
 	h.ClearTickerCache(&ticker)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerTelegram(c *gin.Context) {
@@ -258,7 +258,7 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) DeleteTickerTelegram(c *gin.Context) {
@@ -274,7 +274,7 @@ func (h *handler) DeleteTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerMastodon(c *gin.Context) {
@@ -324,7 +324,7 @@ func (h *handler) PutTickerMastodon(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) DeleteTickerMastodon(c *gin.Context) {
@@ -340,7 +340,7 @@ func (h *handler) DeleteTickerMastodon(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerBluesky(c *gin.Context) {
@@ -375,7 +375,7 @@ func (h *handler) PutTickerBluesky(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) DeleteTickerBluesky(c *gin.Context) {
@@ -391,7 +391,7 @@ func (h *handler) DeleteTickerBluesky(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerSignalGroup(c *gin.Context) {
@@ -423,7 +423,7 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
@@ -455,7 +455,7 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 func (h *handler) PutTickerSignalGroupAdmin(c *gin.Context) {
@@ -547,7 +547,7 @@ func (h *handler) ResetTicker(c *gin.Context) {
 
 	h.ClearTickerCache(&ticker)
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.getBotUsername())}))
 }
 
 // ClearTickerCache clears the cache for the init endpoint of a ticker
@@ -586,4 +586,16 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 	t.Location.Lon = body.Location.Lon
 
 	return nil
+}
+
+// getBotUsername retrieves the Telegram bot username from settings
+func (h *handler) getBotUsername() string {
+	telegramSettings := h.storage.GetTelegramSettings()
+	if telegramSettings.Token == "" {
+		return ""
+	}
+
+	// TODO: Get actual bot username from Telegram API or cache it
+	// For now, return empty string since we don't want to make API calls here
+	return ""
 }
