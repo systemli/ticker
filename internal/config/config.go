@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sethvargo/go-password/password"
 	"github.com/spf13/afero"
 	"github.com/systemli/ticker/internal/logger"
@@ -19,7 +18,6 @@ type Config struct {
 	LogFormat     string      `yaml:"log_format"`
 	Secret        string      `yaml:"secret"`
 	Database      Database    `yaml:"database"`
-	Telegram      Telegram    `yaml:"telegram"`
 	SignalGroup   SignalGroup `yaml:"signal_group"`
 	MetricsListen string      `yaml:"metrics_listen"`
 	Upload        Upload      `yaml:"upload"`
@@ -29,11 +27,6 @@ type Config struct {
 type Database struct {
 	Type string `yaml:"type"`
 	DSN  string `yaml:"dsn"`
-}
-
-type Telegram struct {
-	Token string `yaml:"token"`
-	User  tgbotapi.User
 }
 
 type SignalGroup struct {
@@ -63,11 +56,6 @@ func defaultConfig() Config {
 		},
 		FileBackend: afero.NewOsFs(),
 	}
-}
-
-// Enabled returns true if the required token is not empty.
-func (t *Telegram) Enabled() bool {
-	return t.Token != ""
 }
 
 // Enabled returns true if requried API URL and account are set.
@@ -116,9 +104,6 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_UPLOAD_URL") != "" {
 		c.Upload.URL = os.Getenv("TICKER_UPLOAD_URL")
-	}
-	if os.Getenv("TICKER_TELEGRAM_TOKEN") != "" {
-		c.Telegram.Token = os.Getenv("TICKER_TELEGRAM_TOKEN")
 	}
 	if os.Getenv("TICKER_SIGNAL_GROUP_API_URL") != "" {
 		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_URL")
