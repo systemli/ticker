@@ -12,6 +12,7 @@ const (
 	SettingInactiveHomepage           = `https://www.systemli.org/`
 	SettingInactiveTwitter            = `systemli`
 	SettingDefaultRefreshInterval int = 10000
+	SettingTelegramName               = `telegram_settings`
 )
 
 type Setting struct {
@@ -32,6 +33,10 @@ type InactiveSettings struct {
 	Twitter     string `json:"twitter" binding:"required"`
 }
 
+type TelegramSettings struct {
+	Token string `json:"token"`
+}
+
 func DefaultInactiveSettings() InactiveSettings {
 	return InactiveSettings{
 		Headline:    SettingInactiveHeadline,
@@ -41,5 +46,11 @@ func DefaultInactiveSettings() InactiveSettings {
 		Email:       SettingInactiveEmail,
 		Homepage:    SettingInactiveHomepage,
 		Twitter:     SettingInactiveTwitter,
+	}
+}
+
+func DefaultTelegramSettings() TelegramSettings {
+	return TelegramSettings{
+		Token: "",
 	}
 }
