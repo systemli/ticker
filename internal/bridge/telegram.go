@@ -16,11 +16,17 @@ func (tb *TelegramBridge) Update(ticker storage.Ticker) error {
 }
 
 func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) error {
-	if ticker.Telegram.ChannelName == "" || !tb.config.Telegram.Enabled() || !ticker.Telegram.Active {
+	if ticker.Telegram.ChannelName == "" || !ticker.Telegram.Active {
 		return nil
 	}
 
-	bot, err := tgbotapi.NewBotAPI(tb.config.Telegram.Token)
+	// Get Telegram token from database settings
+	telegramSettings := tb.storage.GetTelegramSettings()
+	if telegramSettings.Token == "" {
+		return nil
+	}
+
+	bot, err := tgbotapi.NewBotAPI(telegramSettings.Token)
 	if err != nil {
 		return err
 	}
@@ -73,7 +79,7 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 }
 
 func (tb *TelegramBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
-	if ticker.Telegram.ChannelName == "" || !tb.config.Telegram.Enabled() {
+	if ticker.Telegram.ChannelName == "" {
 		return nil
 	}
 
@@ -81,7 +87,13 @@ func (tb *TelegramBridge) Delete(ticker storage.Ticker, message *storage.Message
 		return nil
 	}
 
-	bot, err := tgbotapi.NewBotAPI(tb.config.Telegram.Token)
+	// Get Telegram token from database settings
+	telegramSettings := tb.storage.GetTelegramSettings()
+	if telegramSettings.Token == "" {
+		return nil
+	}
+
+	bot, err := tgbotapi.NewBotAPI(telegramSettings.Token)
 	if err != nil {
 		return err
 	}
@@ -99,6 +111,10 @@ func (tb *TelegramBridge) Delete(ticker storage.Ticker, message *storage.Message
 }
 
 func BotUser(token string) (tgbotapi.User, error) {
+	if token == "" {
+		return tgbotapi.User{}, nil
+	}
+
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return tgbotapi.User{}, err

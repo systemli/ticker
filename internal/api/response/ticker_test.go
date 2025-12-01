@@ -4,9 +4,7 @@ import (
 	"testing"
 	"time"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/stretchr/testify/suite"
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -61,15 +59,7 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 		},
 	}
 
-	config := config.Config{
-		Telegram: config.Telegram{
-			User: tgbotapi.User{
-				UserName: "ticker",
-			},
-		},
-	}
-
-	tickerResponse := TickersResponse([]storage.Ticker{ticker}, config)
+	tickerResponse := TickersResponse([]storage.Ticker{ticker}, "")
 
 	s.Equal(1, len(tickerResponse))
 	s.Equal(ticker.ID, tickerResponse[0].ID)
@@ -89,7 +79,7 @@ func (s *TickersResponseTestSuite) TestTickersResponse() {
 	s.Equal(ticker.Websites[0].Origin, tickerResponse[0].Websites[0].Origin)
 	s.Equal(ticker.Telegram.Active, tickerResponse[0].Telegram.Active)
 	s.Equal(ticker.Telegram.Connected(), tickerResponse[0].Telegram.Connected)
-	s.Equal(config.Telegram.User.UserName, tickerResponse[0].Telegram.BotUsername)
+	s.Equal("", tickerResponse[0].Telegram.BotUsername) // Now empty since removed from config
 	s.Equal(ticker.Telegram.ChannelName, tickerResponse[0].Telegram.ChannelName)
 	s.Equal(ticker.Mastodon.Active, tickerResponse[0].Mastodon.Active)
 	s.Equal(ticker.Mastodon.Connected(), tickerResponse[0].Mastodon.Connected)
