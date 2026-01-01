@@ -17,3 +17,10 @@ func InactiveSettingsResponse(inactiveSettings storage.InactiveSettings) Setting
 		Value: inactiveSettings,
 	}
 }
+
+func TelegramSettingsResponse(telegramSettings storage.TelegramSettings) Setting {
+	return Setting{
+		Name:  storage.SettingTelegramName,
+		Value: telegramSettings,
+	}
+}
