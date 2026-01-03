@@ -31,6 +31,7 @@ func (s *SqlStorageTestSuite) SetupTest() {
 		&TickerMastodon{},
 		&TickerBluesky{},
 		&TickerSignalGroup{},
+		&TickerMatrix{},
 		&TickerWebsite{},
 		&User{},
 		&Message{},

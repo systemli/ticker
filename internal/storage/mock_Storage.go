@@ -400,6 +400,57 @@ func (_c *MockStorage_DeleteSignalGroup_Call) RunAndReturn(run func(ticker *Tick
 	return _c
 }
 
+// DeleteMatrix provides a mock function for the type MockStorage
+func (_mock *MockStorage) DeleteMatrix(ticker *Ticker) error {
+	ret := _mock.Called(ticker)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteMatrix")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*Ticker) error); ok {
+		r0 = returnFunc(ticker)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStorage_DeleteMatrix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteMatrix'
+type MockStorage_DeleteMatrix_Call struct {
+	*mock.Call
+}
+
+// DeleteMatrix is a helper method to define mock.On call
+//   - ticker *Ticker
+func (_e *MockStorage_Expecter) DeleteMatrix(ticker interface{}) *MockStorage_DeleteMatrix_Call {
+	return &MockStorage_DeleteMatrix_Call{Call: _e.mock.On("DeleteMatrix", ticker)}
+}
+
+func (_c *MockStorage_DeleteMatrix_Call) Run(run func(ticker *Ticker)) *MockStorage_DeleteMatrix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *Ticker
+		if args[0] != nil {
+			arg0 = args[0].(*Ticker)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_DeleteMatrix_Call) Return(err error) *MockStorage_DeleteMatrix_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStorage_DeleteMatrix_Call) RunAndReturn(run func(ticker *Ticker) error) *MockStorage_DeleteMatrix_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteTelegram provides a mock function for the type MockStorage
 func (_mock *MockStorage) DeleteTelegram(ticker *Ticker) error {
 	ret := _mock.Called(ticker)
