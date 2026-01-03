@@ -18,11 +18,12 @@ var log = logger.GetWithPackage("matrix")
 
 // CreateRoomRequest represents the request payload for creating a Matrix room
 type CreateRoomRequest struct {
-	Name                      string                 `json:"name"`
-	RoomAliasName             string                 `json:"room_alias_name"`
-	Preset                    string                 `json:"preset"`
-	Visibility                string                 `json:"visibility"`
-	PowerLevelContentOverride map[string]interface{} `json:"power_level_content_override,omitempty"`
+	Name                      string                   `json:"name"`
+	RoomAliasName             string                   `json:"room_alias_name"`
+	Preset                    string                   `json:"preset"`
+	Visibility                string                   `json:"visibility"`
+	PowerLevelContentOverride map[string]interface{}   `json:"power_level_content_override,omitempty"`
+	InitialState              []map[string]interface{} `json:"initial_state,omitempty"`
 }
 
 // CreateRoomResponse represents the response from creating a Matrix room
@@ -83,6 +84,15 @@ func attemptCreateRoom(cfg config.Config, title, roomAliasName string) (string, 
 		PowerLevelContentOverride: map[string]interface{}{
 			"invite":         0,
 			"events_default": 50,
+		},
+		// Enable end-to-end encryption for the room
+		InitialState: []map[string]interface{}{
+			{
+				"type": "m.room.encryption",
+				"content": map[string]interface{}{
+					"algorithm": "m.megolm.v1.aes-sha2",
+				},
+			},
 		},
 	}
 
