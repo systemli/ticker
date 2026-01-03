@@ -37,6 +37,24 @@ type MatrixErrorResponse struct {
 	Error   string `json:"error"`
 }
 
+// MembersResponse represents the response from getting room members
+type MembersResponse struct {
+	Chunk []MemberEvent `json:"chunk"`
+}
+
+// MemberEvent represents a single member event
+type MemberEvent struct {
+	Type     string            `json:"type"`
+	StateKey string            `json:"state_key"`
+	Content  map[string]string `json:"content"`
+}
+
+// KickRequest represents the request to kick a user from a room
+type KickRequest struct {
+	UserID string `json:"user_id"`
+	Reason string `json:"reason"`
+}
+
 // CreateRoom creates a new public room in Matrix using the Synapse API
 func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
 	if !cfg.Matrix.Enabled() {
@@ -181,4 +199,190 @@ func sanitizeRoomName(name string) string {
 	}
 
 	return name
+}
+
+// RemoveAllMembers removes all members from a Matrix room except the bot itself
+func RemoveAllMembers(cfg config.Config, roomID string) error {
+	if !cfg.Matrix.Enabled() {
+		return fmt.Errorf("matrix bridge is not configured")
+	}
+
+	// First, get the current user ID to avoid kicking ourselves
+	myUserID, err := getCurrentUser(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to get current user: %w", err)
+	}
+	log.Debug("Current Matrix user ID: ", myUserID)
+
+	// Get all room members
+	members, err := getRoomMembers(cfg, roomID)
+	if err != nil {
+		return fmt.Errorf("failed to get room members: %w", err)
+	}
+	log.Debug("Current Matrix room members: ", members)
+
+	// Kick each member except ourselves
+	for _, member := range members {
+		if member.StateKey != myUserID {
+			err := kickUser(cfg, roomID, member.StateKey)
+			if err != nil {
+				log.WithError(err).WithField("user_id", member.StateKey).Error("failed to kick user")
+				// Continue kicking other users even if one fails
+			} else {
+				log.WithField("user_id", member.StateKey).Info("kicked user from Matrix room")
+			}
+		}
+	}
+
+	return nil
+}
+
+// getCurrentUser gets the user ID of the bot
+func getCurrentUser(cfg config.Config) (string, error) {
+	url := fmt.Sprintf("%s/_matrix/client/v3/account/whoami", cfg.Matrix.ApiUrl)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var response struct {
+		UserID string `json:"user_id"`
+	}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return response.UserID, nil
+}
+
+// getRoomMembers gets all members of a Matrix room
+func getRoomMembers(cfg config.Config, roomID string) ([]MemberEvent, error) {
+	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/members", cfg.Matrix.ApiUrl, roomID)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var response MembersResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return response.Chunk, nil
+}
+
+// kickUser kicks a user from a Matrix room
+func kickUser(cfg config.Config, roomID, userID string) error {
+	url := fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/kick", cfg.Matrix.ApiUrl, roomID)
+
+	kickReq := KickRequest{
+		UserID: userID,
+		Reason: "Room is being deleted",
+	}
+
+	jsonData, err := json.Marshal(kickReq)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
+
+// LeaveRoom leaves a Matrix room
+func LeaveRoom(cfg config.Config, roomID string) error {
+	if !cfg.Matrix.Enabled() {
+		return fmt.Errorf("matrix bridge is not configured")
+	}
+
+	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/leave", cfg.Matrix.ApiUrl, roomID)
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer([]byte("{}")))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	log.WithField("room_id", roomID).Info("left Matrix room")
+
+	return nil
 }

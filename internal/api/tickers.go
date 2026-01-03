@@ -532,6 +532,18 @@ func (h *handler) DeleteTickerMatrix(c *gin.Context) {
 		return
 	}
 
+	err = matrix.RemoveAllMembers(h.config, ticker.Matrix.RoomID)
+	if err != nil {
+		log.WithError(err).Error("failed to remove members")
+		return
+	}
+
+	err = matrix.LeaveRoom(h.config, ticker.Matrix.RoomID)
+	if err != nil {
+		log.WithError(err).Error("failed to leave room")
+		return
+	}
+
 	err = h.storage.DeleteMatrix(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
