@@ -30,13 +30,13 @@ func (mb *MatrixRoomBridge) Send(ticker storage.Ticker, message *storage.Message
 		return nil
 	}
 
-	eventID, err := matrix.SendMessage(mb.config, ticker.Matrix.RoomID, message.Text)
+	eventIDs, err := matrix.SendMessage(mb.config, mb.storage, ticker.Matrix.RoomID, message)
 	if err != nil {
 		return err
 	}
 
-	// Store the event ID so we can delete the message later
-	message.MatrixRoom.EventID = eventID
+	// Store all event IDs (images + text) so we can delete them later
+	message.MatrixRoom.EventIDs = eventIDs
 	err = mb.storage.SaveMessage(message)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (mb *MatrixRoomBridge) Delete(ticker storage.Ticker, message *storage.Messa
 		return nil
 	}
 
-	err := matrix.DeleteMessage(mb.config, ticker.Matrix.RoomID, message.MatrixRoom.EventID)
+	err := matrix.DeleteMessage(mb.config, ticker.Matrix.RoomID, message.MatrixRoom.EventIDs)
 	if err != nil {
 		return err
 	}

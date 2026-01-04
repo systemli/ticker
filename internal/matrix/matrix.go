@@ -1,8 +1,10 @@
 package matrix
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -98,7 +100,7 @@ func attemptCreateRoom(client *mautrix.Client, title, roomAliasName string) (id.
 		return "", err
 	}
 
-	log.WithField("room_id", resp.RoomID).WithField("room_name", title).WithField("room_alias", roomAliasName).Info("Matrix room created successfully")
+	log.WithField("room_id", resp.RoomID).WithField("room_name", title).WithField("room_alias", roomAliasName).Debug("Matrix room created successfully")
 
 	return resp.RoomID, nil
 }
@@ -158,7 +160,7 @@ func UpdateRoomName(cfg config.Config, roomID, name string) error {
 		return fmt.Errorf("failed to update room name: %w", err)
 	}
 
-	log.WithField("room_id", roomID).WithField("room_name", name).Info("Matrix room name updated successfully")
+	log.WithField("room_id", roomID).WithField("room_name", name).Debug("Matrix room name updated successfully")
 
 	return nil
 }
@@ -194,7 +196,7 @@ func RemoveAllMembers(cfg config.Config, roomID string) error {
 				log.WithError(err).WithField("user_id", userID).Error("failed to kick user")
 				// Continue kicking other users even if one fails
 			} else {
-				log.WithField("user_id", userID).Info("kicked user from Matrix room")
+				log.WithField("user_id", userID).Debug("kicked user from Matrix room")
 			}
 		}
 	}
@@ -214,44 +216,100 @@ func LeaveRoom(cfg config.Config, roomID string) error {
 		return fmt.Errorf("failed to leave room: %w", err)
 	}
 
-	log.WithField("room_id", roomID).Info("left Matrix room")
+	log.WithField("room_id", roomID).Debug("left Matrix room")
 
 	return nil
 }
 
-func SendMessage(cfg config.Config, roomID, message string) (string, error) {
+func SendMessage(cfg config.Config, store storage.Storage, roomID string, message *storage.Message) ([]string, error) {
 	client, err := getClient(cfg)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
+	var eventIDs []string
+
+	// Send image attachments first (one per message in Matrix)
+	for _, attachment := range message.Attachments {
+		upload, err := store.FindUploadByUUID(attachment.UUID)
+		if err != nil {
+			log.WithError(err).WithField("uuid", attachment.UUID).Error("failed to find upload")
+			continue
+		}
+
+		// Read file from disk
+		fileContent, err := os.ReadFile(upload.FullPath(cfg.Upload.Path))
+		if err != nil {
+			log.WithError(err).WithField("path", upload.FullPath(cfg.Upload.Path)).Error("failed to read file")
+			continue
+		}
+
+		// Upload file to Matrix
+		uploadResp, err := client.UploadMedia(context.Background(), mautrix.ReqUploadMedia{
+			Content:     bytes.NewReader(fileContent),
+			ContentType: upload.ContentType,
+			FileName:    upload.FileName(),
+		})
+		if err != nil {
+			log.WithError(err).WithField("file", upload.FileName()).Error("failed to upload file to Matrix")
+			continue
+		}
+
+		// Send image message
+		imageResp, err := client.SendMessageEvent(context.Background(), id.RoomID(roomID), event.EventMessage, &event.MessageEventContent{
+			MsgType: event.MsgImage,
+			Body:    upload.FileName(),
+			URL:     uploadResp.ContentURI.CUString(),
+			Info: &event.FileInfo{
+				MimeType: upload.ContentType,
+				Size:     len(fileContent),
+			},
+		})
+		if err != nil {
+			log.WithError(err).WithField("file", upload.FileName()).Error("failed to send image message")
+			continue
+		}
+
+		// Store image event ID
+		eventIDs = append(eventIDs, imageResp.EventID.String())
+		log.WithField("room_id", roomID).WithField("file", upload.FileName()).WithField("event_id", imageResp.EventID).Debug("sent image to Matrix room")
+	}
+
+	// Send text message last
 	resp, err := client.SendMessageEvent(context.Background(), id.RoomID(roomID), event.EventMessage, &event.MessageEventContent{
 		MsgType: event.MsgText,
-		Body:    message,
+		Body:    message.Text,
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to send message: %w", err)
+		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-	log.WithField("room_id", roomID).WithField("event_id", resp.EventID).Info("sent message to Matrix room")
+	// Store text message event ID
+	eventIDs = append(eventIDs, resp.EventID.String())
+	log.WithField("room_id", roomID).WithField("event_id", resp.EventID).Debug("sent message to Matrix room")
 
-	return resp.EventID.String(), nil
+	return eventIDs, nil
 }
 
-func DeleteMessage(cfg config.Config, roomID, eventID string) error {
+// DeleteMessage redacts multiple messages (images + text) from a Matrix room
+func DeleteMessage(cfg config.Config, roomID string, eventIDs []string) error {
 	client, err := getClient(cfg)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.RedactEvent(context.Background(), id.RoomID(roomID), id.EventID(eventID), mautrix.ReqRedact{
-		Reason: "Message deleted",
-	})
-	if err != nil {
-		return fmt.Errorf("failed to delete message: %w", err)
+	// Redact all event IDs (images and text message)
+	for _, eventID := range eventIDs {
+		_, err = client.RedactEvent(context.Background(), id.RoomID(roomID), id.EventID(eventID), mautrix.ReqRedact{
+			Reason: "Message deleted",
+		})
+		if err != nil {
+			log.WithError(err).WithField("event_id", eventID).Error("failed to redact event")
+			// Continue with other events even if one fails
+			continue
+		}
+		log.WithField("room_id", roomID).WithField("event_id", eventID).Debug("deleted message from Matrix room")
 	}
-
-	log.WithField("room_id", roomID).WithField("event_id", eventID).Info("deleted message from Matrix room")
 
 	return nil
 }

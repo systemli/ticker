@@ -69,7 +69,7 @@ type SignalGroupMeta struct {
 }
 
 type MatrixRoomMeta struct {
-	EventID string
+	EventIDs []string
 }
 
 type Attachment struct {
