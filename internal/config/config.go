@@ -46,7 +46,6 @@ type SignalGroup struct {
 type Matrix struct {
 	ApiUrl     string `yaml:"api_url"`
 	Token      string `yaml:"token"`
-	Homeserver string `yaml:"homeserver"`
 }
 
 type Upload struct {
@@ -84,7 +83,7 @@ func (t *SignalGroup) Enabled() bool {
 
 // Enabled returns true if required API URL and token are set.
 func (m *Matrix) Enabled() bool {
-	return m.ApiUrl != "" && m.Token != "" && m.Homeserver != ""
+	return m.ApiUrl != "" && m.Token != ""
 }
 
 // LoadConfig loads config from file.
@@ -146,9 +145,6 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_MATRIX_TOKEN") != "" {
 		c.Matrix.Token = os.Getenv("TICKER_MATRIX_TOKEN")
-	}
-	if os.Getenv("TICKER_MATRIX_HOMESERVER") != "" {
-		c.Matrix.Token = os.Getenv("TICKER_MATRIX_HOMESERVER")
 	}
 
 	return c

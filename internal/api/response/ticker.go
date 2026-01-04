@@ -73,10 +73,10 @@ type SignalGroup struct {
 }
 
 type Matrix struct {
-	Active    bool   `json:"active"`
-	Connected bool   `json:"connected"`
-	RoomID    string `json:"roomID"`
-	RoomName  string `json:"roomName"`
+	Active     bool   `json:"active"`
+	Connected  bool   `json:"connected"`
+	RoomID     string `json:"roomID"`
+	RoomName   string `json:"roomName"`
 }
 
 type Location struct {
@@ -139,10 +139,10 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			GroupInviteLink: t.SignalGroup.GroupInviteLink,
 		},
 		Matrix: Matrix{
-			Active:    t.Matrix.Active,
-			Connected: t.Matrix.Connected(),
-			RoomID:    t.Matrix.RoomID,
-			RoomName:  t.Matrix.RoomName,
+			Active:     t.Matrix.Active,
+			Connected:  t.Matrix.Connected(),
+			RoomID:     t.Matrix.RoomID,
+			RoomName:   t.Matrix.RoomName,
 		},
 		Location: Location{
 			Lat: t.Location.Lat,

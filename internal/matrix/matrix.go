@@ -55,6 +55,11 @@ type KickRequest struct {
 	Reason string `json:"reason"`
 }
 
+// CanonicalAliasResponse represents the response from getting the canonical alias
+type CanonicalAliasResponse struct {
+	Alias string `json:"alias"`
+}
+
 // CreateRoom creates a new public room in Matrix using the Synapse API
 func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
 	if !cfg.Matrix.Enabled() {
@@ -74,7 +79,13 @@ func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
 
 		roomID, err := attemptCreateRoom(cfg, t.Title, roomAliasName)
 		if err == nil {
-			return roomID, roomAliasName, nil
+			// Get the canonical alias from the Matrix API
+			roomName, err := getCanonicalAlias(cfg, roomID)
+			if err != nil {
+				log.WithError(err).WithField("room_id", roomID).Warn("failed to get canonical alias, using constructed alias")
+				return roomID, roomAliasName, nil
+			}
+			return roomID, roomName, nil
 		}
 
 		// Check if the error is due to room alias already being taken
@@ -199,6 +210,41 @@ func sanitizeRoomName(name string) string {
 	}
 
 	return name
+}
+
+// getCanonicalAlias gets the canonical alias for a Matrix room
+func getCanonicalAlias(cfg config.Config, roomID string) (string, error) {
+	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/state/m.room.canonical_alias", cfg.Matrix.ApiUrl, roomID)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var response CanonicalAliasResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return response.Alias, nil
 }
 
 // RemoveAllMembers removes all members from a Matrix room except the bot itself

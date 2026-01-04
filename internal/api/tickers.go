@@ -503,7 +503,7 @@ func (h *handler) PutTickerMatrix(c *gin.Context) {
 
 	// Only create the room if it doesn't exist yet
 	if ticker.Matrix.RoomID == "" {
-		roomID, roomAliasName, err := matrix.CreateRoom(h.config, &ticker)
+		roomID, roomName, err := matrix.CreateRoom(h.config, &ticker)
 		if err != nil {
 			log.WithError(err).Error("failed to create matrix room")
 			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.MatrixError))
@@ -511,7 +511,7 @@ func (h *handler) PutTickerMatrix(c *gin.Context) {
 		}
 
 		ticker.Matrix.RoomID = roomID
-		ticker.Matrix.RoomName = roomAliasName
+		ticker.Matrix.RoomName = roomName
 	}
 
 	ticker.Matrix.Active = body.Active

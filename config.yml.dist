@@ -22,7 +22,6 @@ signal_group:
 matrix:
   api_url: ""
   token: ""
-  homeserver: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 upload:
