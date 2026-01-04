@@ -2,33 +2,37 @@ package bridge
 
 import (
 	"github.com/systemli/ticker/internal/config"
+	"github.com/systemli/ticker/internal/matrix"
 	"github.com/systemli/ticker/internal/storage"
 )
 
-type MatrixBridge struct {
+type MatrixRoomBridge struct {
 	config  config.Config
 	storage storage.Storage
 }
 
-// Update is called when a ticker is updated
-func (mb *MatrixBridge) Update(ticker storage.Ticker) error {
+func (mb *MatrixRoomBridge) Update(ticker storage.Ticker) error {
 	if !mb.config.Matrix.Enabled() || !ticker.Matrix.Connected() {
 		return nil
 	}
 
-	// Call
+	// Rename room if title has changed
+	err := matrix.UpdateRoomName(mb.config, ticker.Matrix.RoomID, ticker.Title)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 // Send sends a message to a Matrix room
-func (mb *MatrixBridge) Send(ticker storage.Ticker, message *storage.Message) error {
+func (mb *MatrixRoomBridge) Send(ticker storage.Ticker, message *storage.Message) error {
 	// Not implemented yet
 	return nil
 }
 
 // Delete deletes a message from a Matrix room
-func (mb *MatrixBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
+func (mb *MatrixRoomBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
 	// Not implemented yet
 	return nil
 }

@@ -1,13 +1,14 @@
 package matrix
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"regexp"
 	"strings"
+
+	"maunium.net/go/mautrix"
+	"maunium.net/go/mautrix/event"
+	"maunium.net/go/mautrix/id"
 
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/logger"
@@ -16,54 +17,24 @@ import (
 
 var log = logger.GetWithPackage("matrix")
 
-// CreateRoomRequest represents the request payload for creating a Matrix room
-type CreateRoomRequest struct {
-	Name                      string                   `json:"name"`
-	RoomAliasName             string                   `json:"room_alias_name"`
-	Preset                    string                   `json:"preset"`
-	Visibility                string                   `json:"visibility"`
-	PowerLevelContentOverride map[string]interface{}   `json:"power_level_content_override,omitempty"`
-	InitialState              []map[string]interface{} `json:"initial_state,omitempty"`
-}
+// getClient creates a new mautrix client with the configured credentials
+func getClient(cfg config.Config) (*mautrix.Client, error) {
+	if !cfg.Matrix.Enabled() {
+		return nil, fmt.Errorf("matrix bridge is not configured")
+	}
 
-// CreateRoomResponse represents the response from creating a Matrix room
-type CreateRoomResponse struct {
-	RoomID string `json:"room_id"`
-}
-
-// MatrixErrorResponse represents an error response from the Matrix API
-type MatrixErrorResponse struct {
-	ErrCode string `json:"errcode"`
-	Error   string `json:"error"`
-}
-
-// MembersResponse represents the response from getting room members
-type MembersResponse struct {
-	Chunk []MemberEvent `json:"chunk"`
-}
-
-// MemberEvent represents a single member event
-type MemberEvent struct {
-	Type     string            `json:"type"`
-	StateKey string            `json:"state_key"`
-	Content  map[string]string `json:"content"`
-}
-
-// KickRequest represents the request to kick a user from a room
-type KickRequest struct {
-	UserID string `json:"user_id"`
-	Reason string `json:"reason"`
-}
-
-// CanonicalAliasResponse represents the response from getting the canonical alias
-type CanonicalAliasResponse struct {
-	Alias string `json:"alias"`
+	client, err := mautrix.NewClient(cfg.Matrix.ApiUrl, "", cfg.Matrix.Token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create matrix client: %w", err)
+	}
+	return client, nil
 }
 
 // CreateRoom creates a new public room in Matrix using the Synapse API
 func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
-	if !cfg.Matrix.Enabled() {
-		return "", "", fmt.Errorf("matrix bridge is not configured")
+	client, err := getClient(cfg)
+	if err != nil {
+		return "", "", err
 	}
 
 	// Sanitize room name: convert to ASCII-only, remove spaces and special characters
@@ -77,15 +48,15 @@ func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
 			roomAliasName = fmt.Sprintf("%s-%d", baseRoomName, i)
 		}
 
-		roomID, err := attemptCreateRoom(cfg, t.Title, roomAliasName)
+		roomID, err := attemptCreateRoom(client, t.Title, roomAliasName)
 		if err == nil {
 			// Get the canonical alias from the Matrix API
-			roomName, err := getCanonicalAlias(cfg, roomID)
+			roomName, err := getCanonicalAlias(client, roomID)
 			if err != nil {
 				log.WithError(err).WithField("room_id", roomID).Warn("failed to get canonical alias, using constructed alias")
-				return roomID, roomAliasName, nil
+				return string(roomID), roomAliasName, nil
 			}
-			return roomID, roomName, nil
+			return string(roomID), roomName, nil
 		}
 
 		// Check if the error is due to room alias already being taken
@@ -101,93 +72,43 @@ func CreateRoom(cfg config.Config, t *storage.Ticker) (string, string, error) {
 }
 
 // attemptCreateRoom attempts to create a Matrix room with the given alias name
-func attemptCreateRoom(cfg config.Config, title, roomAliasName string) (string, error) {
-	url := fmt.Sprintf("%s/_matrix/client/v3/createRoom", cfg.Matrix.ApiUrl)
-
-	requestBody := CreateRoomRequest{
+func attemptCreateRoom(client *mautrix.Client, title, roomAliasName string) (id.RoomID, error) {
+	inviteLevel := 0
+	resp, err := client.CreateRoom(context.Background(), &mautrix.ReqCreateRoom{
 		Name:          title,
 		RoomAliasName: roomAliasName,
 		Preset:        "public_chat",
 		Visibility:    "public",
-		// Set default power levels: allow anyone to invite and restrict sending messages to moderators and above
-		PowerLevelContentOverride: map[string]interface{}{
-			"invite":         0,
-			"events_default": 50,
+		PowerLevelOverride: &event.PowerLevelsEventContent{
+			InvitePtr:     &inviteLevel,
+			EventsDefault: 50,
 		},
-		// Enable end-to-end encryption for the room
-		InitialState: []map[string]interface{}{
+		InitialState: []*event.Event{
 			{
-				"type": "m.room.encryption",
-				"content": map[string]interface{}{
-					"algorithm": "m.megolm.v1.aes-sha2",
+				Type: event.StateEncryption,
+				Content: event.Content{
+					Parsed: &event.EncryptionEventContent{
+						Algorithm: id.AlgorithmMegolmV1,
+					},
 				},
 			},
 		},
-	}
-
-	jsonData, err := json.Marshal(requestBody)
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
+		return "", err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
+	log.WithField("room_id", resp.RoomID).WithField("room_name", title).WithField("room_alias", roomAliasName).Info("Matrix room created successfully")
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		// Try to parse the error response
-		var matrixErr MatrixErrorResponse
-		if err := json.Unmarshal(body, &matrixErr); err == nil {
-			return "", &matrixError{
-				StatusCode: resp.StatusCode,
-				ErrCode:    matrixErr.ErrCode,
-				Message:    matrixErr.Error,
-			}
-		}
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var response CreateRoomResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	log.WithField("room_id", response.RoomID).WithField("room_name", title).WithField("room_alias", roomAliasName).Info("Matrix room created successfully")
-
-	return response.RoomID, nil
-}
-
-// matrixError represents a structured Matrix API error
-type matrixError struct {
-	StatusCode int
-	ErrCode    string
-	Message    string
-}
-
-func (e *matrixError) Error() string {
-	return fmt.Sprintf("Matrix API error (status %d): %s - %s", e.StatusCode, e.ErrCode, e.Message)
+	return resp.RoomID, nil
 }
 
 // isRoomInUseError checks if the error is due to the room alias already being taken
 func isRoomInUseError(err error) bool {
-	if matrixErr, ok := err.(*matrixError); ok {
-		return matrixErr.ErrCode == "M_ROOM_IN_USE"
+	if httpErr, ok := err.(mautrix.HTTPError); ok {
+		if respErr := httpErr.RespError; respErr != nil {
+			return respErr.ErrCode == "M_ROOM_IN_USE"
+		}
 	}
 	return false
 }
@@ -213,69 +134,67 @@ func sanitizeRoomName(name string) string {
 }
 
 // getCanonicalAlias gets the canonical alias for a Matrix room
-func getCanonicalAlias(cfg config.Config, roomID string) (string, error) {
-	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/state/m.room.canonical_alias", cfg.Matrix.ApiUrl, roomID)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func getCanonicalAlias(client *mautrix.Client, roomID id.RoomID) (string, error) {
+	var content event.CanonicalAliasEventContent
+	err := client.StateEvent(context.Background(), roomID, event.StateCanonicalAlias, "", &content)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return "", fmt.Errorf("failed to get canonical alias: %w", err)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
+	return content.Alias.String(), nil
+}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+// UpdateRoomName updates the name of a Matrix room
+func UpdateRoomName(cfg config.Config, roomID, name string) error {
+	client, err := getClient(cfg)
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
+		return err
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	_, err = client.SendStateEvent(context.Background(), id.RoomID(roomID), event.StateRoomName, "", &event.RoomNameEventContent{
+		Name: name,
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("failed to update room name: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
+	log.WithField("room_id", roomID).WithField("room_name", name).Info("Matrix room name updated successfully")
 
-	var response CanonicalAliasResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return response.Alias, nil
+	return nil
 }
 
 // RemoveAllMembers removes all members from a Matrix room except the bot itself
 func RemoveAllMembers(cfg config.Config, roomID string) error {
-	if !cfg.Matrix.Enabled() {
-		return fmt.Errorf("matrix bridge is not configured")
+	client, err := getClient(cfg)
+	if err != nil {
+		return err
 	}
 
 	// First, get the current user ID to avoid kicking ourselves
-	myUserID, err := getCurrentUser(cfg)
+	whoami, err := client.Whoami(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get current user: %w", err)
 	}
-	log.Debug("Current Matrix user ID: ", myUserID)
+	myUserID := whoami.UserID
 
 	// Get all room members
-	members, err := getRoomMembers(cfg, roomID)
+	members, err := client.JoinedMembers(context.Background(), id.RoomID(roomID))
 	if err != nil {
 		return fmt.Errorf("failed to get room members: %w", err)
 	}
-	log.Debug("Current Matrix room members: ", members)
 
 	// Kick each member except ourselves
-	for _, member := range members {
-		if member.StateKey != myUserID {
-			err := kickUser(cfg, roomID, member.StateKey)
+	for userID := range members.Joined {
+		if userID != myUserID {
+			_, err := client.KickUser(context.Background(), id.RoomID(roomID), &mautrix.ReqKickUser{
+				UserID: userID,
+				Reason: "Room is being deleted",
+			})
 			if err != nil {
-				log.WithError(err).WithField("user_id", member.StateKey).Error("failed to kick user")
+				log.WithError(err).WithField("user_id", userID).Error("failed to kick user")
 				// Continue kicking other users even if one fails
 			} else {
-				log.WithField("user_id", member.StateKey).Info("kicked user from Matrix room")
+				log.WithField("user_id", userID).Info("kicked user from Matrix room")
 			}
 		}
 	}
@@ -283,152 +202,38 @@ func RemoveAllMembers(cfg config.Config, roomID string) error {
 	return nil
 }
 
-// getCurrentUser gets the user ID of the bot
-func getCurrentUser(cfg config.Config) (string, error) {
-	url := fmt.Sprintf("%s/_matrix/client/v3/account/whoami", cfg.Matrix.ApiUrl)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+// LeaveRoom leaves a Matrix room
+func LeaveRoom(cfg config.Config, roomID string) error {
+	client, err := getClient(cfg)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	_, err = client.LeaveRoom(context.Background(), id.RoomID(roomID))
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("failed to leave room: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var response struct {
-		UserID string `json:"user_id"`
-	}
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return response.UserID, nil
-}
-
-// getRoomMembers gets all members of a Matrix room
-func getRoomMembers(cfg config.Config, roomID string) ([]MemberEvent, error) {
-	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/members", cfg.Matrix.ApiUrl, roomID)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var response MembersResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return response.Chunk, nil
-}
-
-// kickUser kicks a user from a Matrix room
-func kickUser(cfg config.Config, roomID, userID string) error {
-	url := fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/kick", cfg.Matrix.ApiUrl, roomID)
-
-	kickReq := KickRequest{
-		UserID: userID,
-		Reason: "Room is being deleted",
-	}
-
-	jsonData, err := json.Marshal(kickReq)
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
+	log.WithField("room_id", roomID).Info("left Matrix room")
 
 	return nil
 }
 
-// LeaveRoom leaves a Matrix room
-func LeaveRoom(cfg config.Config, roomID string) error {
-	if !cfg.Matrix.Enabled() {
-		return fmt.Errorf("matrix bridge is not configured")
-	}
-
-	url := fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/leave", cfg.Matrix.ApiUrl, roomID)
-
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer([]byte("{}")))
+func SendMessage(cfg config.Config, roomID, message string) error {
+	client, err := getClient(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Matrix.Token))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	_, err = client.SendMessageEvent(context.Background(), id.RoomID(roomID), event.EventMessage, &event.MessageEventContent{
+		MsgType: event.MsgText,
+		Body:    message,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("failed to send message: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	log.WithField("room_id", roomID).Info("left Matrix room")
+	log.WithField("room_id", roomID).Info("sent message to Matrix room")
 
 	return nil
 }
