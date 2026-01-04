@@ -81,19 +81,10 @@ func attemptCreateRoom(client *mautrix.Client, title, roomAliasName string) (id.
 		RoomAliasName: roomAliasName,
 		Preset:        "public_chat",
 		Visibility:    "public",
+		// Adjust room permissions to allow anyone to invite and only moderators and above to send messages
 		PowerLevelOverride: &event.PowerLevelsEventContent{
 			InvitePtr:     &inviteLevel,
 			EventsDefault: 50,
-		},
-		InitialState: []*event.Event{
-			{
-				Type: event.StateEncryption,
-				Content: event.Content{
-					Parsed: &event.EncryptionEventContent{
-						Algorithm: id.AlgorithmMegolmV1,
-					},
-				},
-			},
 		},
 	})
 	if err != nil {
