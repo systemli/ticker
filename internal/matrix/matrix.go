@@ -219,21 +219,39 @@ func LeaveRoom(cfg config.Config, roomID string) error {
 	return nil
 }
 
-func SendMessage(cfg config.Config, roomID, message string) error {
+func SendMessage(cfg config.Config, roomID, message string) (string, error) {
+	client, err := getClient(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.SendMessageEvent(context.Background(), id.RoomID(roomID), event.EventMessage, &event.MessageEventContent{
+		MsgType: event.MsgText,
+		Body:    message,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to send message: %w", err)
+	}
+
+	log.WithField("room_id", roomID).WithField("event_id", resp.EventID).Info("sent message to Matrix room")
+
+	return resp.EventID.String(), nil
+}
+
+func DeleteMessage(cfg config.Config, roomID, eventID string) error {
 	client, err := getClient(cfg)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.SendMessageEvent(context.Background(), id.RoomID(roomID), event.EventMessage, &event.MessageEventContent{
-		MsgType: event.MsgText,
-		Body:    message,
+	_, err = client.RedactEvent(context.Background(), id.RoomID(roomID), id.EventID(eventID), mautrix.ReqRedact{
+		Reason: "Message deleted",
 	})
 	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
+		return fmt.Errorf("failed to delete message: %w", err)
 	}
 
-	log.WithField("room_id", roomID).Info("sent message to Matrix room")
+	log.WithField("room_id", roomID).WithField("event_id", eventID).Info("deleted message from Matrix room")
 
 	return nil
 }

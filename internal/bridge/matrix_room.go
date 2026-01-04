@@ -25,14 +25,35 @@ func (mb *MatrixRoomBridge) Update(ticker storage.Ticker) error {
 	return nil
 }
 
-// Send sends a message to a Matrix room
 func (mb *MatrixRoomBridge) Send(ticker storage.Ticker, message *storage.Message) error {
-	// Not implemented yet
+	if !mb.config.Matrix.Enabled() || !ticker.Matrix.Connected() || !ticker.Matrix.Active {
+		return nil
+	}
+
+	eventID, err := matrix.SendMessage(mb.config, ticker.Matrix.RoomID, message.Text)
+	if err != nil {
+		return err
+	}
+
+	// Store the event ID so we can delete the message later
+	message.MatrixRoom.EventID = eventID
+	err = mb.storage.SaveMessage(message)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// Delete deletes a message from a Matrix room
 func (mb *MatrixRoomBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
-	// Not implemented yet
+	if !mb.config.Matrix.Enabled() || !ticker.Matrix.Connected() || !ticker.Matrix.Active {
+		return nil
+	}
+
+	err := matrix.DeleteMessage(mb.config, ticker.Matrix.RoomID, message.MatrixRoom.EventID)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
