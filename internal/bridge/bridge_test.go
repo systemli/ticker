@@ -171,7 +171,7 @@ func (s *BridgeTestSuite) TestDelete() {
 
 func (s *BridgeTestSuite) TestRegisterBridges() {
 	bridges := RegisterBridges(config.Config{}, nil)
-	s.Equal(4, len(bridges))
+	s.Equal(5, len(bridges))
 }
 
 func TestBrigde(t *testing.T) {

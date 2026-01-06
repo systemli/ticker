@@ -21,6 +21,7 @@ type Config struct {
 	Database      Database    `yaml:"database"`
 	Telegram      Telegram    `yaml:"telegram"`
 	SignalGroup   SignalGroup `yaml:"signal_group"`
+	Matrix        Matrix      `yaml:"matrix"`
 	MetricsListen string      `yaml:"metrics_listen"`
 	Upload        Upload      `yaml:"upload"`
 	FileBackend   afero.Fs
@@ -40,6 +41,11 @@ type SignalGroup struct {
 	ApiUrl  string `yaml:"api_url"`
 	Avatar  string `yaml:"avatar"`
 	Account string `yaml:"account"`
+}
+
+type Matrix struct {
+	ApiUrl     string `yaml:"api_url"`
+	Token      string `yaml:"token"`
 }
 
 type Upload struct {
@@ -73,6 +79,11 @@ func (t *Telegram) Enabled() bool {
 // Enabled returns true if requried API URL and account are set.
 func (t *SignalGroup) Enabled() bool {
 	return t.ApiUrl != "" && t.Account != ""
+}
+
+// Enabled returns true if required API URL and token are set.
+func (m *Matrix) Enabled() bool {
+	return m.ApiUrl != "" && m.Token != ""
 }
 
 // LoadConfig loads config from file.
@@ -128,6 +139,12 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_SIGNAL_GROUP_AVATAR") != "" {
 		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_AVATAR")
+	}
+	if os.Getenv("TICKER_MATRIX_API_URL") != "" {
+		c.Matrix.ApiUrl = os.Getenv("TICKER_MATRIX_API_URL")
+	}
+	if os.Getenv("TICKER_MATRIX_TOKEN") != "" {
+		c.Matrix.Token = os.Getenv("TICKER_MATRIX_TOKEN")
 	}
 
 	return c

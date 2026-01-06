@@ -34,6 +34,7 @@ type Storage interface {
 	DeleteTelegram(ticker *Ticker) error
 	DeleteBluesky(ticker *Ticker) error
 	DeleteSignalGroup(ticker *Ticker) error
+	DeleteMatrix(ticker *Ticker) error
 	SaveUpload(upload *Upload) error
 	FindUploadByUUID(uuid string) (Upload, error)
 	FindUploadsByIDs(ids []int) ([]Upload, error)

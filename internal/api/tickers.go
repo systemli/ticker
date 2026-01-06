@@ -11,6 +11,7 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/bluesky"
+	"github.com/systemli/ticker/internal/matrix"
 	"github.com/systemli/ticker/internal/signal"
 	"github.com/systemli/ticker/internal/storage"
 )
@@ -484,6 +485,72 @@ func (h *handler) PutTickerSignalGroupAdmin(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{}))
+}
+
+func (h *handler) PutTickerMatrix(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	var body storage.TickerMatrix
+	err = c.Bind(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeNotFound, response.FormError))
+		return
+	}
+
+	// Only create the room if it doesn't exist yet
+	if ticker.Matrix.RoomID == "" {
+		roomID, roomName, err := matrix.CreateRoom(h.config, &ticker)
+		if err != nil {
+			log.WithError(err).Error("failed to create matrix room")
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.MatrixError))
+			return
+		}
+
+		ticker.Matrix.RoomID = roomID
+		ticker.Matrix.RoomName = roomName
+	}
+
+	ticker.Matrix.Active = body.Active
+
+	err = h.storage.SaveTicker(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
+}
+
+func (h *handler) DeleteTickerMatrix(c *gin.Context) {
+	ticker, err := helper.Ticker(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
+		return
+	}
+
+	err = matrix.RemoveAllMembers(h.config, ticker.Matrix.RoomID)
+	if err != nil {
+		log.WithError(err).Error("failed to remove members")
+		return
+	}
+
+	err = matrix.LeaveRoom(h.config, ticker.Matrix.RoomID)
+	if err != nil {
+		log.WithError(err).Error("failed to leave room")
+		return
+	}
+
+	err = h.storage.DeleteMatrix(&ticker)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": response.TickerResponse(ticker, h.config)}))
 }
 
 func (h *handler) DeleteTicker(c *gin.Context) {

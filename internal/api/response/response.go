@@ -25,6 +25,7 @@ const (
 	BlueskyError            ErrorMessage = "unable to connect to bluesky"
 	SignalGroupError        ErrorMessage = "unable to connect to signal"
 	SignalGroupDeleteError  ErrorMessage = "unable to delete signal group"
+	MatrixError             ErrorMessage = "unable to connect to matrix"
 	PasswordError           ErrorMessage = "could not authenticate password"
 
 	StatusSuccess Status = `success`

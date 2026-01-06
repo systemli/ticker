@@ -21,8 +21,9 @@ func RegisterBridges(config config.Config, storage storage.Storage) Bridges {
 	mastodon := MastodonBridge{config, storage}
 	bluesky := BlueskyBridge{config, storage}
 	signalGroup := SignalGroupBridge{config, storage}
+	matrixRoom := MatrixRoomBridge{config, storage}
 
-	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup}
+	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup, "matrixRoom": &matrixRoom}
 }
 
 func (b *Bridges) Update(ticker storage.Ticker) error {

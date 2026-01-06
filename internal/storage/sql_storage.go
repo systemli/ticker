@@ -318,6 +318,10 @@ func (s *SqlStorage) DeleteIntegrations(ticker *Ticker) error {
 		return err
 	}
 
+	if err := s.DeleteMatrix(ticker); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -343,6 +347,12 @@ func (s *SqlStorage) DeleteSignalGroup(ticker *Ticker) error {
 	ticker.SignalGroup = TickerSignalGroup{}
 
 	return s.DB.Delete(TickerSignalGroup{}, EqualTickerID, ticker.ID).Error
+}
+
+func (s *SqlStorage) DeleteMatrix(ticker *Ticker) error {
+	ticker.Matrix = TickerMatrix{}
+
+	return s.DB.Delete(TickerMatrix{}, EqualTickerID, ticker.ID).Error
 }
 
 func (s *SqlStorage) FindUploadByUUID(uuid string) (Upload, error) {
