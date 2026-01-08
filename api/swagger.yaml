@@ -1,0 +1,174 @@
+basePath: /v1
+definitions:
+  response.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  response.InitResponse:
+    properties:
+      data:
+        properties:
+          settings:
+            type: object
+          ticker:
+            properties:
+              createdAt:
+                type: string
+              description:
+                type: string
+              domain:
+                type: string
+              id:
+                type: integer
+              information:
+                properties:
+                  author:
+                    type: string
+                  email:
+                    type: string
+                  facebook:
+                    type: string
+                  telegram:
+                    type: string
+                  twitter:
+                    type: string
+                  url:
+                    type: string
+                  mastodon:
+                    type: string
+          status:
+            type: string
+          error:
+            $ref: "#/definitions/response.Error"
+  response.TimelineResponse:
+    properties:
+      data:
+        properties:
+          messages:
+            items:
+              properties:
+                id:
+                  type: integer
+                createdAt:
+                  type: string
+                text:
+                  type: string
+                geoInformation:
+                  type: string
+                attachments:
+                  items:
+                    properties:
+                      url:
+                        type: string
+                      contentType:
+                        type: string
+                  type: array
+            type: array
+      status:
+        type: string
+      error:
+        $ref: "#/definitions/response.Error"
+  response.ErrorResponse:
+    properties:
+      data:
+        type: string
+      error:
+        $ref: "#/definitions/response.Error"
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: admin@systemli.org
+    name: Systemli Admin Team
+    url: https://www.systemli.org/en/contact/
+  description: Service to distribute short messages in support of events, demonstrations,
+    or other time-sensitive events.
+  license:
+    name: GPLv3
+    url: https://www.gnu.org/licenses/gpl-3.0.html
+  title: Ticker API
+  version: "2.0"
+paths:
+  /init:
+    get:
+      consumes:
+        - application/json
+      description: |-
+        The first request for retrieving information about the ticker. It is mandatory that the browser sends
+        the origin as a header. This can be overwritten with a query parameter.
+      parameters:
+        - description: Origin from the ticker, e.g. demoticker.org
+          in: query
+          name: origin
+          type: string
+        - description: Origin from the ticker, e.g. http://demoticker.org
+          in: header
+          name: origin
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/response.InitResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/response.ErrorResponse"
+      summary: Retrieves the initial ticker configuration
+      tags:
+        - public
+  /timeline:
+    get:
+      consumes:
+        - application/json
+      description: |-
+        Endpoint to retrieve the messages from a ticker. The endpoint has a pagination to fetch newer or older
+        messages. It is mandatory that the browser sends the origin as a header. This can be overwritten with
+        a query parameter.
+      parameters:
+        - description: Origin from the ticker, e.g. demoticker.org
+          in: query
+          name: origin
+          type: string
+        - description: Origin from the ticker, e.g. http://demoticker.org
+          in: header
+          name: origin
+          type: string
+        - description: "Limit for fetched messages, default: 10"
+          in: query
+          name: limit
+          type: integer
+        - description: ID of the message we look for older entries
+          in: query
+          name: before
+          type: integer
+        - description: ID of the message we look for newer entries
+          in: query
+          name: after
+          type: integer
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/response.TimelineResponse"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/response.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/response.ErrorResponse"
+      summary: Fetch the messages for a ticker.
+      tags:
+        - public
+swagger: "2.0"
