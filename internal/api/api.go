@@ -119,6 +119,7 @@ func API(config config.Config, store storage.Storage) *Server {
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
 
 		public.GET(`/init`, response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetInit))
+		public.GET(`/manifest.json`, ticker.PrefetchTickerFromRequest(store), handler.HandleManifest)
 		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
 		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
 		public.GET(`/ws`, ticker.PrefetchTickerFromRequest(store), handler.HandleWebSocket)
