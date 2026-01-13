@@ -18,6 +18,10 @@ signal_group:
   api_url: ""
   avatar: ""
   account: ""
+# matrix configuration
+matrix:
+  api_url: ""
+  token: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 upload:

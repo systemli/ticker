@@ -12,6 +12,7 @@ func MigrateDB(db *gorm.DB) error {
 		&TickerTelegram{},
 		&TickerBluesky{},
 		&TickerSignalGroup{},
+		&TickerMatrix{},
 		&TickerWebsite{},
 		&User{},
 		&Setting{},

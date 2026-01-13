@@ -19,6 +19,7 @@ type Ticker struct {
 	Mastodon    Mastodon    `json:"mastodon"`
 	Bluesky     Bluesky     `json:"bluesky"`
 	SignalGroup SignalGroup `json:"signalGroup"`
+	Matrix      Matrix      `json:"matrix"`
 	Location    Location    `json:"location"`
 }
 
@@ -69,6 +70,13 @@ type SignalGroup struct {
 	Connected       bool   `json:"connected"`
 	GroupID         string `json:"groupID"`
 	GroupInviteLink string `json:"groupInviteLink"`
+}
+
+type Matrix struct {
+	Active     bool   `json:"active"`
+	Connected  bool   `json:"connected"`
+	RoomID     string `json:"roomID"`
+	RoomName   string `json:"roomName"`
 }
 
 type Location struct {
@@ -129,6 +137,12 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			Connected:       t.SignalGroup.Connected(),
 			GroupID:         t.SignalGroup.GroupID,
 			GroupInviteLink: t.SignalGroup.GroupInviteLink,
+		},
+		Matrix: Matrix{
+			Active:     t.Matrix.Active,
+			Connected:  t.Matrix.Connected(),
+			RoomID:     t.Matrix.RoomID,
+			RoomName:   t.Matrix.RoomName,
 		},
 		Location: Location{
 			Lat: t.Location.Lat,
