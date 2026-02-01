@@ -1,0 +1,17 @@
+[Unit]
+Description=ticker-api
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ticker
+# If you build ticker on this machine, include the first "ExecStart"
+# If you downloaded ticker from github, include the second "ExecStart"
+# If you put ticker in a different location, you can probably figure out what to change. ;)
+#ExecStart=/var/www/ticker/build/ticker run --config /var/www/ticker/config.yml
+#ExecStart=/var/www/ticker/ticker run --config /var/www/ticker/config.yml
+WorkingDirectory=/var/www/ticker
+[Install]
+WantedBy=multi-user.target
