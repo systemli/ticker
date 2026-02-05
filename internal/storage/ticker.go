@@ -20,6 +20,7 @@ type Ticker struct {
 	Mastodon    TickerMastodon
 	Bluesky     TickerBluesky
 	SignalGroup TickerSignalGroup
+	Matrix      TickerMatrix
 	Websites    []TickerWebsite `gorm:"foreignKey:TickerID;"`
 	Users       []User          `gorm:"many2many:ticker_users;"`
 }
@@ -137,6 +138,20 @@ type TickerSignalGroup struct {
 
 func (s *TickerSignalGroup) Connected() bool {
 	return s.GroupID != ""
+}
+
+type TickerMatrix struct {
+	ID        int `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	TickerID  int `gorm:"index"`
+	Active    bool
+	RoomID    string
+	RoomName  string
+}
+
+func (m *TickerMatrix) Connected() bool {
+	return m.RoomID != ""
 }
 
 type TickerLocation struct {
