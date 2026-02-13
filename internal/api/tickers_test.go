@@ -41,6 +41,10 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
 		s.store = &storage.MockStorage{}
+
+		// Add default mock expectation for GetTelegramSettings which is called by getBotUsername
+		s.store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""}).Maybe()
+
 		s.cfg = config.LoadConfig("")
 		s.cfg.SignalGroup = config.SignalGroup{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",

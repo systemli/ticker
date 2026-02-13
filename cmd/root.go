@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/logger"
 	"github.com/systemli/ticker/internal/storage"
@@ -37,16 +36,6 @@ func initConfig() {
 
 	// Initialize the global logger with configuration
 	loggerInstance := logger.Initialize(cfg.LogLevel, cfg.LogFormat)
-
-	//TODO: Improve startup routine
-	if cfg.Telegram.Enabled() {
-		user, err := bridge.BotUser(cfg.Telegram.Token)
-		if err != nil {
-			log.WithError(err).Error("unable to retrieve the user information for the telegram bot")
-		} else {
-			cfg.Telegram.User = user
-		}
-	}
 
 	var err error
 	db, err = storage.OpenGormDB(cfg.Database.Type, cfg.Database.DSN, loggerInstance)

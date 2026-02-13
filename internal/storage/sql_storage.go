@@ -502,6 +502,38 @@ func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) err
 	return s.DB.Save(&setting).Error
 }
 
+func (s *SqlStorage) GetTelegramSettings() TelegramSettings {
+	var setting Setting
+	err := s.DB.First(&setting, EqualName, SettingTelegramName).Error
+	if err != nil {
+		return DefaultTelegramSettings()
+	}
+
+	var telegramSettings TelegramSettings
+	err = json.Unmarshal([]byte(setting.Value), &telegramSettings)
+	if err != nil {
+		return DefaultTelegramSettings()
+	}
+
+	return telegramSettings
+}
+
+func (s *SqlStorage) SaveTelegramSettings(telegramSettings TelegramSettings) error {
+	var setting Setting
+	err := s.DB.First(&setting, EqualName, SettingTelegramName).Error
+	if err != nil {
+		setting = Setting{Name: SettingTelegramName}
+	}
+
+	value, err := json.Marshal(telegramSettings)
+	if err != nil {
+		return err
+	}
+	setting.Value = string(value)
+
+	return s.DB.Save(&setting).Error
+}
+
 func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
 	db := s.DB
 	for _, opt := range opts {

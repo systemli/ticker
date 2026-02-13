@@ -24,6 +24,9 @@ func (s *FeaturesTestSuite) TestGetFeatures() {
 	c, _ := gin.CreateTestContext(w)
 	store := &storage.MockStorage{}
 
+	// Mock GetTelegramSettings to return empty token (disabled)
+	store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""})
+
 	h := handler{
 		storage: store,
 		config:  config.LoadConfig(""),

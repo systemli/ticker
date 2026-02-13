@@ -3,7 +3,6 @@ package response
 import (
 	"time"
 
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -76,7 +75,7 @@ type Location struct {
 	Lon float64 `json:"lon"`
 }
 
-func TickerResponse(t storage.Ticker, config config.Config) Ticker {
+func TickerResponse(t storage.Ticker, botUsername string) Ticker {
 	websites := make([]Website, 0)
 	for _, website := range t.Websites {
 		websites = append(websites, Website{
@@ -108,7 +107,7 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 		Telegram: Telegram{
 			Active:      t.Telegram.Active,
 			Connected:   t.Telegram.Connected(),
-			BotUsername: config.Telegram.User.UserName,
+			BotUsername: botUsername,
 			ChannelName: t.Telegram.ChannelName,
 		},
 		Mastodon: Mastodon{
@@ -137,11 +136,11 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 	}
 }
 
-func TickersResponse(tickers []storage.Ticker, config config.Config) []Ticker {
+func TickersResponse(tickers []storage.Ticker, botUsername string) []Ticker {
 	t := make([]Ticker, 0)
 
 	for _, ticker := range tickers {
-		t = append(t, TickerResponse(ticker, config))
+		t = append(t, TickerResponse(ticker, botUsername))
 	}
 	return t
 }
