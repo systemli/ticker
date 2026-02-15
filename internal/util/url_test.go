@@ -35,6 +35,30 @@ func TestExtractURL(t *testing.T) {
 			"This is a text with a URL https://www.systemli.org/en/contact/?key=value#fragment",
 			[]string{"https://www.systemli.org/en/contact/?key=value#fragment"},
 		},
+		{
+			"Text with URL in parentheses (https://www.systemli.org) and more text",
+			[]string{"https://www.systemli.org"},
+		},
+		{
+			"Wikipedia URL https://en.wikipedia.org/wiki/Foo_(bar) should keep balanced parens",
+			[]string{"https://en.wikipedia.org/wiki/Foo_(bar)"},
+		},
+		{
+			"Wrapped Wikipedia URL (https://en.wikipedia.org/wiki/Foo_(bar)) should trim outer paren",
+			[]string{"https://en.wikipedia.org/wiki/Foo_(bar)"},
+		},
+		{
+			"URL with trailing dot https://example.com.",
+			[]string{"https://example.com"},
+		},
+		{
+			"URL with trailing comma https://example.com, and more",
+			[]string{"https://example.com"},
+		},
+		{
+			"URL with trailing exclamation https://example.com!",
+			[]string{"https://example.com"},
+		},
 	}
 
 	for _, tc := range testCases {
