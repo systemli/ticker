@@ -59,9 +59,10 @@ type Mastodon struct {
 }
 
 type Bluesky struct {
-	Active    bool   `json:"active"`
-	Connected bool   `json:"connected"`
-	Handle    string `json:"handle"`
+	Active           bool   `json:"active"`
+	Connected        bool   `json:"connected"`
+	Handle           string `json:"handle"`
+	ReplyRestriction string `json:"replyRestriction"`
 }
 
 type SignalGroup struct {
@@ -120,9 +121,10 @@ func TickerResponse(t storage.Ticker, config config.Config) Ticker {
 			ImageURL:   t.Mastodon.User.Avatar,
 		},
 		Bluesky: Bluesky{
-			Active:    t.Bluesky.Active,
-			Connected: t.Bluesky.Connected(),
-			Handle:    t.Bluesky.Handle,
+			Active:           t.Bluesky.Active,
+			Connected:        t.Bluesky.Connected(),
+			Handle:           t.Bluesky.Handle,
+			ReplyRestriction: t.Bluesky.ReplyRestriction,
 		},
 		SignalGroup: SignalGroup{
 			Active:          t.SignalGroup.Active,

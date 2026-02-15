@@ -119,6 +119,10 @@ type TickerBluesky struct {
 	// AppKey is the application password from Bluesky
 	// Future consideration: persist the access token, refresh token instead of app key
 	AppKey string
+	// ReplyRestriction controls who can reply to posts.
+	// Valid values: "" (anyone), "followers", "following", "mentioned", "nobody"
+	// Multiple values can be combined with commas, e.g. "followers,mentioned"
+	ReplyRestriction string
 }
 
 func (b *TickerBluesky) Connected() bool {
