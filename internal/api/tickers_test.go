@@ -681,6 +681,34 @@ func (s *TickerTestSuite) TestPutTickerBluesky() {
 		s.store.AssertExpectations(s.T())
 	})
 
+	s.Run("when enabling bluesky with reply restriction", func() {
+		gock.New("https://bsky.social").
+			Post("/xrpc/com.atproto.server.createSession").
+			MatchHeader("Content-Type", "application/json").
+			Reply(200).
+			JSON(map[string]string{
+				"Did":        "sample-did",
+				"AccessJwt":  "sample-access-jwt",
+				"RefreshJwt": "sample-refresh-jwt",
+			})
+
+		s.ctx.Set("ticker", storage.Ticker{})
+		body := `{"active":true,"handle":"bluesky","appKey":"appKey","replyRestriction":"followers"}`
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTicker", mock.AnythingOfType("*storage.Ticker")).Run(func(args mock.Arguments) {
+			ticker := args.Get(0).(*storage.Ticker)
+			s.Equal("followers", ticker.Bluesky.ReplyRestriction)
+		}).Return(nil).Once()
+
+		h := s.handler()
+		h.PutTickerBluesky(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.True(gock.IsDone())
+		s.store.AssertExpectations(s.T())
+	})
+
 	s.Run("when enabling bluesky not successfully", func() {
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.server.createSession").

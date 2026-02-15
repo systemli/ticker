@@ -12,6 +12,7 @@ import (
 	comatproto "github.com/bluesky-social/indigo/api/atproto"
 	"github.com/bluesky-social/indigo/api/bsky"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
+	"github.com/bluesky-social/indigo/xrpc"
 	"github.com/systemli/ticker/internal/bluesky"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
@@ -134,6 +135,14 @@ func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) e
 		return err
 	}
 
+	// Create thread gate if reply restriction is configured
+	if ticker.Bluesky.ReplyRestriction != "" {
+		err = bb.createThreadGate(client, resp.Uri, ticker.Bluesky.ReplyRestriction)
+		if err != nil {
+			log.WithError(err).Warn("failed to create thread gate")
+		}
+	}
+
 	message.Bluesky = storage.BlueskyMeta{
 		Handle: ticker.Bluesky.Handle,
 		Uri:    resp.Uri,
@@ -171,6 +180,13 @@ func (bb *BlueskyBridge) Delete(ticker storage.Ticker, message *storage.Message)
 	rkey := parts[len(parts)-1]
 	schema := parts[len(parts)-2]
 
+	// Delete thread gate first (if it exists, ignore errors)
+	_, _ = comatproto.RepoDeleteRecord(context.TODO(), client, &comatproto.RepoDeleteRecord_Input{
+		Repo:       client.Auth.Did,
+		Collection: "app.bsky.feed.threadgate",
+		Rkey:       rkey,
+	})
+
 	_, err = comatproto.RepoDeleteRecord(context.TODO(), client, &comatproto.RepoDeleteRecord_Input{
 		Repo:       client.Auth.Did,
 		Collection: schema,
@@ -181,4 +197,61 @@ func (bb *BlueskyBridge) Delete(ticker storage.Ticker, message *storage.Message)
 	}
 
 	return err
+}
+
+// createThreadGate creates a thread gate record for the given post URI.
+func (bb *BlueskyBridge) createThreadGate(client *xrpc.Client, postUri string, replyRestriction string) error {
+	parts := strings.Split(postUri, "/")
+	if len(parts) < 3 {
+		return fmt.Errorf("invalid post uri: %s", postUri)
+	}
+	rkey := parts[len(parts)-1]
+
+	threadgate := &bsky.FeedThreadgate{
+		Post:      postUri,
+		CreatedAt: time.Now().Local().Format(time.RFC3339),
+		Allow:     buildAllowRules(replyRestriction),
+	}
+
+	_, err := comatproto.RepoCreateRecord(context.TODO(), client, &comatproto.RepoCreateRecord_Input{
+		Collection: "app.bsky.feed.threadgate",
+		Repo:       client.Auth.Did,
+		Rkey:       &rkey,
+		Record: &lexutil.LexiconTypeDecoder{
+			Val: threadgate,
+		},
+	})
+
+	return err
+}
+
+// buildAllowRules converts a reply restriction string to thread gate allow rules.
+// Valid values: "followers", "following", "mentioned", "nobody"
+// Multiple values can be combined with commas, e.g. "followers,mentioned"
+// "nobody" results in an empty allow list (no one can reply).
+func buildAllowRules(replyRestriction string) []*bsky.FeedThreadgate_Allow_Elem {
+	if replyRestriction == "nobody" {
+		return []*bsky.FeedThreadgate_Allow_Elem{}
+	}
+
+	var rules []*bsky.FeedThreadgate_Allow_Elem
+	for _, restriction := range strings.Split(replyRestriction, ",") {
+		restriction = strings.TrimSpace(restriction)
+		switch restriction {
+		case "followers":
+			rules = append(rules, &bsky.FeedThreadgate_Allow_Elem{
+				FeedThreadgate_FollowerRule: &bsky.FeedThreadgate_FollowerRule{},
+			})
+		case "following":
+			rules = append(rules, &bsky.FeedThreadgate_Allow_Elem{
+				FeedThreadgate_FollowingRule: &bsky.FeedThreadgate_FollowingRule{},
+			})
+		case "mentioned":
+			rules = append(rules, &bsky.FeedThreadgate_Allow_Elem{
+				FeedThreadgate_MentionRule: &bsky.FeedThreadgate_MentionRule{},
+			})
+		}
+	}
+
+	return rules
 }

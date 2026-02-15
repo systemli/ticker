@@ -368,6 +368,7 @@ func (h *handler) PutTickerBluesky(c *gin.Context) {
 		ticker.Bluesky.AppKey = body.AppKey
 	}
 	ticker.Bluesky.Active = body.Active
+	ticker.Bluesky.ReplyRestriction = body.ReplyRestriction
 
 	err = h.storage.SaveTicker(&ticker)
 	if err != nil {

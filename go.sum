@@ -7,8 +7,8 @@ github.com/appleboy/gofight/v2 v2.1.2 h1:VOy3jow4vIK8BRQJoC/I9muxyYlJ2yb9ht2hZoS
 github.com/appleboy/gofight/v2 v2.1.2/go.mod h1:frW+U1QZEdDgixycTj4CygQ48yLTUhplt43+Wczp3rw=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/bluesky-social/indigo v0.0.0-20251209183751-e1034c679349 h1:0iX3+nM0PlGEz+5A8/gTeLCcWedUg6nq18O1Vjc/Htk=
-github.com/bluesky-social/indigo v0.0.0-20251209183751-e1034c679349/go.mod h1:Pm2I1+iDXn/hLbF7XCg/DsZi6uDCiOo7hZGWprSM7k0=
+github.com/bluesky-social/indigo v0.0.0-20260213232405-1286ca7a7cb2 h1:q/dijVJ+cA17e2qmJZPNuB7anByq1W6+uYJr1D9gfto=
+github.com/bluesky-social/indigo v0.0.0-20260213232405-1286ca7a7cb2/go.mod h1:VG/LeqLGNI3Ew7lsYixajnZGFfWPv144qbUddh+Oyag=
 github.com/bytedance/gopkg v0.1.3 h1:TPBSwH8RsouGCBcMBktLt1AymVo2TVsBVCY4b6TnZ/M=
 github.com/bytedance/gopkg v0.1.3/go.mod h1:576VvJ+eJgyCzdjS+c4+77QF3p7ubbtiKARP3TxducM=
 github.com/bytedance/sonic v1.14.2 h1:k1twIoe97C1DtYUo+fZQy865IuHia4PR5RPiuGPPIIE=

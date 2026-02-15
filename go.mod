@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/appleboy/gin-jwt/v2 v2.10.3
-	github.com/bluesky-social/indigo v0.0.0-20251209183751-e1034c679349
+	github.com/bluesky-social/indigo v0.0.0-20260213232405-1286ca7a7cb2
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/size v1.0.2
