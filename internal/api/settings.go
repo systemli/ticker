@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -57,6 +58,16 @@ func (h *handler) PutTelegramSettings(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 		return
+	}
+
+	// Validate the token by calling the Telegram API if a token is provided
+	if value.Token != "" {
+		botUser, err := bridge.BotUser(value.Token)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeBadCredentials, response.TelegramError))
+			return
+		}
+		value.BotUsername = botUser.UserName
 	}
 
 	err = h.storage.SaveTelegramSettings(value)

@@ -27,20 +27,23 @@ func (s *SettingsResponseTestSuite) TestTelegramSettingsResponse() {
 		setting := TelegramSettingsResponse(telegramSettings)
 
 		s.Equal(storage.SettingTelegramName, setting.Name)
-		s.Equal(telegramSettings, setting.Value)
-		s.Equal("", setting.Value.(storage.TelegramSettings).Token)
+		value := setting.Value.(TelegramSettingsValue)
+		s.Equal("", value.Token)
+		s.Equal("", value.BotUsername)
 	})
 
 	s.Run("with token set", func() {
 		telegramSettings := storage.TelegramSettings{
-			Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+			Token:       "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+			BotUsername: "test_bot",
 		}
 
 		setting := TelegramSettingsResponse(telegramSettings)
 
 		s.Equal(storage.SettingTelegramName, setting.Name)
-		s.Equal(telegramSettings, setting.Value)
-		s.Equal("123456789:ABCdefGHIjklMNOpqrsTUVwxyz", setting.Value.(storage.TelegramSettings).Token)
+		value := setting.Value.(TelegramSettingsValue)
+		s.Equal("****wxyz", value.Token)
+		s.Equal("test_bot", value.BotUsername)
 	})
 
 	s.Run("with empty token", func() {
@@ -51,20 +54,23 @@ func (s *SettingsResponseTestSuite) TestTelegramSettingsResponse() {
 		setting := TelegramSettingsResponse(telegramSettings)
 
 		s.Equal(storage.SettingTelegramName, setting.Name)
-		s.Equal(telegramSettings, setting.Value)
-		s.Equal("", setting.Value.(storage.TelegramSettings).Token)
+		value := setting.Value.(TelegramSettingsValue)
+		s.Equal("", value.Token)
+		s.Equal("", value.BotUsername)
+	})
+}
+
+func (s *SettingsResponseTestSuite) TestMaskToken() {
+	s.Run("empty token", func() {
+		s.Equal("", maskToken(""))
 	})
 
-	s.Run("response structure validation", func() {
-		telegramSettings := storage.TelegramSettings{
-			Token: "test-token",
-		}
+	s.Run("short token", func() {
+		s.Equal("****", maskToken("ab"))
+	})
 
-		setting := TelegramSettingsResponse(telegramSettings)
-
-		s.IsType(Setting{}, setting)
-		s.IsType(storage.TelegramSettings{}, setting.Value)
-		s.NotEmpty(setting.Name)
+	s.Run("normal token", func() {
+		s.Equal("****wxyz", maskToken("123456789:ABCdefGHIjklMNOpqrsTUVwxyz"))
 	})
 }
 

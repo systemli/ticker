@@ -43,7 +43,7 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 		s.store = &storage.MockStorage{}
 
 		// Add default mock expectation for GetTelegramSettings which is called by getBotUsername
-		s.store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""}).Maybe()
+		s.store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "", BotUsername: ""}).Maybe()
 
 		s.cfg = config.LoadConfig("")
 		s.cfg.SignalGroup = config.SignalGroup{

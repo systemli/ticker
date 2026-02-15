@@ -34,7 +34,8 @@ type InactiveSettings struct {
 }
 
 type TelegramSettings struct {
-	Token string `json:"token"`
+	Token       string `json:"token"`
+	BotUsername string `json:"botUsername"`
 }
 
 func DefaultInactiveSettings() InactiveSettings {

@@ -11,6 +11,11 @@ type Setting struct {
 	Value interface{} `json:"value"`
 }
 
+type TelegramSettingsValue struct {
+	Token       string `json:"token"`
+	BotUsername string `json:"botUsername"`
+}
+
 func InactiveSettingsResponse(inactiveSettings storage.InactiveSettings) Setting {
 	return Setting{
 		Name:  storage.SettingInactiveName,
@@ -20,7 +25,22 @@ func InactiveSettingsResponse(inactiveSettings storage.InactiveSettings) Setting
 
 func TelegramSettingsResponse(telegramSettings storage.TelegramSettings) Setting {
 	return Setting{
-		Name:  storage.SettingTelegramName,
-		Value: telegramSettings,
+		Name: storage.SettingTelegramName,
+		Value: TelegramSettingsValue{
+			Token:       maskToken(telegramSettings.Token),
+			BotUsername: telegramSettings.BotUsername,
+		},
 	}
+}
+
+// maskToken returns a masked version of the token, showing only the last 4 characters.
+// If the token is empty, it returns an empty string.
+func maskToken(token string) string {
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 4 {
+		return "****"
+	}
+	return "****" + token[len(token)-4:]
 }

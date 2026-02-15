@@ -23,6 +23,7 @@ const (
 	BridgeError             ErrorMessage = "unable to update ticker in bridges"
 	MastodonError           ErrorMessage = "unable to connect to mastodon"
 	BlueskyError            ErrorMessage = "unable to connect to bluesky"
+	TelegramError           ErrorMessage = "unable to connect to telegram"
 	SignalGroupError        ErrorMessage = "unable to connect to signal"
 	SignalGroupDeleteError  ErrorMessage = "unable to delete signal group"
 	PasswordError           ErrorMessage = "could not authenticate password"

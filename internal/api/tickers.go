@@ -591,11 +591,5 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 // getBotUsername retrieves the Telegram bot username from settings
 func (h *handler) getBotUsername() string {
 	telegramSettings := h.storage.GetTelegramSettings()
-	if telegramSettings.Token == "" {
-		return ""
-	}
-
-	// TODO: Get actual bot username from Telegram API or cache it
-	// For now, return empty string since we don't want to make API calls here
-	return ""
+	return telegramSettings.BotUsername
 }
