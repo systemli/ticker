@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/bridge"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -18,6 +19,13 @@ func (h *handler) GetSetting(c *gin.Context) {
 	if c.Param("name") == storage.SettingInactiveName {
 		setting := h.storage.GetInactiveSettings()
 		data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
+		c.JSON(http.StatusOK, response.SuccessResponse(data))
+		return
+	}
+
+	if c.Param("name") == storage.SettingTelegramName {
+		setting := h.storage.GetTelegramSettings()
+		data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
 		c.JSON(http.StatusOK, response.SuccessResponse(data))
 		return
 	}
@@ -41,5 +49,34 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 
 	setting := h.storage.GetInactiveSettings()
 	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
+	c.JSON(http.StatusOK, response.SuccessResponse(data))
+}
+
+func (h *handler) PutTelegramSettings(c *gin.Context) {
+	value := storage.TelegramSettings{}
+	err := c.Bind(&value)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
+		return
+	}
+
+	// Validate the token by calling the Telegram API if a token is provided
+	if value.Token != "" {
+		botUser, err := bridge.BotUser(value.Token)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeBadCredentials, response.TelegramError))
+			return
+		}
+		value.BotUsername = botUser.UserName
+	}
+
+	err = h.storage.SaveTelegramSettings(value)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
+		return
+	}
+
+	setting := h.storage.GetTelegramSettings()
+	data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

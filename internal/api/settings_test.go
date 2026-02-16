@@ -58,6 +58,31 @@ func (s *SettingsTestSuite) TestGetSetting() {
 		s.Equal(http.StatusOK, s.w.Code)
 		s.store.AssertExpectations(s.T())
 	})
+
+	s.Run("get telegram settings", func() {
+		s.ctx.AddParam("name", storage.SettingTelegramName)
+		expectedSettings := storage.TelegramSettings{Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", BotUsername: "test_bot"}
+		s.store.On("GetTelegramSettings").Return(expectedSettings).Once()
+		h := s.handler()
+		h.GetSetting(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), "telegram_settings")
+		// Token should be masked in response
+		s.NotContains(s.w.Body.String(), "123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
+		s.Contains(s.w.Body.String(), "****wxyz")
+		s.Contains(s.w.Body.String(), "test_bot")
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("get unknown setting", func() {
+		s.ctx.AddParam("name", "unknown_setting")
+		h := s.handler()
+		h.GetSetting(s.ctx)
+
+		s.Equal(http.StatusNotFound, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
 }
 
 func (s *SettingsTestSuite) TestPutInactiveSetting() {
@@ -94,6 +119,47 @@ func (s *SettingsTestSuite) TestPutInactiveSetting() {
 		h.PutInactiveSettings(s.ctx)
 
 		s.Equal(http.StatusOK, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+}
+
+func (s *SettingsTestSuite) TestPutTelegramSettings() {
+	s.Run("when body is invalid", func() {
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", strings.NewReader(`{"token":123}`))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.PutTelegramSettings(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when storage returns error", func() {
+		setting := storage.TelegramSettings{Token: ""}
+		body, _ := json.Marshal(setting)
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", bytes.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTelegramSettings", mock.Anything).Return(errors.New("storage error")).Once()
+		h := s.handler()
+		h.PutTelegramSettings(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("when saving empty token", func() {
+		setting := storage.TelegramSettings{Token: ""}
+		body, _ := json.Marshal(setting)
+		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", bytes.NewReader(body))
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		s.store.On("SaveTelegramSettings", mock.Anything).Return(nil).Once()
+		s.store.On("GetTelegramSettings").Return(setting)
+		h := s.handler()
+		h.PutTelegramSettings(s.ctx)
+
+		s.Equal(http.StatusOK, s.w.Code)
+		s.Contains(s.w.Body.String(), "telegram_settings")
+		s.NotContains(s.w.Body.String(), "ABCdefGHI")
 		s.store.AssertExpectations(s.T())
 	})
 }

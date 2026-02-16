@@ -1437,6 +1437,87 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 	})
 }
 
+func (s *SqlStorageTestSuite) TestGetTelegramSettings() {
+	s.Run("when no settings exist", func() {
+		settings := s.store.GetTelegramSettings()
+		s.Equal("", settings.Token)
+		s.Equal("", settings.BotUsername)
+	})
+
+	s.Run("when settings exist", func() {
+		setting := Setting{Name: SettingTelegramName, Value: `{"token":"123456789:ABCdefGHIjklMNOpqrsTUVwxyz","botUsername":"test_bot"}`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetTelegramSettings()
+		s.Equal("123456789:ABCdefGHIjklMNOpqrsTUVwxyz", settings.Token)
+		s.Equal("test_bot", settings.BotUsername)
+
+		// Cleanup for next sub-test
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+
+	s.Run("when settings have invalid JSON", func() {
+		setting := Setting{Name: SettingTelegramName, Value: `invalid json`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetTelegramSettings()
+		s.Equal("", settings.Token)
+		s.Equal("", settings.BotUsername)
+
+		// Cleanup
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
+	settings := TelegramSettings{Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", BotUsername: "test_bot"}
+
+	s.Run("when settings are new", func() {
+		err := s.store.SaveTelegramSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingTelegramName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		// Verify the setting was saved correctly
+		var savedSetting Setting
+		err = s.db.Where("name = ?", SettingTelegramName).First(&savedSetting).Error
+		s.NoError(err)
+		s.Contains(savedSetting.Value, "123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
+		s.Contains(savedSetting.Value, "test_bot")
+	})
+
+	s.Run("when settings are existing", func() {
+		settings.Token = "987654321:ZYXwvuTSRqponMLKjihGFeDcba"
+		settings.BotUsername = "updated_bot"
+		err := s.store.SaveTelegramSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingTelegramName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		retrievedSettings := s.store.GetTelegramSettings()
+		s.Equal("987654321:ZYXwvuTSRqponMLKjihGFeDcba", retrievedSettings.Token)
+		s.Equal("updated_bot", retrievedSettings.BotUsername)
+	})
+
+	s.Run("when saving empty token", func() {
+		emptySettings := TelegramSettings{Token: "", BotUsername: ""}
+		err := s.store.SaveTelegramSettings(emptySettings)
+		s.NoError(err)
+
+		retrievedSettings := s.store.GetTelegramSettings()
+		s.Equal("", retrievedSettings.Token)
+		s.Equal("", retrievedSettings.BotUsername)
+	})
+}
+
 func TestSqlStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(SqlStorageTestSuite))
 }
