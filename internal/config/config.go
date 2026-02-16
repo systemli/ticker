@@ -13,26 +13,19 @@ import (
 var log = logger.GetWithPackage("config")
 
 type Config struct {
-	Listen        string      `yaml:"listen"`
-	LogLevel      string      `yaml:"log_level"`
-	LogFormat     string      `yaml:"log_format"`
-	Secret        string      `yaml:"secret"`
-	Database      Database    `yaml:"database"`
-	SignalGroup   SignalGroup `yaml:"signal_group"`
-	MetricsListen string      `yaml:"metrics_listen"`
-	Upload        Upload      `yaml:"upload"`
+	Listen        string   `yaml:"listen"`
+	LogLevel      string   `yaml:"log_level"`
+	LogFormat     string   `yaml:"log_format"`
+	Secret        string   `yaml:"secret"`
+	Database      Database `yaml:"database"`
+	MetricsListen string   `yaml:"metrics_listen"`
+	Upload        Upload   `yaml:"upload"`
 	FileBackend   afero.Fs
 }
 
 type Database struct {
 	Type string `yaml:"type"`
 	DSN  string `yaml:"dsn"`
-}
-
-type SignalGroup struct {
-	ApiUrl  string `yaml:"api_url"`
-	Avatar  string `yaml:"avatar"`
-	Account string `yaml:"account"`
 }
 
 type Upload struct {
@@ -56,11 +49,6 @@ func defaultConfig() Config {
 		},
 		FileBackend: afero.NewOsFs(),
 	}
-}
-
-// Enabled returns true if requried API URL and account are set.
-func (t *SignalGroup) Enabled() bool {
-	return t.ApiUrl != "" && t.Account != ""
 }
 
 // LoadConfig loads config from file.
@@ -104,15 +92,6 @@ func LoadConfig(path string) Config {
 	}
 	if os.Getenv("TICKER_UPLOAD_URL") != "" {
 		c.Upload.URL = os.Getenv("TICKER_UPLOAD_URL")
-	}
-	if os.Getenv("TICKER_SIGNAL_GROUP_API_URL") != "" {
-		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_API_URL")
-	}
-	if os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT") != "" {
-		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_ACCOUNT")
-	}
-	if os.Getenv("TICKER_SIGNAL_GROUP_AVATAR") != "" {
-		c.SignalGroup.ApiUrl = os.Getenv("TICKER_SIGNAL_GROUP_AVATAR")
 	}
 
 	return c

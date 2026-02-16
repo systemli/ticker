@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 	"github.com/ybbus/jsonrpc/v3"
 )
@@ -23,22 +22,21 @@ type ListGroupsResponseGroup struct {
 }
 
 type GroupClient struct {
-	cfg    config.Config
-	client jsonrpc.RPCClient
+	settings storage.SignalGroupSettings
+	client   jsonrpc.RPCClient
 }
 
-func NewGroupClient(cfg config.Config) *GroupClient {
-	client := Client(cfg)
-
-	return &GroupClient{cfg, client}
+func NewGroupClientFromSettings(settings storage.SignalGroupSettings) *GroupClient {
+	client := ClientFromSettings(settings)
+	return &GroupClient{settings, client}
 }
 
 func (gc *GroupClient) CreateOrUpdateGroup(t *storage.Ticker) error {
 	params := map[string]interface{}{
-		"account":                   gc.cfg.SignalGroup.Account,
+		"account":                   gc.settings.Account,
 		"name":                      t.Title,
 		"description":               t.Description,
-		"avatar":                    gc.cfg.SignalGroup.Avatar,
+		"avatar":                    gc.settings.Avatar,
 		"link":                      "enabled",
 		"setPermissionAddMember":    "every-member",
 		"setPermissionEditDetails":  "only-admins",
@@ -85,7 +83,7 @@ func (gc *GroupClient) QuitGroup(groupID string) error {
 		GroupID string `json:"group-id"`
 		Delete  bool   `json:"delete"`
 	}{
-		Account: gc.cfg.SignalGroup.Account,
+		Account: gc.settings.Account,
 		GroupID: groupID,
 		Delete:  true,
 	}
@@ -99,14 +97,14 @@ func (gc *GroupClient) QuitGroup(groupID string) error {
 	return nil
 }
 
-func (gc *GroupClient) listGroups() ([]ListGroupsResponseGroup, error) {
+func (gc *GroupClient) ListGroups() ([]ListGroupsResponseGroup, error) {
 	ctx := context.Background()
 
 	params := struct {
 		Account  string `json:"account"`
 		Detailed bool   `json:"detailed"`
 	}{
-		Account:  gc.cfg.SignalGroup.Account,
+		Account:  gc.settings.Account,
 		Detailed: true,
 	}
 
@@ -120,7 +118,7 @@ func (gc *GroupClient) listGroups() ([]ListGroupsResponseGroup, error) {
 }
 
 func (gc *GroupClient) getGroup(groupID string) (ListGroupsResponseGroup, error) {
-	gl, err := gc.listGroups()
+	gl, err := gc.ListGroups()
 	if err != nil {
 		return ListGroupsResponseGroup{}, err
 	}
@@ -144,7 +142,7 @@ func (gc *GroupClient) AddAdminMember(groupId string, number string) error {
 		Member  []string `json:"member"`
 		Admin   []string `json:"admin"`
 	}{
-		Account: gc.cfg.SignalGroup.Account,
+		Account: gc.settings.Account,
 		GroupID: groupId,
 		Member:  numbers,
 		Admin:   numbers,
@@ -168,7 +166,7 @@ func (gc *GroupClient) RemoveAllMembers(groupId string) error {
 	numbers := make([]string, 0, len(g.Members))
 	for _, m := range g.Members {
 		// Exclude the account number
-		if m.Number == gc.cfg.SignalGroup.Account {
+		if m.Number == gc.settings.Account {
 			continue
 		}
 		numbers = append(numbers, m.Number)
@@ -187,7 +185,7 @@ func (gc *GroupClient) removeMembers(groupId string, numbers []string) error {
 		GroupID      string   `json:"group-id"`
 		RemoveMember []string `json:"remove-member"`
 	}{
-		Account:      gc.cfg.SignalGroup.Account,
+		Account:      gc.settings.Account,
 		GroupID:      groupId,
 		RemoveMember: numbers,
 	}
@@ -201,6 +199,6 @@ func (gc *GroupClient) removeMembers(groupId string, numbers []string) error {
 	return nil
 }
 
-func Client(config config.Config) jsonrpc.RPCClient {
-	return jsonrpc.NewClient(config.SignalGroup.ApiUrl)
+func ClientFromSettings(settings storage.SignalGroupSettings) jsonrpc.RPCClient {
+	return jsonrpc.NewClient(settings.ApiUrl)
 }

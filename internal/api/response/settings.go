@@ -33,6 +33,13 @@ func TelegramSettingsResponse(telegramSettings storage.TelegramSettings) Setting
 	}
 }
 
+func SignalGroupSettingsResponse(signalGroupSettings storage.SignalGroupSettings) Setting {
+	return Setting{
+		Name:  storage.SettingSignalGroupName,
+		Value: signalGroupSettings,
+	}
+}
+
 // maskToken returns a masked version of the token, showing only the last 4 characters.
 // If the token is empty, it returns an empty string.
 func maskToken(token string) string {

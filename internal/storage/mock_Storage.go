@@ -2033,6 +2033,50 @@ func (_c *MockStorage_GetInactiveSettings_Call) RunAndReturn(run func() Inactive
 	return _c
 }
 
+// GetSignalGroupSettings provides a mock function for the type MockStorage
+func (_mock *MockStorage) GetSignalGroupSettings() SignalGroupSettings {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSignalGroupSettings")
+	}
+
+	var r0 SignalGroupSettings
+	if returnFunc, ok := ret.Get(0).(func() SignalGroupSettings); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(SignalGroupSettings)
+	}
+	return r0
+}
+
+// MockStorage_GetSignalGroupSettings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSignalGroupSettings'
+type MockStorage_GetSignalGroupSettings_Call struct {
+	*mock.Call
+}
+
+// GetSignalGroupSettings is a helper method to define mock.On call
+func (_e *MockStorage_Expecter) GetSignalGroupSettings() *MockStorage_GetSignalGroupSettings_Call {
+	return &MockStorage_GetSignalGroupSettings_Call{Call: _e.mock.On("GetSignalGroupSettings")}
+}
+
+func (_c *MockStorage_GetSignalGroupSettings_Call) Run(run func()) *MockStorage_GetSignalGroupSettings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockStorage_GetSignalGroupSettings_Call) Return(signalGroupSettings SignalGroupSettings) *MockStorage_GetSignalGroupSettings_Call {
+	_c.Call.Return(signalGroupSettings)
+	return _c
+}
+
+func (_c *MockStorage_GetSignalGroupSettings_Call) RunAndReturn(run func() SignalGroupSettings) *MockStorage_GetSignalGroupSettings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetTelegramSettings provides a mock function for the type MockStorage
 func (_mock *MockStorage) GetTelegramSettings() TelegramSettings {
 	ret := _mock.Called()
@@ -2226,6 +2270,57 @@ func (_c *MockStorage_SaveMessage_Call) Return(err error) *MockStorage_SaveMessa
 }
 
 func (_c *MockStorage_SaveMessage_Call) RunAndReturn(run func(message *Message) error) *MockStorage_SaveMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveSignalGroupSettings provides a mock function for the type MockStorage
+func (_mock *MockStorage) SaveSignalGroupSettings(signalGroupSettings SignalGroupSettings) error {
+	ret := _mock.Called(signalGroupSettings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveSignalGroupSettings")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(SignalGroupSettings) error); ok {
+		r0 = returnFunc(signalGroupSettings)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStorage_SaveSignalGroupSettings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveSignalGroupSettings'
+type MockStorage_SaveSignalGroupSettings_Call struct {
+	*mock.Call
+}
+
+// SaveSignalGroupSettings is a helper method to define mock.On call
+//   - signalGroupSettings SignalGroupSettings
+func (_e *MockStorage_Expecter) SaveSignalGroupSettings(signalGroupSettings interface{}) *MockStorage_SaveSignalGroupSettings_Call {
+	return &MockStorage_SaveSignalGroupSettings_Call{Call: _e.mock.On("SaveSignalGroupSettings", signalGroupSettings)}
+}
+
+func (_c *MockStorage_SaveSignalGroupSettings_Call) Run(run func(signalGroupSettings SignalGroupSettings)) *MockStorage_SaveSignalGroupSettings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 SignalGroupSettings
+		if args[0] != nil {
+			arg0 = args[0].(SignalGroupSettings)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStorage_SaveSignalGroupSettings_Call) Return(err error) *MockStorage_SaveSignalGroupSettings_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStorage_SaveSignalGroupSettings_Call) RunAndReturn(run func(signalGroupSettings SignalGroupSettings) error) *MockStorage_SaveSignalGroupSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }

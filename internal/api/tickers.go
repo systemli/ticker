@@ -409,7 +409,8 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	groupClient := signal.NewGroupClient(h.config)
+	settings := h.storage.GetSignalGroupSettings()
+	groupClient := signal.NewGroupClientFromSettings(settings)
 	err = groupClient.CreateOrUpdateGroup(&ticker)
 	if err != nil {
 		log.WithError(err).Error("failed to create or update group")
@@ -434,7 +435,8 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	groupClient := signal.NewGroupClient(h.config)
+	settings := h.storage.GetSignalGroupSettings()
+	groupClient := signal.NewGroupClientFromSettings(settings)
 
 	// Remove all members except the account number
 	err = groupClient.RemoveAllMembers(ticker.SignalGroup.GroupID)
@@ -476,7 +478,8 @@ func (h *handler) PutTickerSignalGroupAdmin(c *gin.Context) {
 		return
 	}
 
-	groupClient := signal.NewGroupClient(h.config)
+	settings := h.storage.GetSignalGroupSettings()
+	groupClient := signal.NewGroupClientFromSettings(settings)
 	err = groupClient.AddAdminMember(ticker.SignalGroup.GroupID, body.Number)
 	if err != nil {
 		log.WithError(err).Error("failed to add member")

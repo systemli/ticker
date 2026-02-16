@@ -534,6 +534,38 @@ func (s *SqlStorage) SaveTelegramSettings(telegramSettings TelegramSettings) err
 	return s.DB.Save(&setting).Error
 }
 
+func (s *SqlStorage) GetSignalGroupSettings() SignalGroupSettings {
+	var setting Setting
+	err := s.DB.First(&setting, EqualName, SettingSignalGroupName).Error
+	if err != nil {
+		return DefaultSignalGroupSettings()
+	}
+
+	var signalGroupSettings SignalGroupSettings
+	err = json.Unmarshal([]byte(setting.Value), &signalGroupSettings)
+	if err != nil {
+		return DefaultSignalGroupSettings()
+	}
+
+	return signalGroupSettings
+}
+
+func (s *SqlStorage) SaveSignalGroupSettings(signalGroupSettings SignalGroupSettings) error {
+	var setting Setting
+	err := s.DB.First(&setting, EqualName, SettingSignalGroupName).Error
+	if err != nil {
+		setting = Setting{Name: SettingSignalGroupName}
+	}
+
+	value, err := json.Marshal(signalGroupSettings)
+	if err != nil {
+		return err
+	}
+	setting.Value = string(value)
+
+	return s.DB.Save(&setting).Error
+}
+
 func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
 	db := s.DB
 	for _, opt := range opts {

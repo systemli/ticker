@@ -60,6 +60,36 @@ func (s *SettingsResponseTestSuite) TestTelegramSettingsResponse() {
 	})
 }
 
+func (s *SettingsResponseTestSuite) TestSignalGroupSettingsResponse() {
+	s.Run("with default settings", func() {
+		signalGroupSettings := storage.DefaultSignalGroupSettings()
+
+		setting := SignalGroupSettingsResponse(signalGroupSettings)
+
+		s.Equal(storage.SettingSignalGroupName, setting.Name)
+		value := setting.Value.(storage.SignalGroupSettings)
+		s.Equal("", value.ApiUrl)
+		s.Equal("", value.Account)
+		s.Equal("", value.Avatar)
+	})
+
+	s.Run("with values set", func() {
+		signalGroupSettings := storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+			Avatar:  "/path/to/avatar.png",
+		}
+
+		setting := SignalGroupSettingsResponse(signalGroupSettings)
+
+		s.Equal(storage.SettingSignalGroupName, setting.Name)
+		value := setting.Value.(storage.SignalGroupSettings)
+		s.Equal("https://signal-cli.example.org/api/v1/rpc", value.ApiUrl)
+		s.Equal("0123456789", value.Account)
+		s.Equal("/path/to/avatar.png", value.Avatar)
+	})
+}
+
 func (s *SettingsResponseTestSuite) TestMaskToken() {
 	s.Run("empty token", func() {
 		s.Equal("", maskToken(""))

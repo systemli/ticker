@@ -1518,6 +1518,94 @@ func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
 	})
 }
 
+func (s *SqlStorageTestSuite) TestGetSignalGroupSettings() {
+	s.Run("when no settings exist", func() {
+		settings := s.store.GetSignalGroupSettings()
+		s.Equal("", settings.ApiUrl)
+		s.Equal("", settings.Account)
+		s.Equal("", settings.Avatar)
+	})
+
+	s.Run("when settings exist", func() {
+		setting := Setting{Name: SettingSignalGroupName, Value: `{"apiUrl":"https://signal-cli.example.org/api/v1/rpc","account":"+491234567890","avatar":"/path/to/avatar.png"}`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetSignalGroupSettings()
+		s.Equal("https://signal-cli.example.org/api/v1/rpc", settings.ApiUrl)
+		s.Equal("+491234567890", settings.Account)
+		s.Equal("/path/to/avatar.png", settings.Avatar)
+
+		// Cleanup for next sub-test
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+
+	s.Run("when settings have invalid JSON", func() {
+		setting := Setting{Name: SettingSignalGroupName, Value: `invalid json`}
+		err := s.db.Create(&setting).Error
+		s.NoError(err)
+
+		settings := s.store.GetSignalGroupSettings()
+		s.Equal("", settings.ApiUrl)
+		s.Equal("", settings.Account)
+		s.Equal("", settings.Avatar)
+
+		// Cleanup
+		s.NoError(s.db.Delete(&setting).Error)
+	})
+}
+
+func (s *SqlStorageTestSuite) TestSaveSignalGroupSettings() {
+	settings := SignalGroupSettings{ApiUrl: "https://signal-cli.example.org/api/v1/rpc", Account: "+491234567890", Avatar: "/path/to/avatar.png"}
+
+	s.Run("when settings are new", func() {
+		err := s.store.SaveSignalGroupSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingSignalGroupName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		// Verify the setting was saved correctly
+		var savedSetting Setting
+		err = s.db.Where("name = ?", SettingSignalGroupName).First(&savedSetting).Error
+		s.NoError(err)
+		s.Contains(savedSetting.Value, "https://signal-cli.example.org/api/v1/rpc")
+		s.Contains(savedSetting.Value, "+491234567890")
+		s.Contains(savedSetting.Value, "/path/to/avatar.png")
+	})
+
+	s.Run("when settings are existing", func() {
+		settings.ApiUrl = "https://new-signal-cli.example.org/api/v1/rpc"
+		settings.Account = "+490987654321"
+		settings.Avatar = "/new/path/avatar.png"
+		err := s.store.SaveSignalGroupSettings(settings)
+		s.NoError(err)
+
+		var count int64
+		err = s.db.Model(&Setting{}).Where("name = ?", SettingSignalGroupName).Count(&count).Error
+		s.NoError(err)
+		s.Equal(int64(1), count)
+
+		retrievedSettings := s.store.GetSignalGroupSettings()
+		s.Equal("https://new-signal-cli.example.org/api/v1/rpc", retrievedSettings.ApiUrl)
+		s.Equal("+490987654321", retrievedSettings.Account)
+		s.Equal("/new/path/avatar.png", retrievedSettings.Avatar)
+	})
+
+	s.Run("when saving empty settings", func() {
+		emptySettings := SignalGroupSettings{ApiUrl: "", Account: "", Avatar: ""}
+		err := s.store.SaveSignalGroupSettings(emptySettings)
+		s.NoError(err)
+
+		retrievedSettings := s.store.GetSignalGroupSettings()
+		s.Equal("", retrievedSettings.ApiUrl)
+		s.Equal("", retrievedSettings.Account)
+		s.Equal("", retrievedSettings.Avatar)
+	})
+}
+
 func TestSqlStorageTestSuite(t *testing.T) {
 	suite.Run(t, new(SqlStorageTestSuite))
 }

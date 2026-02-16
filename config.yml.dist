@@ -10,14 +10,6 @@ database:
   dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
 # secret used for JSON Web Tokens
 secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
-# telegram configuration
-telegram:
-  token: ""
-# signal group configuration
-signal_group:
-  api_url: ""
-  avatar: ""
-  account: ""
 # listen port for prometheus metrics exporter
 metrics_listen: ":8181"
 upload:

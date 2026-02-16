@@ -10,7 +10,10 @@ func TestSettingConstants(t *testing.T) {
 	t.Run("setting names are defined correctly", func(t *testing.T) {
 		assert.Equal(t, "inactive_settings", SettingInactiveName)
 		assert.Equal(t, "telegram_settings", SettingTelegramName)
+		assert.Equal(t, "signal_group_settings", SettingSignalGroupName)
 		assert.NotEqual(t, SettingInactiveName, SettingTelegramName)
+		assert.NotEqual(t, SettingTelegramName, SettingSignalGroupName)
+		assert.NotEqual(t, SettingInactiveName, SettingSignalGroupName)
 	})
 }
 
@@ -34,5 +37,38 @@ func TestDefaultTelegramSettings(t *testing.T) {
 
 		assert.Equal(t, "", defaults.Token)
 		assert.Equal(t, "", defaults.BotUsername)
+	})
+}
+
+func TestDefaultSignalGroupSettings(t *testing.T) {
+	t.Run("returns correct default values", func(t *testing.T) {
+		defaults := DefaultSignalGroupSettings()
+
+		assert.Equal(t, "", defaults.ApiUrl)
+		assert.Equal(t, "", defaults.Account)
+		assert.Equal(t, "", defaults.Avatar)
+		assert.False(t, defaults.Enabled())
+	})
+}
+
+func TestSignalGroupSettingsEnabled(t *testing.T) {
+	t.Run("returns false when both fields are empty", func(t *testing.T) {
+		settings := SignalGroupSettings{}
+		assert.False(t, settings.Enabled())
+	})
+
+	t.Run("returns false when only ApiUrl is set", func(t *testing.T) {
+		settings := SignalGroupSettings{ApiUrl: "http://localhost:8080"}
+		assert.False(t, settings.Enabled())
+	})
+
+	t.Run("returns false when only Account is set", func(t *testing.T) {
+		settings := SignalGroupSettings{Account: "+491234567890"}
+		assert.False(t, settings.Enabled())
+	})
+
+	t.Run("returns true when both ApiUrl and Account are set", func(t *testing.T) {
+		settings := SignalGroupSettings{ApiUrl: "http://localhost:8080", Account: "+491234567890"}
+		assert.True(t, settings.Enabled())
 	})
 }

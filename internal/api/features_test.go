@@ -26,6 +26,8 @@ func (s *FeaturesTestSuite) TestGetFeatures() {
 
 	// Mock GetTelegramSettings to return empty token (disabled)
 	store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""})
+	// Mock GetSignalGroupSettings to return empty settings (disabled)
+	store.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
 
 	h := handler{
 		storage: store,
