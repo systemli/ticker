@@ -50,5 +50,7 @@ type Storage interface {
 	SaveInactiveSettings(inactiveSettings InactiveSettings) error
 	GetTelegramSettings() TelegramSettings
 	SaveTelegramSettings(telegramSettings TelegramSettings) error
+	GetSignalGroupSettings() SignalGroupSettings
+	SaveSignalGroupSettings(signalGroupSettings SignalGroupSettings) error
 	UploadPath() string
 }

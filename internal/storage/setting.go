@@ -13,6 +13,7 @@ const (
 	SettingInactiveTwitter            = `systemli`
 	SettingDefaultRefreshInterval int = 10000
 	SettingTelegramName               = `telegram_settings`
+	SettingSignalGroupName            = `signal_group_settings`
 )
 
 type Setting struct {
@@ -53,5 +54,24 @@ func DefaultInactiveSettings() InactiveSettings {
 func DefaultTelegramSettings() TelegramSettings {
 	return TelegramSettings{
 		Token: "",
+	}
+}
+
+type SignalGroupSettings struct {
+	ApiUrl  string `json:"apiUrl"`
+	Account string `json:"account"`
+	Avatar  string `json:"avatar"`
+}
+
+// Enabled returns true if required API URL and account are set.
+func (s *SignalGroupSettings) Enabled() bool {
+	return s.ApiUrl != "" && s.Account != ""
+}
+
+func DefaultSignalGroupSettings() SignalGroupSettings {
+	return SignalGroupSettings{
+		ApiUrl:  "",
+		Account: "",
+		Avatar:  "",
 	}
 }

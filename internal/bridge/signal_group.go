@@ -22,11 +22,12 @@ type SignalGroupResponse struct {
 }
 
 func (sb *SignalGroupBridge) Update(ticker storage.Ticker) error {
-	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() {
+	settings := sb.storage.GetSignalGroupSettings()
+	if !settings.Enabled() || !ticker.SignalGroup.Connected() {
 		return nil
 	}
 
-	groupClient := signal.NewGroupClient(sb.config)
+	groupClient := signal.NewGroupClientFromSettings(settings)
 	err := groupClient.CreateOrUpdateGroup(&ticker)
 	if err != nil {
 		return err
@@ -36,12 +37,13 @@ func (sb *SignalGroupBridge) Update(ticker storage.Ticker) error {
 }
 
 func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Message) error {
-	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active {
+	settings := sb.storage.GetSignalGroupSettings()
+	if !settings.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active {
 		return nil
 	}
 
 	ctx := context.Background()
-	client := signal.Client(sb.config)
+	client := signal.ClientFromSettings(settings)
 
 	var attachments []string
 	if len(message.Attachments) > 0 {
@@ -69,7 +71,7 @@ func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Messag
 		Message    string   `json:"message"`
 		Attachment []string `json:"attachment"`
 	}{
-		Account:    sb.config.SignalGroup.Account,
+		Account:    settings.Account,
 		GroupID:    ticker.SignalGroup.GroupID,
 		Message:    message.Text,
 		Attachment: attachments,
@@ -92,17 +94,18 @@ func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Messag
 }
 
 func (sb *SignalGroupBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
-	if !sb.config.SignalGroup.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active || message.SignalGroup.Timestamp == 0 {
+	settings := sb.storage.GetSignalGroupSettings()
+	if !settings.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active || message.SignalGroup.Timestamp == 0 {
 		return nil
 	}
 
-	client := signal.Client(sb.config)
+	client := signal.ClientFromSettings(settings)
 	params := struct {
 		Account         string `json:"account"`
 		GroupID         string `json:"group-id"`
 		TargetTimestamp int    `json:"target-timestamp"`
 	}{
-		Account:         sb.config.SignalGroup.Account,
+		Account:         settings.Account,
 		GroupID:         ticker.SignalGroup.GroupID,
 		TargetTimestamp: message.SignalGroup.Timestamp,
 	}

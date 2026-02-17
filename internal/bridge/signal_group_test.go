@@ -10,19 +10,22 @@ import (
 
 func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 	s.Run("when signalGroup is inactive", func() {
-		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Update(tickerWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when signalGroup is active but signal-cli api fails", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -31,15 +34,16 @@ func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 		err := bridge.Update(tickerWithBridges)
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("happy path", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		// updateGroup
 		gock.New("https://signal-cli.example.org").
@@ -75,24 +79,28 @@ func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 }
 
 func (s *BridgeTestSuite) TestSignalGroupSend() {
 	s.Run("when signalGroup is inactive", func() {
-		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Send(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when signalGroup is active but signal-cli api fails", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -101,15 +109,16 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 		err := bridge.Send(tickerWithBridges, &storage.Message{})
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when response timestamp == 0", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -125,18 +134,18 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 		err := bridge.Send(tickerWithBridges, &storage.Message{})
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("send message with attachment failed to find upload", func() {
 		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
 		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
 		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, mockStorage)
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -157,14 +166,13 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 
 	s.Run("send message with attachment failed to read file", func() {
 		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
 		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{UUID: "123", ContentType: "image/gif"}, nil).Once()
 		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{UUID: "456", ContentType: "image/jpeg"}, nil).Once()
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, mockStorage)
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -184,12 +192,12 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("send message without attachments", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -205,43 +213,51 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 		err := bridge.Send(tickerWithBridges, &storage.Message{})
 		s.NoError(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 }
 
 func (s *BridgeTestSuite) TestSignalDelete() {
 	s.Run("when signal not connected", func() {
-		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when message has no signal meta", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when signal is inactive", func() {
-		bridge := s.signalGroupBridge(config.Config{}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("when delete fails", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -250,15 +266,16 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 		err := bridge.Delete(tickerWithBridges, &messageWithBridges)
 		s.Error(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 
 	s.Run("happy path", func() {
-		bridge := s.signalGroupBridge(config.Config{
-			SignalGroup: config.SignalGroup{
-				ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
-				Account: "0123456789",
-			},
-		}, &storage.MockStorage{})
+		mockStorage := &storage.MockStorage{}
+		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
+			Account: "0123456789",
+		})
+		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
@@ -274,6 +291,7 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 		err := bridge.Delete(tickerWithBridges, &messageWithBridges)
 		s.NoError(err)
 		s.True(gock.IsDone())
+		mockStorage.AssertExpectations(s.T())
 	})
 }
 

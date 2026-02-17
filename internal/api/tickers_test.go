@@ -44,12 +44,13 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 
 		// Add default mock expectation for GetTelegramSettings which is called by getBotUsername
 		s.store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "", BotUsername: ""}).Maybe()
-
-		s.cfg = config.LoadConfig("")
-		s.cfg.SignalGroup = config.SignalGroup{
+		// Add default mock expectation for GetSignalGroupSettings which is called by signal group handlers
+		s.store.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "+1234567890",
-		}
+		}).Maybe()
+
+		s.cfg = config.LoadConfig("")
 		s.cache = cache.NewCache(time.Minute)
 
 		subtest()
