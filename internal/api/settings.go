@@ -18,21 +18,21 @@ func (h *handler) GetSetting(c *gin.Context) {
 	}
 
 	if c.Param("name") == storage.SettingInactiveName {
-		setting := h.storage.GetInactiveSettings()
+		setting := storage.GetSettings(h.stores.Settings, storage.InactiveSetting)
 		data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
 		c.JSON(http.StatusOK, response.SuccessResponse(data))
 		return
 	}
 
 	if c.Param("name") == storage.SettingTelegramName {
-		setting := h.storage.GetTelegramSettings()
+		setting := storage.GetSettings(h.stores.Settings, storage.TelegramSetting)
 		data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
 		c.JSON(http.StatusOK, response.SuccessResponse(data))
 		return
 	}
 
 	if c.Param("name") == storage.SettingSignalGroupName {
-		setting := h.storage.GetSignalGroupSettings()
+		setting := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
 		data := map[string]interface{}{"setting": response.SignalGroupSettingsResponse(setting)}
 		c.JSON(http.StatusOK, response.SuccessResponse(data))
 		return
@@ -49,13 +49,13 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.SaveInactiveSettings(value)
+	err = storage.SaveSettings(h.stores.Settings, storage.InactiveSetting, value)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	setting := h.storage.GetInactiveSettings()
+	setting := storage.GetSettings(h.stores.Settings, storage.InactiveSetting)
 	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
@@ -78,13 +78,13 @@ func (h *handler) PutTelegramSettings(c *gin.Context) {
 		value.BotUsername = botUser.UserName
 	}
 
-	err = h.storage.SaveTelegramSettings(value)
+	err = storage.SaveSettings(h.stores.Settings, storage.TelegramSetting, value)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	setting := h.storage.GetTelegramSettings()
+	setting := storage.GetSettings(h.stores.Settings, storage.TelegramSetting)
 	data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
@@ -107,13 +107,13 @@ func (h *handler) PutSignalGroupSettings(c *gin.Context) {
 		}
 	}
 
-	err = h.storage.SaveSignalGroupSettings(value)
+	err = storage.SaveSettings(h.stores.Settings, storage.SignalGroupSetting, value)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
-	setting := h.storage.GetSignalGroupSettings()
+	setting := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
 	data := map[string]interface{}{"setting": response.SignalGroupSettingsResponse(setting)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }

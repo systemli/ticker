@@ -21,7 +21,7 @@ import (
 
 type BlueskyBridge struct {
 	config  config.Config
-	storage storage.Storage
+	uploads storage.UploadStore
 }
 
 func (bb *BlueskyBridge) Update(ticker storage.Ticker) error {
@@ -87,7 +87,7 @@ func (bb *BlueskyBridge) Send(ticker storage.Ticker, message *storage.Message) e
 		var images []*bsky.EmbedImages_Image
 
 		for _, attachment := range message.Attachments {
-			upload, err := bb.storage.FindUploadByUUID(attachment.UUID)
+			upload, err := bb.uploads.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
 				continue

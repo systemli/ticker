@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/goccy/go-json"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
@@ -33,7 +32,7 @@ func (s *SettingsTestSuite) Run(name string, subtest func()) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
 		s.ctx.Set("me", storage.User{ID: 1, IsSuperAdmin: true})
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 
 		subtest()
@@ -51,7 +50,7 @@ func (s *SettingsTestSuite) TestGetSetting() {
 
 	s.Run("get inactive settings", func() {
 		s.ctx.AddParam("name", storage.SettingInactiveName)
-		s.store.On("GetInactiveSettings").Return(storage.InactiveSettings{}).Once()
+		s.store.Settings.MockGetInactive(storage.InactiveSettings{}).Once()
 		h := s.handler()
 		h.GetSetting(s.ctx)
 
@@ -62,7 +61,7 @@ func (s *SettingsTestSuite) TestGetSetting() {
 	s.Run("get telegram settings", func() {
 		s.ctx.AddParam("name", storage.SettingTelegramName)
 		expectedSettings := storage.TelegramSettings{Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", BotUsername: "test_bot"}
-		s.store.On("GetTelegramSettings").Return(expectedSettings).Once()
+		s.store.Settings.MockGetTelegram(expectedSettings).Once()
 		h := s.handler()
 		h.GetSetting(s.ctx)
 
@@ -82,7 +81,7 @@ func (s *SettingsTestSuite) TestGetSetting() {
 			Account: "0123456789",
 			Avatar:  "/path/to/avatar.png",
 		}
-		s.store.On("GetSignalGroupSettings").Return(expectedSettings).Once()
+		s.store.Settings.MockGetSignalGroup(expectedSettings).Once()
 		h := s.handler()
 		h.GetSetting(s.ctx)
 
@@ -119,7 +118,7 @@ func (s *SettingsTestSuite) TestPutInactiveSetting() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveInactiveSettings", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Settings.MockSaveInactive(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutInactiveSettings(s.ctx)
 
@@ -132,8 +131,8 @@ func (s *SettingsTestSuite) TestPutInactiveSetting() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveInactiveSettings", mock.Anything).Return(nil).Once()
-		s.store.On("GetInactiveSettings").Return(setting)
+		s.store.Settings.MockSaveInactive(nil).Once()
+		s.store.Settings.MockGetInactive(setting)
 		h := s.handler()
 		h.PutInactiveSettings(s.ctx)
 
@@ -158,7 +157,7 @@ func (s *SettingsTestSuite) TestPutTelegramSettings() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTelegramSettings", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Settings.MockSaveTelegram(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTelegramSettings(s.ctx)
 
@@ -171,8 +170,8 @@ func (s *SettingsTestSuite) TestPutTelegramSettings() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTelegramSettings", mock.Anything).Return(nil).Once()
-		s.store.On("GetTelegramSettings").Return(setting)
+		s.store.Settings.MockSaveTelegram(nil).Once()
+		s.store.Settings.MockGetTelegram(setting)
 		h := s.handler()
 		h.PutTelegramSettings(s.ctx)
 
@@ -199,7 +198,7 @@ func (s *SettingsTestSuite) TestPutSignalGroupSettings() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/signal_group_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveSignalGroupSettings", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Settings.MockSaveSignalGroup(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutSignalGroupSettings(s.ctx)
 
@@ -212,8 +211,8 @@ func (s *SettingsTestSuite) TestPutSignalGroupSettings() {
 		body, _ := json.Marshal(setting)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/signal_group_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveSignalGroupSettings", mock.Anything).Return(nil).Once()
-		s.store.On("GetSignalGroupSettings").Return(setting)
+		s.store.Settings.MockSaveSignalGroup(nil).Once()
+		s.store.Settings.MockGetSignalGroup(setting)
 		h := s.handler()
 		h.PutSignalGroupSettings(s.ctx)
 
@@ -225,8 +224,8 @@ func (s *SettingsTestSuite) TestPutSignalGroupSettings() {
 
 func (s *SettingsTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 

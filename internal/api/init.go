@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
+	"github.com/systemli/ticker/internal/storage"
 )
 
 func (h *handler) GetInit(c *gin.Context) {
@@ -16,9 +17,9 @@ func (h *handler) GetInit(c *gin.Context) {
 		return
 	}
 
-	ticker, err := h.storage.FindTickerByOrigin(origin)
+	ticker, err := h.stores.Tickers.FindTickerByOrigin(origin)
 	if err != nil || !ticker.Active {
-		settings.InactiveSettings = h.storage.GetInactiveSettings()
+		settings.InactiveSettings = storage.GetSettings(h.stores.Settings, storage.InactiveSetting)
 		c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"ticker": nil, "settings": settings}))
 		return
 	}

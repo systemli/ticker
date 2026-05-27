@@ -16,11 +16,11 @@ type Bridge interface {
 
 type Bridges map[string]Bridge
 
-func RegisterBridges(config config.Config, storage storage.Storage) Bridges {
-	telegram := TelegramBridge{config, storage}
-	mastodon := MastodonBridge{config, storage}
-	bluesky := BlueskyBridge{config, storage}
-	signalGroup := SignalGroupBridge{config, storage}
+func RegisterBridges(config config.Config, stores storage.Stores) Bridges {
+	telegram := TelegramBridge{config: config, uploads: stores.Uploads, settings: stores.Settings}
+	mastodon := MastodonBridge{config: config, uploads: stores.Uploads}
+	bluesky := BlueskyBridge{config: config, uploads: stores.Uploads}
+	signalGroup := SignalGroupBridge{config: config, uploads: stores.Uploads, settings: stores.Settings}
 
 	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup}
 }

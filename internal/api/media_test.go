@@ -27,13 +27,13 @@ func (s *MediaTestSuite) SetupTest() {
 	s.w = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.w)
 	s.ctx.Request = httptest.NewRequest(http.MethodGet, "/media", nil)
-	s.store = &storage.MockStorage{}
+	s.store = storage.NewMockStorage()
 	s.cfg = config.LoadConfig("")
 }
 
 func (s *MediaTestSuite) TestGetMedia() {
 	s.Run("when upload not found", func() {
-		s.store.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found")).Once()
+		s.store.Uploads.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found")).Once()
 		h := s.handler()
 		h.GetMedia(s.ctx)
 
@@ -43,8 +43,8 @@ func (s *MediaTestSuite) TestGetMedia() {
 
 	s.Run("when upload found", func() {
 		upload := storage.NewUpload("image.jpg", "image/jpeg", 1)
-		s.store.On("FindUploadByUUID", mock.Anything).Return(upload, nil).Once()
-		s.store.On("UploadPath").Return("./uploads").Once()
+		s.store.Uploads.On("FindUploadByUUID", mock.Anything).Return(upload, nil).Once()
+		s.store.Uploads.On("UploadPath").Return("./uploads").Once()
 
 		h := s.handler()
 		h.GetMedia(s.ctx)
@@ -56,8 +56,8 @@ func (s *MediaTestSuite) TestGetMedia() {
 
 func (s *MediaTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 
