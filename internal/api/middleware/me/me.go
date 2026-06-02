@@ -8,7 +8,7 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func MeMiddleware(store storage.Storage) gin.HandlerFunc {
+func MeMiddleware(store storage.UserStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("id")
 		if !exists {

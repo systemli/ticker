@@ -10,8 +10,8 @@ import (
 
 func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 	s.Run("when signalGroup is inactive", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.DefaultSignalGroupSettings())
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Update(tickerWithoutBridges)
@@ -20,8 +20,8 @@ func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 	})
 
 	s.Run("when signalGroup is active but signal-cli api fails", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -38,8 +38,8 @@ func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 	})
 
 	s.Run("happy path", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -85,8 +85,8 @@ func (s *BridgeTestSuite) TestSignalGroupUpdate() {
 
 func (s *BridgeTestSuite) TestSignalGroupSend() {
 	s.Run("when signalGroup is inactive", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.DefaultSignalGroupSettings())
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Send(tickerWithoutBridges, &messageWithoutBridges)
@@ -95,8 +95,8 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("when signalGroup is active but signal-cli api fails", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -113,8 +113,8 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("when response timestamp == 0", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -138,13 +138,13 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("send message with attachment failed to find upload", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
-		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
+		mockStorage.Uploads.On("FindUploadByUUID", "456").Return(storage.Upload{}, errors.New("failed to find upload")).Once()
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
@@ -165,13 +165,13 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("send message with attachment failed to read file", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{UUID: "123", ContentType: "image/gif"}, nil).Once()
-		mockStorage.On("FindUploadByUUID", "456").Return(storage.Upload{UUID: "456", ContentType: "image/jpeg"}, nil).Once()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{UUID: "123", ContentType: "image/gif"}, nil).Once()
+		mockStorage.Uploads.On("FindUploadByUUID", "456").Return(storage.Upload{UUID: "456", ContentType: "image/jpeg"}, nil).Once()
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		gock.New("https://signal-cli.example.org").
@@ -192,8 +192,8 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 	})
 
 	s.Run("send message without attachments", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -219,8 +219,8 @@ func (s *BridgeTestSuite) TestSignalGroupSend() {
 
 func (s *BridgeTestSuite) TestSignalDelete() {
 	s.Run("when signal not connected", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.DefaultSignalGroupSettings())
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithoutBridges, &messageWithoutBridges)
@@ -229,8 +229,8 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 	})
 
 	s.Run("when message has no signal meta", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -242,8 +242,8 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 	})
 
 	s.Run("when signal is inactive", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.DefaultSignalGroupSettings())
 		bridge := s.signalGroupBridge(config.Config{}, mockStorage)
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
@@ -252,8 +252,8 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 	})
 
 	s.Run("when delete fails", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -270,8 +270,8 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 	})
 
 	s.Run("happy path", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "0123456789",
 		})
@@ -295,9 +295,10 @@ func (s *BridgeTestSuite) TestSignalDelete() {
 	})
 }
 
-func (s *BridgeTestSuite) signalGroupBridge(config config.Config, storage storage.Storage) *SignalGroupBridge {
+func (s *BridgeTestSuite) signalGroupBridge(config config.Config, m *storage.MockStorage) *SignalGroupBridge {
 	return &SignalGroupBridge{
-		config:  config,
-		storage: storage,
+		config:   config,
+		uploads:  m.Uploads,
+		settings: m.Settings,
 	}
 }

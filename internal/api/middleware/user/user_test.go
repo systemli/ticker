@@ -24,7 +24,7 @@ func (s *UserTestSuite) TestPrefetchUser() {
 	s.Run("when param is missing", func() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		store := &storage.MockStorage{}
+		store := &storage.MockUserStore{}
 		mw := PrefetchUser(store)
 
 		mw(c)
@@ -36,7 +36,7 @@ func (s *UserTestSuite) TestPrefetchUser() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("userID", "1")
-		store := &storage.MockStorage{}
+		store := &storage.MockUserStore{}
 		store.On("FindUserByID", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("storage error"))
 		mw := PrefetchUser(store)
 
@@ -49,7 +49,7 @@ func (s *UserTestSuite) TestPrefetchUser() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("userID", "1")
-		store := &storage.MockStorage{}
+		store := &storage.MockUserStore{}
 		user := storage.User{ID: 1}
 		store.On("FindUserByID", mock.Anything, mock.Anything).Return(user, nil)
 		mw := PrefetchUser(store)

@@ -25,7 +25,7 @@ func (s *ManifestTestSuite) SetupTest() {
 
 	s.w = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.w)
-	s.store = &storage.MockStorage{}
+	s.store = storage.NewMockStorage()
 	s.cfg = config.LoadConfig("")
 }
 
@@ -72,8 +72,8 @@ func (s *ManifestTestSuite) TestHandleManifest() {
 
 func (s *ManifestTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 

@@ -705,7 +705,7 @@ func (s *SqlStorageTestSuite) TestSaveTicker() {
 	})
 }
 
-func (s *SqlStorageTestSuite) TestDeleteIntegrations() {
+func (s *SqlStorageTestSuite) TestClearIntegrations() {
 	s.Run("when ticker is resetting integrations", func() {
 		var telegramCount, mastodonCount, blueskyCount, signalGroupCount int64
 
@@ -740,7 +740,7 @@ func (s *SqlStorageTestSuite) TestDeleteIntegrations() {
 		s.Equal("group_id", ticker.SignalGroup.GroupID)
 		s.Equal("group_invite_link", ticker.SignalGroup.GroupInviteLink)
 
-		err = s.store.DeleteIntegrations(&ticker)
+		err = s.store.ClearIntegrations(&ticker)
 		s.NoError(err)
 
 		s.False(ticker.Telegram.Active)
@@ -1397,7 +1397,7 @@ func (s *SqlStorageTestSuite) TestDeleteMessages() {
 
 func (s *SqlStorageTestSuite) TestGetInactiveSettings() {
 	s.Run("when no settings exist", func() {
-		settings := s.store.GetInactiveSettings()
+		settings := GetSettings(s.store, InactiveSetting)
 		s.Equal(DefaultInactiveSettings().Author, settings.Author)
 	})
 
@@ -1406,7 +1406,7 @@ func (s *SqlStorageTestSuite) TestGetInactiveSettings() {
 		err := s.db.Create(&setting).Error
 		s.NoError(err)
 
-		settings := s.store.GetInactiveSettings()
+		settings := GetSettings(s.store, InactiveSetting)
 		s.Equal("test", settings.Author)
 	})
 }
@@ -1415,7 +1415,7 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 	settings := InactiveSettings{Author: "test"}
 
 	s.Run("when settings are new", func() {
-		err := s.store.SaveInactiveSettings(settings)
+		err := SaveSettings(s.store, InactiveSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1426,7 +1426,7 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 
 	s.Run("when settings are existing", func() {
 		settings.Author = "test2"
-		err := s.store.SaveInactiveSettings(settings)
+		err := SaveSettings(s.store, InactiveSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1439,7 +1439,7 @@ func (s *SqlStorageTestSuite) TestSaveInactiveSettings() {
 
 func (s *SqlStorageTestSuite) TestGetTelegramSettings() {
 	s.Run("when no settings exist", func() {
-		settings := s.store.GetTelegramSettings()
+		settings := GetSettings(s.store, TelegramSetting)
 		s.Equal("", settings.Token)
 		s.Equal("", settings.BotUsername)
 	})
@@ -1449,7 +1449,7 @@ func (s *SqlStorageTestSuite) TestGetTelegramSettings() {
 		err := s.db.Create(&setting).Error
 		s.NoError(err)
 
-		settings := s.store.GetTelegramSettings()
+		settings := GetSettings(s.store, TelegramSetting)
 		s.Equal("123456789:ABCdefGHIjklMNOpqrsTUVwxyz", settings.Token)
 		s.Equal("test_bot", settings.BotUsername)
 
@@ -1462,7 +1462,7 @@ func (s *SqlStorageTestSuite) TestGetTelegramSettings() {
 		err := s.db.Create(&setting).Error
 		s.NoError(err)
 
-		settings := s.store.GetTelegramSettings()
+		settings := GetSettings(s.store, TelegramSetting)
 		s.Equal("", settings.Token)
 		s.Equal("", settings.BotUsername)
 
@@ -1475,7 +1475,7 @@ func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
 	settings := TelegramSettings{Token: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", BotUsername: "test_bot"}
 
 	s.Run("when settings are new", func() {
-		err := s.store.SaveTelegramSettings(settings)
+		err := SaveSettings(s.store, TelegramSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1494,7 +1494,7 @@ func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
 	s.Run("when settings are existing", func() {
 		settings.Token = "987654321:ZYXwvuTSRqponMLKjihGFeDcba"
 		settings.BotUsername = "updated_bot"
-		err := s.store.SaveTelegramSettings(settings)
+		err := SaveSettings(s.store, TelegramSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1502,17 +1502,17 @@ func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
 		s.NoError(err)
 		s.Equal(int64(1), count)
 
-		retrievedSettings := s.store.GetTelegramSettings()
+		retrievedSettings := GetSettings(s.store, TelegramSetting)
 		s.Equal("987654321:ZYXwvuTSRqponMLKjihGFeDcba", retrievedSettings.Token)
 		s.Equal("updated_bot", retrievedSettings.BotUsername)
 	})
 
 	s.Run("when saving empty token", func() {
 		emptySettings := TelegramSettings{Token: "", BotUsername: ""}
-		err := s.store.SaveTelegramSettings(emptySettings)
+		err := SaveSettings(s.store, TelegramSetting, emptySettings)
 		s.NoError(err)
 
-		retrievedSettings := s.store.GetTelegramSettings()
+		retrievedSettings := GetSettings(s.store, TelegramSetting)
 		s.Equal("", retrievedSettings.Token)
 		s.Equal("", retrievedSettings.BotUsername)
 	})
@@ -1520,7 +1520,7 @@ func (s *SqlStorageTestSuite) TestSaveTelegramSettings() {
 
 func (s *SqlStorageTestSuite) TestGetSignalGroupSettings() {
 	s.Run("when no settings exist", func() {
-		settings := s.store.GetSignalGroupSettings()
+		settings := GetSettings(s.store, SignalGroupSetting)
 		s.Equal("", settings.ApiUrl)
 		s.Equal("", settings.Account)
 		s.Equal("", settings.Avatar)
@@ -1531,7 +1531,7 @@ func (s *SqlStorageTestSuite) TestGetSignalGroupSettings() {
 		err := s.db.Create(&setting).Error
 		s.NoError(err)
 
-		settings := s.store.GetSignalGroupSettings()
+		settings := GetSettings(s.store, SignalGroupSetting)
 		s.Equal("https://signal-cli.example.org/api/v1/rpc", settings.ApiUrl)
 		s.Equal("+491234567890", settings.Account)
 		s.Equal("/path/to/avatar.png", settings.Avatar)
@@ -1545,7 +1545,7 @@ func (s *SqlStorageTestSuite) TestGetSignalGroupSettings() {
 		err := s.db.Create(&setting).Error
 		s.NoError(err)
 
-		settings := s.store.GetSignalGroupSettings()
+		settings := GetSettings(s.store, SignalGroupSetting)
 		s.Equal("", settings.ApiUrl)
 		s.Equal("", settings.Account)
 		s.Equal("", settings.Avatar)
@@ -1559,7 +1559,7 @@ func (s *SqlStorageTestSuite) TestSaveSignalGroupSettings() {
 	settings := SignalGroupSettings{ApiUrl: "https://signal-cli.example.org/api/v1/rpc", Account: "+491234567890", Avatar: "/path/to/avatar.png"}
 
 	s.Run("when settings are new", func() {
-		err := s.store.SaveSignalGroupSettings(settings)
+		err := SaveSettings(s.store, SignalGroupSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1580,7 +1580,7 @@ func (s *SqlStorageTestSuite) TestSaveSignalGroupSettings() {
 		settings.ApiUrl = "https://new-signal-cli.example.org/api/v1/rpc"
 		settings.Account = "+490987654321"
 		settings.Avatar = "/new/path/avatar.png"
-		err := s.store.SaveSignalGroupSettings(settings)
+		err := SaveSettings(s.store, SignalGroupSetting, settings)
 		s.NoError(err)
 
 		var count int64
@@ -1588,7 +1588,7 @@ func (s *SqlStorageTestSuite) TestSaveSignalGroupSettings() {
 		s.NoError(err)
 		s.Equal(int64(1), count)
 
-		retrievedSettings := s.store.GetSignalGroupSettings()
+		retrievedSettings := GetSettings(s.store, SignalGroupSetting)
 		s.Equal("https://new-signal-cli.example.org/api/v1/rpc", retrievedSettings.ApiUrl)
 		s.Equal("+490987654321", retrievedSettings.Account)
 		s.Equal("/new/path/avatar.png", retrievedSettings.Avatar)
@@ -1596,10 +1596,10 @@ func (s *SqlStorageTestSuite) TestSaveSignalGroupSettings() {
 
 	s.Run("when saving empty settings", func() {
 		emptySettings := SignalGroupSettings{ApiUrl: "", Account: "", Avatar: ""}
-		err := s.store.SaveSignalGroupSettings(emptySettings)
+		err := SaveSettings(s.store, SignalGroupSetting, emptySettings)
 		s.NoError(err)
 
-		retrievedSettings := s.store.GetSignalGroupSettings()
+		retrievedSettings := GetSettings(s.store, SignalGroupSetting)
 		s.Equal("", retrievedSettings.ApiUrl)
 		s.Equal("", retrievedSettings.Account)
 		s.Equal("", retrievedSettings.Avatar)

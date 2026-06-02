@@ -13,7 +13,7 @@ import (
 
 var log = logger.GetWithPackage("auth")
 
-func AuthMiddleware(s storage.Storage, secret string) *jwt.GinJWTMiddleware {
+func AuthMiddleware(s storage.UserStore, secret string) *jwt.GinJWTMiddleware {
 	config := &jwt.GinJWTMiddleware{
 		Realm:         "ticker admin",
 		Key:           []byte(secret),
@@ -36,7 +36,7 @@ func AuthMiddleware(s storage.Storage, secret string) *jwt.GinJWTMiddleware {
 	return middleware
 }
 
-func Authenticator(s storage.Storage) func(c *gin.Context) (interface{}, error) {
+func Authenticator(s storage.UserStore) func(c *gin.Context) (interface{}, error) {
 	return func(c *gin.Context) (interface{}, error) {
 		type login struct {
 			Username string `form:"username" json:"username" binding:"required"`
@@ -67,7 +67,7 @@ func Authenticator(s storage.Storage) func(c *gin.Context) (interface{}, error) 
 	}
 }
 
-func Authorizator(s storage.Storage) func(data interface{}, c *gin.Context) bool {
+func Authorizator(s storage.UserStore) func(data interface{}, c *gin.Context) bool {
 	return func(data interface{}, c *gin.Context) bool {
 		id := int(data.(float64))
 
