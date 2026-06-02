@@ -1,7 +1,5 @@
 package storage
 
-import "gorm.io/gorm"
-
 // TickerStore covers Ticker CRUD, its sub-collections (websites), the integration
 // configs (Telegram/Mastodon/Bluesky/SignalGroup), and User<->Ticker membership.
 type TickerStore interface {
@@ -28,8 +26,6 @@ type TickerStore interface {
 	AddTickerUser(ticker *Ticker, user *User) error
 	DeleteTickerUser(ticker *Ticker, user *User) error
 	DeleteTickerUsers(ticker *Ticker) error
-
-	WithTickerTx(tx *gorm.DB) TickerStore
 }
 
 // ClearIntegration removes the configuration row for a single integration on
@@ -62,7 +58,3 @@ func (s *SqlStorage) ClearIntegrations(ticker *Ticker) error {
 	return nil
 }
 
-// WithTickerTx returns a TickerStore scoped to the given transaction.
-func (s *SqlStorage) WithTickerTx(tx *gorm.DB) TickerStore {
-	return &SqlStorage{DB: tx, uploadPath: s.uploadPath}
-}

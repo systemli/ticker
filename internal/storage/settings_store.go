@@ -2,8 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-
-	"gorm.io/gorm"
 )
 
 // SettingValue is the type constraint for values stored in the settings table.
@@ -39,8 +37,6 @@ var (
 type SettingsStore interface {
 	GetSetting(name string) (Setting, error)
 	SaveSetting(setting *Setting) error
-
-	WithSettingsTx(tx *gorm.DB) SettingsStore
 }
 
 // GetSettings reads the row identified by desc and decodes it into T. On any
@@ -83,7 +79,3 @@ func (s *SqlStorage) SaveSetting(setting *Setting) error {
 	return s.DB.Save(setting).Error
 }
 
-// WithSettingsTx returns a SettingsStore scoped to the given transaction.
-func (s *SqlStorage) WithSettingsTx(tx *gorm.DB) SettingsStore {
-	return &SqlStorage{DB: tx, uploadPath: s.uploadPath}
-}

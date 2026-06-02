@@ -17,11 +17,9 @@ type MockStorage struct {
 	Messages *MockMessageStore
 	Uploads  *MockUploadStore
 	Settings *MockSettingsStore
-	UoW      *MockUnitOfWork
 }
 
 // NewMockStorage builds a MockStorage with fresh mocks for every aggregate.
-// Pass `nil` for `t` when you don't want automatic AssertExpectations.
 func NewMockStorage() *MockStorage {
 	return &MockStorage{
 		Users:    &MockUserStore{},
@@ -29,7 +27,6 @@ func NewMockStorage() *MockStorage {
 		Messages: &MockMessageStore{},
 		Uploads:  &MockUploadStore{},
 		Settings: &MockSettingsStore{},
-		UoW:      &MockUnitOfWork{},
 	}
 }
 
@@ -41,7 +38,6 @@ func (m *MockStorage) Stores() Stores {
 		Messages: m.Messages,
 		Uploads:  m.Uploads,
 		Settings: m.Settings,
-		UoW:      m.UoW,
 	}
 }
 
@@ -61,12 +57,6 @@ func (m *MockStorage) AssertExpectations(t mock.TestingT) bool {
 func MockGetSetting[T SettingValue](m *MockSettingsStore, desc SettingDescriptor[T], v T) *mock.Call {
 	raw, _ := json.Marshal(v)
 	return m.On("GetSetting", desc.Name).Return(Setting{Name: desc.Name, Value: string(raw)}, nil)
-}
-
-// MockGetSettingMissing makes GetSetting(name) return an error, which causes
-// GetSettings[T] to fall back to the descriptor's default.
-func MockGetSettingMissing[T SettingValue](m *MockSettingsStore, desc SettingDescriptor[T]) *mock.Call {
-	return m.On("GetSetting", desc.Name).Return(Setting{}, errors.New("not found"))
 }
 
 // MockSaveSetting wires GetSetting (missing) + SaveSetting so SaveSettings[T]

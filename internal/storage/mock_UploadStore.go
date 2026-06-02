@@ -6,7 +6,6 @@ package storage
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 // NewMockUploadStore creates a new instance of MockUploadStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -391,59 +390,6 @@ func (_c *MockUploadStore_UploadPath_Call) Return(s string) *MockUploadStore_Upl
 }
 
 func (_c *MockUploadStore_UploadPath_Call) RunAndReturn(run func() string) *MockUploadStore_UploadPath_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithUploadTx provides a mock function for the type MockUploadStore
-func (_mock *MockUploadStore) WithUploadTx(tx *gorm.DB) UploadStore {
-	ret := _mock.Called(tx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithUploadTx")
-	}
-
-	var r0 UploadStore
-	if returnFunc, ok := ret.Get(0).(func(*gorm.DB) UploadStore); ok {
-		r0 = returnFunc(tx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(UploadStore)
-		}
-	}
-	return r0
-}
-
-// MockUploadStore_WithUploadTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithUploadTx'
-type MockUploadStore_WithUploadTx_Call struct {
-	*mock.Call
-}
-
-// WithUploadTx is a helper method to define mock.On call
-//   - tx *gorm.DB
-func (_e *MockUploadStore_Expecter) WithUploadTx(tx interface{}) *MockUploadStore_WithUploadTx_Call {
-	return &MockUploadStore_WithUploadTx_Call{Call: _e.mock.On("WithUploadTx", tx)}
-}
-
-func (_c *MockUploadStore_WithUploadTx_Call) Run(run func(tx *gorm.DB)) *MockUploadStore_WithUploadTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *gorm.DB
-		if args[0] != nil {
-			arg0 = args[0].(*gorm.DB)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUploadStore_WithUploadTx_Call) Return(uploadStore UploadStore) *MockUploadStore_WithUploadTx_Call {
-	_c.Call.Return(uploadStore)
-	return _c
-}
-
-func (_c *MockUploadStore_WithUploadTx_Call) RunAndReturn(run func(tx *gorm.DB) UploadStore) *MockUploadStore_WithUploadTx_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -6,7 +6,6 @@ package storage
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 // NewMockSettingsStore creates a new instance of MockSettingsStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -143,59 +142,6 @@ func (_c *MockSettingsStore_SaveSetting_Call) Return(err error) *MockSettingsSto
 }
 
 func (_c *MockSettingsStore_SaveSetting_Call) RunAndReturn(run func(setting *Setting) error) *MockSettingsStore_SaveSetting_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithSettingsTx provides a mock function for the type MockSettingsStore
-func (_mock *MockSettingsStore) WithSettingsTx(tx *gorm.DB) SettingsStore {
-	ret := _mock.Called(tx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithSettingsTx")
-	}
-
-	var r0 SettingsStore
-	if returnFunc, ok := ret.Get(0).(func(*gorm.DB) SettingsStore); ok {
-		r0 = returnFunc(tx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(SettingsStore)
-		}
-	}
-	return r0
-}
-
-// MockSettingsStore_WithSettingsTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithSettingsTx'
-type MockSettingsStore_WithSettingsTx_Call struct {
-	*mock.Call
-}
-
-// WithSettingsTx is a helper method to define mock.On call
-//   - tx *gorm.DB
-func (_e *MockSettingsStore_Expecter) WithSettingsTx(tx interface{}) *MockSettingsStore_WithSettingsTx_Call {
-	return &MockSettingsStore_WithSettingsTx_Call{Call: _e.mock.On("WithSettingsTx", tx)}
-}
-
-func (_c *MockSettingsStore_WithSettingsTx_Call) Run(run func(tx *gorm.DB)) *MockSettingsStore_WithSettingsTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *gorm.DB
-		if args[0] != nil {
-			arg0 = args[0].(*gorm.DB)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockSettingsStore_WithSettingsTx_Call) Return(settingsStore SettingsStore) *MockSettingsStore_WithSettingsTx_Call {
-	_c.Call.Return(settingsStore)
-	return _c
-}
-
-func (_c *MockSettingsStore_WithSettingsTx_Call) RunAndReturn(run func(tx *gorm.DB) SettingsStore) *MockSettingsStore_WithSettingsTx_Call {
 	_c.Call.Return(run)
 	return _c
 }

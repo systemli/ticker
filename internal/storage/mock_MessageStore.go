@@ -7,7 +7,6 @@ package storage
 import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/systemli/ticker/internal/api/pagination"
-	"gorm.io/gorm"
 )
 
 // NewMockMessageStore creates a new instance of MockMessageStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -427,59 +426,6 @@ func (_c *MockMessageStore_SaveMessage_Call) Return(err error) *MockMessageStore
 }
 
 func (_c *MockMessageStore_SaveMessage_Call) RunAndReturn(run func(message *Message) error) *MockMessageStore_SaveMessage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithMessageTx provides a mock function for the type MockMessageStore
-func (_mock *MockMessageStore) WithMessageTx(tx *gorm.DB) MessageStore {
-	ret := _mock.Called(tx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithMessageTx")
-	}
-
-	var r0 MessageStore
-	if returnFunc, ok := ret.Get(0).(func(*gorm.DB) MessageStore); ok {
-		r0 = returnFunc(tx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(MessageStore)
-		}
-	}
-	return r0
-}
-
-// MockMessageStore_WithMessageTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithMessageTx'
-type MockMessageStore_WithMessageTx_Call struct {
-	*mock.Call
-}
-
-// WithMessageTx is a helper method to define mock.On call
-//   - tx *gorm.DB
-func (_e *MockMessageStore_Expecter) WithMessageTx(tx interface{}) *MockMessageStore_WithMessageTx_Call {
-	return &MockMessageStore_WithMessageTx_Call{Call: _e.mock.On("WithMessageTx", tx)}
-}
-
-func (_c *MockMessageStore_WithMessageTx_Call) Run(run func(tx *gorm.DB)) *MockMessageStore_WithMessageTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *gorm.DB
-		if args[0] != nil {
-			arg0 = args[0].(*gorm.DB)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockMessageStore_WithMessageTx_Call) Return(messageStore MessageStore) *MockMessageStore_WithMessageTx_Call {
-	_c.Call.Return(messageStore)
-	return _c
-}
-
-func (_c *MockMessageStore_WithMessageTx_Call) RunAndReturn(run func(tx *gorm.DB) MessageStore) *MockMessageStore_WithMessageTx_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -6,7 +6,6 @@ package storage
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 // NewMockTickerStore creates a new instance of MockTickerStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -1034,59 +1033,6 @@ func (_c *MockTickerStore_SaveTickerWebsites_Call) Return(err error) *MockTicker
 }
 
 func (_c *MockTickerStore_SaveTickerWebsites_Call) RunAndReturn(run func(ticker *Ticker, websites []TickerWebsite) error) *MockTickerStore_SaveTickerWebsites_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithTickerTx provides a mock function for the type MockTickerStore
-func (_mock *MockTickerStore) WithTickerTx(tx *gorm.DB) TickerStore {
-	ret := _mock.Called(tx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithTickerTx")
-	}
-
-	var r0 TickerStore
-	if returnFunc, ok := ret.Get(0).(func(*gorm.DB) TickerStore); ok {
-		r0 = returnFunc(tx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(TickerStore)
-		}
-	}
-	return r0
-}
-
-// MockTickerStore_WithTickerTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithTickerTx'
-type MockTickerStore_WithTickerTx_Call struct {
-	*mock.Call
-}
-
-// WithTickerTx is a helper method to define mock.On call
-//   - tx *gorm.DB
-func (_e *MockTickerStore_Expecter) WithTickerTx(tx interface{}) *MockTickerStore_WithTickerTx_Call {
-	return &MockTickerStore_WithTickerTx_Call{Call: _e.mock.On("WithTickerTx", tx)}
-}
-
-func (_c *MockTickerStore_WithTickerTx_Call) Run(run func(tx *gorm.DB)) *MockTickerStore_WithTickerTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *gorm.DB
-		if args[0] != nil {
-			arg0 = args[0].(*gorm.DB)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockTickerStore_WithTickerTx_Call) Return(tickerStore TickerStore) *MockTickerStore_WithTickerTx_Call {
-	_c.Call.Return(tickerStore)
-	return _c
-}
-
-func (_c *MockTickerStore_WithTickerTx_Call) RunAndReturn(run func(tx *gorm.DB) TickerStore) *MockTickerStore_WithTickerTx_Call {
 	_c.Call.Return(run)
 	return _c
 }

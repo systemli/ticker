@@ -6,7 +6,6 @@ package storage
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	"gorm.io/gorm"
 )
 
 // NewMockUserStore creates a new instance of MockUserStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -438,59 +437,6 @@ func (_c *MockUserStore_SaveUser_Call) Return(err error) *MockUserStore_SaveUser
 }
 
 func (_c *MockUserStore_SaveUser_Call) RunAndReturn(run func(user *User) error) *MockUserStore_SaveUser_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WithUserTx provides a mock function for the type MockUserStore
-func (_mock *MockUserStore) WithUserTx(tx *gorm.DB) UserStore {
-	ret := _mock.Called(tx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WithUserTx")
-	}
-
-	var r0 UserStore
-	if returnFunc, ok := ret.Get(0).(func(*gorm.DB) UserStore); ok {
-		r0 = returnFunc(tx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(UserStore)
-		}
-	}
-	return r0
-}
-
-// MockUserStore_WithUserTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WithUserTx'
-type MockUserStore_WithUserTx_Call struct {
-	*mock.Call
-}
-
-// WithUserTx is a helper method to define mock.On call
-//   - tx *gorm.DB
-func (_e *MockUserStore_Expecter) WithUserTx(tx interface{}) *MockUserStore_WithUserTx_Call {
-	return &MockUserStore_WithUserTx_Call{Call: _e.mock.On("WithUserTx", tx)}
-}
-
-func (_c *MockUserStore_WithUserTx_Call) Run(run func(tx *gorm.DB)) *MockUserStore_WithUserTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *gorm.DB
-		if args[0] != nil {
-			arg0 = args[0].(*gorm.DB)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserStore_WithUserTx_Call) Return(userStore UserStore) *MockUserStore_WithUserTx_Call {
-	_c.Call.Return(userStore)
-	return _c
-}
-
-func (_c *MockUserStore_WithUserTx_Call) RunAndReturn(run func(tx *gorm.DB) UserStore) *MockUserStore_WithUserTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
