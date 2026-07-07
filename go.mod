@@ -131,5 +131,5 @@ require (
 	github.com/goccy/go-json v0.10.6
 	github.com/gorilla/feeds v1.2.0
 	github.com/mattn/go-mastodon v0.0.11
-	golang.org/x/image v0.38.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 )
