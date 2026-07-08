@@ -21,7 +21,7 @@ func (h *handler) GetMessages(c *gin.Context) {
 	}
 
 	pagination := pagination.NewPagination(c)
-	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination, storage.WithAttachments())
+	messages, err := h.stores.Messages.FindMessagesByTickerAndPagination(ticker, *pagination, storage.WithAttachments())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -61,7 +61,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 
 	var uploads []storage.Upload
 	if len(body.Attachments) > 0 {
-		uploads, err = h.storage.FindUploadsByIDs(body.Attachments)
+		uploads, err = h.stores.Uploads.FindUploadsByIDs(body.Attachments)
 		if err != nil {
 			c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeNotFound, response.UploadsNotFound))
 			return
@@ -75,7 +75,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 
 	_ = h.bridges.Send(ticker, &message)
 
-	err = h.storage.SaveMessage(&message)
+	err = h.stores.Messages.SaveMessage(&message)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -109,7 +109,7 @@ func (h *handler) DeleteMessage(c *gin.Context) {
 
 	_ = h.bridges.Delete(ticker, &message)
 
-	err = h.storage.DeleteMessage(message)
+	err = h.stores.Messages.DeleteMessage(message)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return

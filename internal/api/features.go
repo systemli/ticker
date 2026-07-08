@@ -10,9 +10,9 @@ import (
 
 type FeaturesResponse map[string]bool
 
-func NewFeaturesResponse(storage storage.Storage) FeaturesResponse {
-	telegramSettings := storage.GetTelegramSettings()
-	signalGroupSettings := storage.GetSignalGroupSettings()
+func NewFeaturesResponse(settings storage.SettingsStore) FeaturesResponse {
+	telegramSettings := storage.GetSettings(settings, storage.TelegramSetting)
+	signalGroupSettings := storage.GetSettings(settings, storage.SignalGroupSetting)
 	return FeaturesResponse{
 		"telegramEnabled":    telegramSettings.Token != "",
 		"signalGroupEnabled": signalGroupSettings.Enabled(),
@@ -20,6 +20,6 @@ func NewFeaturesResponse(storage storage.Storage) FeaturesResponse {
 }
 
 func (h *handler) GetFeatures(c *gin.Context) {
-	features := NewFeaturesResponse(h.storage)
+	features := NewFeaturesResponse(h.stores.Settings)
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"features": features}))
 }

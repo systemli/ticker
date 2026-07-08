@@ -33,13 +33,13 @@ type Server struct {
 
 type handler struct {
 	config   config.Config
-	storage  storage.Storage
+	stores   storage.Stores
 	bridges  bridge.Bridges
 	cache    *cache.Cache
 	realtime *realtime.Engine
 }
 
-func API(config config.Config, store storage.Storage) *Server {
+func API(config config.Config, stores storage.Stores) *Server {
 	inMemoryCache := cache.NewCache(5 * time.Minute)
 
 	ws := realtime.New()
@@ -47,8 +47,8 @@ func API(config config.Config, store storage.Storage) *Server {
 
 	handler := handler{
 		config:   config,
-		storage:  store,
-		bridges:  bridge.RegisterBridges(config, store),
+		stores:   stores,
+		bridges:  bridge.RegisterBridges(config, stores),
 		cache:    inMemoryCache,
 		realtime: ws,
 	}
@@ -63,11 +63,11 @@ func API(config config.Config, store storage.Storage) *Server {
 	r.Use(limits.RequestSizeLimiter(1024 * 1024 * 10))
 
 	// the jwt middleware
-	authMiddleware := auth.AuthMiddleware(store, config.Secret)
+	authMiddleware := auth.AuthMiddleware(stores.Users, config.Secret)
 
 	admin := r.Group("/v1/admin")
 	{
-		meMiddleware := me.MeMiddleware(store)
+		meMiddleware := me.MeMiddleware(stores.Users)
 		admin.Use(authMiddleware.MiddlewareFunc())
 		admin.Use(meMiddleware)
 
@@ -76,39 +76,39 @@ func API(config config.Config, store storage.Storage) *Server {
 		admin.GET("/features", handler.GetFeatures)
 
 		admin.GET(`/tickers`, handler.GetTickers)
-		admin.GET(`/tickers/:tickerID`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.GetTicker)
+		admin.GET(`/tickers/:tickerID`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.GetTicker)
 		admin.POST(`/tickers`, user.NeedAdmin(), handler.PostTicker)
-		admin.PUT(`/tickers/:tickerID`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTicker)
-		admin.DELETE(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerWebsites)
-		admin.PUT(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerWebsites)
-		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerTelegram)
-		admin.DELETE(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerTelegram)
-		admin.PUT(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerMastodon)
-		admin.DELETE(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerMastodon)
-		admin.PUT(`/tickers/:tickerID/bluesky`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerBluesky)
-		admin.DELETE(`/tickers/:tickerID/bluesky`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerBluesky)
-		admin.PUT(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerSignalGroup)
-		admin.DELETE(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.DeleteTickerSignalGroup)
-		admin.PUT(`/tickers/:tickerID/signal_group/admin`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PutTickerSignalGroupAdmin)
-		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), ticker.PrefetchTicker(store), handler.DeleteTicker)
-		admin.PUT(`/tickers/:tickerID/reset`, ticker.PrefetchTicker(store, storage.WithPreload()), ticker.PrefetchTicker(store), handler.ResetTicker)
-		admin.GET(`/tickers/:tickerID/users`, ticker.PrefetchTicker(store), handler.GetTickerUsers)
-		admin.PUT(`/tickers/:tickerID/users`, user.NeedAdmin(), ticker.PrefetchTicker(store), handler.PutTickerUsers)
-		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), ticker.PrefetchTicker(store), handler.DeleteTickerUser)
+		admin.PUT(`/tickers/:tickerID`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTicker)
+		admin.DELETE(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.DeleteTickerWebsites)
+		admin.PUT(`/tickers/:tickerID/websites`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerWebsites)
+		admin.PUT(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerTelegram)
+		admin.DELETE(`/tickers/:tickerID/telegram`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.DeleteTickerTelegram)
+		admin.PUT(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerMastodon)
+		admin.DELETE(`/tickers/:tickerID/mastodon`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.DeleteTickerMastodon)
+		admin.PUT(`/tickers/:tickerID/bluesky`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerBluesky)
+		admin.DELETE(`/tickers/:tickerID/bluesky`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.DeleteTickerBluesky)
+		admin.PUT(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerSignalGroup)
+		admin.DELETE(`/tickers/:tickerID/signal_group`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.DeleteTickerSignalGroup)
+		admin.PUT(`/tickers/:tickerID/signal_group/admin`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PutTickerSignalGroupAdmin)
+		admin.DELETE(`/tickers/:tickerID`, user.NeedAdmin(), ticker.PrefetchTicker(stores.Tickers), handler.DeleteTicker)
+		admin.PUT(`/tickers/:tickerID/reset`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), ticker.PrefetchTicker(stores.Tickers), handler.ResetTicker)
+		admin.GET(`/tickers/:tickerID/users`, ticker.PrefetchTicker(stores.Tickers), handler.GetTickerUsers)
+		admin.PUT(`/tickers/:tickerID/users`, user.NeedAdmin(), ticker.PrefetchTicker(stores.Tickers), handler.PutTickerUsers)
+		admin.DELETE(`/tickers/:tickerID/users/:userID`, user.NeedAdmin(), ticker.PrefetchTicker(stores.Tickers), handler.DeleteTickerUser)
 
-		admin.GET(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.GetMessages)
-		admin.GET(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(store, storage.WithPreload()), message.PrefetchMessage(store), handler.GetMessage)
-		admin.POST(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(store, storage.WithPreload()), handler.PostMessage)
-		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(store, storage.WithPreload()), message.PrefetchMessage(store), handler.DeleteMessage)
+		admin.GET(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.GetMessages)
+		admin.GET(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), message.PrefetchMessage(stores.Messages), handler.GetMessage)
+		admin.POST(`/tickers/:tickerID/messages`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), handler.PostMessage)
+		admin.DELETE(`/tickers/:tickerID/messages/:messageID`, ticker.PrefetchTicker(stores.Tickers, storage.WithPreload()), message.PrefetchMessage(stores.Messages), handler.DeleteMessage)
 
 		admin.POST(`/upload`, handler.PostUpload)
 
 		admin.GET(`/users`, user.NeedAdmin(), handler.GetUsers)
-		admin.GET(`/users/:userID`, user.PrefetchUser(store), handler.GetUser)
+		admin.GET(`/users/:userID`, user.PrefetchUser(stores.Users), handler.GetUser)
 		admin.POST(`/users`, user.NeedAdmin(), handler.PostUser)
 		admin.PUT(`/users/me`, handler.PutMe)
-		admin.PUT(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(store), handler.PutUser)
-		admin.DELETE(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(store), handler.DeleteUser)
+		admin.PUT(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(stores.Users), handler.PutUser)
+		admin.DELETE(`/users/:userID`, user.NeedAdmin(), user.PrefetchUser(stores.Users), handler.DeleteUser)
 
 		admin.GET(`/settings/:name`, user.NeedAdmin(), handler.GetSetting)
 		admin.PUT(`/settings/inactive_settings`, user.NeedAdmin(), handler.PutInactiveSettings)
@@ -121,10 +121,10 @@ func API(config config.Config, store storage.Storage) *Server {
 		public.POST(`/admin/login`, authMiddleware.LoginHandler)
 
 		public.GET(`/init`, response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetInit))
-		public.GET(`/manifest.json`, ticker.PrefetchTickerFromRequest(store), handler.HandleManifest)
-		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
-		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
-		public.GET(`/ws`, ticker.PrefetchTickerFromRequest(store), handler.HandleWebSocket)
+		public.GET(`/manifest.json`, ticker.PrefetchTickerFromRequest(stores.Tickers), handler.HandleManifest)
+		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(stores.Tickers), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
+		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(stores.Tickers), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
+		public.GET(`/ws`, ticker.PrefetchTickerFromRequest(stores.Tickers), handler.HandleWebSocket)
 	}
 
 	r.GET(`/media/:fileName`, handler.GetMedia)

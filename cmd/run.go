@@ -33,7 +33,7 @@ var (
 				log.Fatal(http.ListenAndServe(cfg.MetricsListen, nil))
 			}()
 
-			apiServer := api.API(cfg, store)
+			apiServer := api.API(cfg, stores)
 			server := &http.Server{
 				Addr:    cfg.Listen,
 				Handler: apiServer.Router,

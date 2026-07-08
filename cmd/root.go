@@ -16,6 +16,7 @@ var (
 	cfg        config.Config
 	db         *gorm.DB
 	store      *storage.SqlStorage
+	stores     storage.Stores
 
 	log = logger.GetWithPackage("cmd")
 
@@ -43,6 +44,7 @@ func initConfig() {
 		log.WithError(err).Fatal("could not connect to database")
 	}
 	store = storage.NewSqlStorage(db, cfg.Upload.Path)
+	stores = storage.NewStores(store)
 	if err := storage.MigrateDB(db); err != nil {
 		log.WithError(err).Fatal("could not migrate database")
 	}

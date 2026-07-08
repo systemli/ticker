@@ -30,7 +30,7 @@ func (s *TimelineTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 
 		subtest()
@@ -51,7 +51,7 @@ func (s *TimelineTestSuite) TestGetTimeline() {
 	s.Run("when storage returns an error", func() {
 		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		s.ctx.Set("ticker", storage.Ticker{Active: true})
-		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetTimeline(s.ctx)
 
@@ -63,7 +63,7 @@ func (s *TimelineTestSuite) TestGetTimeline() {
 	s.Run("when storage returns messages", func() {
 		s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		s.ctx.Set("ticker", storage.Ticker{Active: true})
-		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
 		h := s.handler()
 		h.GetTimeline(s.ctx)
 
@@ -74,8 +74,8 @@ func (s *TimelineTestSuite) TestGetTimeline() {
 
 func (s *TimelineTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 

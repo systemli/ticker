@@ -8,10 +8,9 @@ import (
 	"github.com/systemli/ticker/internal/api/helper"
 	"github.com/systemli/ticker/internal/api/response"
 	"github.com/systemli/ticker/internal/storage"
-	"gorm.io/gorm"
 )
 
-func PrefetchTicker(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.HandlerFunc {
+func PrefetchTicker(s storage.TickerStore, opts ...storage.QueryOpt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := helper.Me(c)
 		tickerID, err := strconv.Atoi(c.Param("tickerID"))
@@ -30,7 +29,7 @@ func PrefetchTicker(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.Hand
 	}
 }
 
-func PrefetchTickerFromRequest(s storage.Storage, opts ...func(*gorm.DB) *gorm.DB) gin.HandlerFunc {
+func PrefetchTickerFromRequest(s storage.TickerStore, opts ...storage.QueryOpt) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin, err := helper.GetOrigin(c)
 		if err != nil {

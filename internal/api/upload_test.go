@@ -33,7 +33,7 @@ func (s *UploadTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 
 		subtest()
@@ -97,7 +97,7 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, errors.New("not found")).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, errors.New("not found")).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -113,7 +113,7 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -140,7 +140,7 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -160,7 +160,7 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -180,8 +180,8 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
-		s.store.On("SaveUpload", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Uploads.On("SaveUpload", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -201,8 +201,8 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
-		s.store.On("SaveUpload", mock.Anything).Return(errors.New("save error")).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Uploads.On("SaveUpload", mock.Anything).Return(errors.New("save error")).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -222,8 +222,8 @@ func (s *UploadTestSuite) TestPostUpload() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/upload", body)
 		s.ctx.Request.Header.Add("Content-Type", writer.FormDataContentType())
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
-		s.store.On("SaveUpload", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("FindTickerByUserAndID", mock.Anything, 1).Return(storage.Ticker{}, nil).Once()
+		s.store.Uploads.On("SaveUpload", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PostUpload(s.ctx)
 
@@ -234,8 +234,8 @@ func (s *UploadTestSuite) TestPostUpload() {
 
 func (s *UploadTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 
