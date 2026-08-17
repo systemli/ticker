@@ -1,5 +1,7 @@
 package storage
 
+import "fmt"
+
 // TickerStore covers Ticker CRUD, its sub-collections (websites), the integration
 // configs (Telegram/Mastodon/Bluesky/SignalGroup), and User<->Ticker membership.
 type TickerStore interface {
@@ -28,24 +30,37 @@ type TickerStore interface {
 	DeleteTickerUsers(ticker *Ticker) error
 }
 
+// integrationClearers maps each Integration to the function that resets its
+// field on the ticker and deletes its configuration row. Table-driven so an
+// unmatched Integration is a lookup miss (returns an error) rather than a
+// silent no-op, and adding an integration means adding one entry here.
+var integrationClearers = map[Integration]func(s *SqlStorage, ticker *Ticker) error{
+	IntegrationTelegram: func(s *SqlStorage, ticker *Ticker) error {
+		ticker.Telegram = TickerTelegram{}
+		return s.DB.Delete(TickerTelegram{}, EqualTickerID, ticker.ID).Error
+	},
+	IntegrationMastodon: func(s *SqlStorage, ticker *Ticker) error {
+		ticker.Mastodon = TickerMastodon{}
+		return s.DB.Delete(TickerMastodon{}, EqualTickerID, ticker.ID).Error
+	},
+	IntegrationBluesky: func(s *SqlStorage, ticker *Ticker) error {
+		ticker.Bluesky = TickerBluesky{}
+		return s.DB.Delete(TickerBluesky{}, EqualTickerID, ticker.ID).Error
+	},
+	IntegrationSignalGroup: func(s *SqlStorage, ticker *Ticker) error {
+		ticker.SignalGroup = TickerSignalGroup{}
+		return s.DB.Delete(TickerSignalGroup{}, EqualTickerID, ticker.ID).Error
+	},
+}
+
 // ClearIntegration removes the configuration row for a single integration on
 // the given ticker.
 func (s *SqlStorage) ClearIntegration(ticker *Ticker, integration Integration) error {
-	switch integration {
-	case IntegrationTelegram:
-		ticker.Telegram = TickerTelegram{}
-		return s.DB.Delete(TickerTelegram{}, EqualTickerID, ticker.ID).Error
-	case IntegrationMastodon:
-		ticker.Mastodon = TickerMastodon{}
-		return s.DB.Delete(TickerMastodon{}, EqualTickerID, ticker.ID).Error
-	case IntegrationBluesky:
-		ticker.Bluesky = TickerBluesky{}
-		return s.DB.Delete(TickerBluesky{}, EqualTickerID, ticker.ID).Error
-	case IntegrationSignalGroup:
-		ticker.SignalGroup = TickerSignalGroup{}
-		return s.DB.Delete(TickerSignalGroup{}, EqualTickerID, ticker.ID).Error
+	clear, ok := integrationClearers[integration]
+	if !ok {
+		return fmt.Errorf("unknown integration: %q", integration)
 	}
-	return nil
+	return clear(s, ticker)
 }
 
 // ClearIntegrations clears every configured integration on the ticker.

@@ -14,7 +14,7 @@ type Bridge interface {
 	Delete(ticker storage.Ticker, message *storage.Message) error
 }
 
-type Bridges map[string]Bridge
+type Bridges map[storage.Integration]Bridge
 
 func RegisterBridges(config config.Config, stores storage.Stores) Bridges {
 	telegram := TelegramBridge{config: config, uploads: stores.Uploads, settings: stores.Settings}
@@ -22,7 +22,12 @@ func RegisterBridges(config config.Config, stores storage.Stores) Bridges {
 	bluesky := BlueskyBridge{config: config, uploads: stores.Uploads}
 	signalGroup := SignalGroupBridge{config: config, uploads: stores.Uploads, settings: stores.Settings}
 
-	return Bridges{"telegram": &telegram, "mastodon": &mastodon, "bluesky": &bluesky, "signalGroup": &signalGroup}
+	return Bridges{
+		storage.IntegrationTelegram:    &telegram,
+		storage.IntegrationMastodon:    &mastodon,
+		storage.IntegrationBluesky:     &bluesky,
+		storage.IntegrationSignalGroup: &signalGroup,
+	}
 }
 
 func (b *Bridges) Update(ticker storage.Ticker) error {

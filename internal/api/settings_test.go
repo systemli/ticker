@@ -132,7 +132,6 @@ func (s *SettingsTestSuite) TestPutInactiveSetting() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.Settings.MockSaveInactive(nil).Once()
-		s.store.Settings.MockGetInactive(setting)
 		h := s.handler()
 		h.PutInactiveSettings(s.ctx)
 
@@ -171,7 +170,6 @@ func (s *SettingsTestSuite) TestPutTelegramSettings() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/telegram_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.Settings.MockSaveTelegram(nil).Once()
-		s.store.Settings.MockGetTelegram(setting)
 		h := s.handler()
 		h.PutTelegramSettings(s.ctx)
 
@@ -212,7 +210,6 @@ func (s *SettingsTestSuite) TestPutSignalGroupSettings() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/settings/signal_group_settings", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.store.Settings.MockSaveSignalGroup(nil).Once()
-		s.store.Settings.MockGetSignalGroup(setting)
 		h := s.handler()
 		h.PutSignalGroupSettings(s.ctx)
 

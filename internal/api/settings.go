@@ -55,8 +55,7 @@ func (h *handler) PutInactiveSettings(c *gin.Context) {
 		return
 	}
 
-	setting := storage.GetSettings(h.stores.Settings, storage.InactiveSetting)
-	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(setting)}
+	data := map[string]interface{}{"setting": response.InactiveSettingsResponse(value)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -84,8 +83,7 @@ func (h *handler) PutTelegramSettings(c *gin.Context) {
 		return
 	}
 
-	setting := storage.GetSettings(h.stores.Settings, storage.TelegramSetting)
-	data := map[string]interface{}{"setting": response.TelegramSettingsResponse(setting)}
+	data := map[string]interface{}{"setting": response.TelegramSettingsResponse(value)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -113,7 +111,6 @@ func (h *handler) PutSignalGroupSettings(c *gin.Context) {
 		return
 	}
 
-	setting := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
-	data := map[string]interface{}{"setting": response.SignalGroupSettingsResponse(setting)}
+	data := map[string]interface{}{"setting": response.SignalGroupSettingsResponse(value)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
