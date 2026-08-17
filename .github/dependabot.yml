@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: "monthly"
     groups:
-      ticker:
+      gomod:
         patterns:
           - "*"
 
@@ -19,3 +19,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
