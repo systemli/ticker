@@ -1,0 +1,61 @@
+name: Monthly Patch Release
+
+on:
+  schedule:
+    # First day of every month at 06:00 UTC
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish Patch Release Draft
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Obtain Access Token
+        id: acces_token
+        run: |
+          TOKEN="$(npx obtain-github-app-installation-access-token ci ${{ secrets.SYSTEMLI_APP_CREDENTIALS_TOKEN }})"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+      
+      - name: Publish draft if it is a patch release
+        env:
+          GH_TOKEN: ${{ steps.acces_token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          draft=$(gh release list --limit 20 --json tagName,isDraft \
+            --jq 'map(select(.isDraft)) | first | .tagName // empty')
+          if [ -z "$draft" ]; then
+            echo "No draft release found, nothing to do."
+            exit 0
+          fi
+
+          latest=$(gh release list --limit 20 --json tagName,isDraft,isPrerelease \
+            --jq 'map(select(.isDraft == false and .isPrerelease == false)) | first | .tagName // empty')
+          if [ -z "$latest" ]; then
+            echo "No published release found, refusing to auto-publish."
+            exit 0
+          fi
+
+          echo "Draft: $draft, latest published: $latest"
+
+          semver() { echo "${1#v}" | tr '.' ' '; }
+          read -r d_major d_minor d_patch <<<"$(semver "$draft")"
+          read -r l_major l_minor l_patch <<<"$(semver "$latest")"
+
+          if [ "$d_major" != "$l_major" ] || [ "$d_minor" != "$l_minor" ]; then
+            echo "Draft $draft is not a patch release over $latest, skipping."
+            exit 0
+          fi
+
+          if [ "$d_patch" -le "$l_patch" ]; then
+            echo "Draft $draft is not newer than $latest, skipping."
+            exit 0
+          fi
+
+          echo "Publishing patch release $draft"
+          gh release edit "$draft" --draft=false --latest
