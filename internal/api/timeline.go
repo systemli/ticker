@@ -27,5 +27,5 @@ func (h *handler) GetTimeline(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"messages": response.TimelineResponse(messages, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"messages": response.TimelineResponse(messages)}))
 }

@@ -1,10 +1,8 @@
 package response
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -22,13 +20,12 @@ type Attachment struct {
 	ContentType string `json:"contentType"`
 }
 
-func TimelineResponse(messages []storage.Message, config config.Config) []TimelineEntry {
+func TimelineResponse(messages []storage.Message) []TimelineEntry {
 	timeline := make([]TimelineEntry, 0)
 	for _, message := range messages {
 		var attachments []Attachment
 		for _, attachment := range message.Attachments {
-			name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-			attachments = append(attachments, Attachment{URL: MediaURL(config.Upload.URL, name), ContentType: attachment.ContentType})
+			attachments = append(attachments, Attachment{URL: storage.MediaURL(attachment.FileName()), ContentType: attachment.ContentType})
 		}
 
 		timeline = append(timeline, TimelineEntry{

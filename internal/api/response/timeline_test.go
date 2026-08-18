@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -13,18 +12,17 @@ type TimelineTestSuite struct {
 }
 
 func (s *TimelineTestSuite) TestTimelineResponse() {
-	config := config.Config{Upload: config.Upload{URL: "https://upload.example.com"}}
 	message := storage.NewMessage()
 	message.Attachments = []storage.Attachment{{UUID: "uuid", Extension: "jpg"}}
 
-	response := TimelineResponse([]storage.Message{message}, config)
+	response := TimelineResponse([]storage.Message{message})
 
 	s.Equal(1, len(response))
 	s.Equal(1, len(response[0].Attachments))
 
 	attachments := response[0].Attachments
 
-	s.Equal("https://upload.example.com/media/uuid.jpg", attachments[0].URL)
+	s.Equal("/api/media/uuid.jpg", attachments[0].URL)
 }
 
 func TestTimelineTestSuite(t *testing.T) {

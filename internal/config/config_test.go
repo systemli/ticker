@@ -26,7 +26,6 @@ func (s *ConfigTestSuite) SetupTest() {
 		"TICKER_DATABASE_DSN":   "user:password@tcp(localhost:3306)/ticker?charset=utf8mb4&parseTime=True&loc=Local",
 		"TICKER_METRICS_LISTEN": ":9191",
 		"TICKER_UPLOAD_PATH":    "/data/uploads",
-		"TICKER_UPLOAD_URL":     "https://example.com",
 	}
 }
 
@@ -43,7 +42,6 @@ func (s *ConfigTestSuite) TestConfig() {
 				s.Equal("ticker.db", c.Database.DSN)
 				s.Equal(":8181", c.MetricsListen)
 				s.Equal("uploads", c.Upload.Path)
-				s.Equal("http://localhost:8080", c.Upload.URL)
 			})
 
 			s.Run("loads config from env", func() {
@@ -61,7 +59,6 @@ func (s *ConfigTestSuite) TestConfig() {
 				s.Equal(s.envs["TICKER_DATABASE_DSN"], c.Database.DSN)
 				s.Equal(s.envs["TICKER_METRICS_LISTEN"], c.MetricsListen)
 				s.Equal(s.envs["TICKER_UPLOAD_PATH"], c.Upload.Path)
-				s.Equal(s.envs["TICKER_UPLOAD_URL"], c.Upload.URL)
 
 				for key := range s.envs {
 					os.Unsetenv(key)
