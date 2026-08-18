@@ -27,7 +27,7 @@ func (s *FeedTestSuite) SetupTest() {
 
 	s.w = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.w)
-	s.store = &storage.MockStorage{}
+	s.store = storage.NewMockStorage()
 	s.cfg = config.LoadConfig("")
 }
 
@@ -43,7 +43,7 @@ func (s *FeedTestSuite) TestGetFeed() {
 
 	s.Run("when fetching messages fails", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
 
 		h := s.handler()
 		h.GetFeed(s.ctx)
@@ -69,7 +69,7 @@ func (s *FeedTestSuite) TestGetFeed() {
 			TickerID: ticker.ID,
 			Text:     "Text",
 		}
-		s.store.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{message}, nil).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", mock.Anything, mock.Anything).Return([]storage.Message{message}, nil).Once()
 
 		h := s.handler()
 		h.GetFeed(s.ctx)
@@ -81,8 +81,8 @@ func (s *FeedTestSuite) TestGetFeed() {
 
 func (s *FeedTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 

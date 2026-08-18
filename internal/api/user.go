@@ -12,7 +12,7 @@ import (
 func (h *handler) GetUsers(c *gin.Context) {
 	//TODO: Discuss need of Pagination
 	filter := storage.NewUserFilter(c.Request)
-	users, err := h.storage.FindUsers(filter, storage.WithTickers())
+	users, err := h.stores.Users.FindUsers(filter, storage.WithTickers())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
@@ -61,7 +61,7 @@ func (h *handler) PostUser(c *gin.Context) {
 	user.IsSuperAdmin = body.IsSuperAdmin
 	user.Tickers = body.Tickers
 
-	err = h.storage.SaveUser(&user)
+	err = h.stores.Users.SaveUser(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -105,7 +105,7 @@ func (h *handler) PutUser(c *gin.Context) {
 		user.IsSuperAdmin = body.IsSuperAdmin
 	}
 
-	err = h.storage.SaveUser(&user)
+	err = h.stores.Users.SaveUser(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -128,7 +128,7 @@ func (h *handler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteUser(user)
+	err = h.stores.Users.DeleteUser(user)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -162,7 +162,7 @@ func (h *handler) PutMe(c *gin.Context) {
 
 	me.UpdatePassword(body.NewPassword)
 
-	err = h.storage.SaveUser(&me)
+	err = h.stores.Users.SaveUser(&me)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return

@@ -10,7 +10,7 @@ import (
 
 func (s *BridgeTestSuite) TestBlueskyUpdate() {
 	s.Run("does nothing", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
@@ -19,14 +19,14 @@ func (s *BridgeTestSuite) TestBlueskyUpdate() {
 
 func (s *BridgeTestSuite) TestBlueskySend() {
 	s.Run("when bluesky is inactive", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Send(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when bluesky is active but login fails", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.DisableNetworking()
 		defer gock.Off()
@@ -41,8 +41,8 @@ func (s *BridgeTestSuite) TestBlueskySend() {
 	})
 
 	s.Run("when bluesky is active and login succeeds", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.blueskyBridge(config.Config{}, mockStorage)
 
 		gock.DisableNetworking()
@@ -76,8 +76,8 @@ func (s *BridgeTestSuite) TestBlueskySend() {
 	})
 
 	s.Run("when bluesky is active and upload is not found", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("not found")).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("not found")).Once()
 		bridge := s.blueskyBridge(config.Config{}, mockStorage)
 
 		gock.DisableNetworking()
@@ -111,8 +111,8 @@ func (s *BridgeTestSuite) TestBlueskySend() {
 	})
 
 	s.Run("when bluesky is active but bluesky responds with error", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.blueskyBridge(config.Config{}, mockStorage)
 
 		gock.DisableNetworking()
@@ -140,28 +140,28 @@ func (s *BridgeTestSuite) TestBlueskySend() {
 
 func (s *BridgeTestSuite) TestBlueskyDelete() {
 	s.Run("when bluesky not connected", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Delete(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when message has no bluesky meta", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when bluesky is inactive", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when bluesky is active but login fails", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.server.createSession").
@@ -173,7 +173,7 @@ func (s *BridgeTestSuite) TestBlueskyDelete() {
 	})
 
 	s.Run("when delete fails", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.server.createSession").
@@ -201,7 +201,7 @@ func (s *BridgeTestSuite) TestBlueskyDelete() {
 	})
 
 	s.Run("happy path", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.server.createSession").
@@ -230,10 +230,10 @@ func (s *BridgeTestSuite) TestBlueskyDelete() {
 	})
 }
 
-func (s *BridgeTestSuite) blueskyBridge(config config.Config, storage storage.Storage) *BlueskyBridge {
+func (s *BridgeTestSuite) blueskyBridge(config config.Config, m *storage.MockStorage) *BlueskyBridge {
 	return &BlueskyBridge{
 		config:  config,
-		storage: storage,
+		uploads: m.Uploads,
 	}
 }
 
@@ -285,8 +285,8 @@ func (s *BridgeTestSuite) TestBuildAllowRules() {
 
 func (s *BridgeTestSuite) TestBlueskySendWithThreadGate() {
 	s.Run("when reply restriction is set to followers", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.blueskyBridge(config.Config{}, mockStorage)
 
 		gock.DisableNetworking()
@@ -345,8 +345,8 @@ func (s *BridgeTestSuite) TestBlueskySendWithThreadGate() {
 	})
 
 	s.Run("when thread gate creation fails", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.blueskyBridge(config.Config{}, mockStorage)
 
 		gock.DisableNetworking()
@@ -402,7 +402,7 @@ func (s *BridgeTestSuite) TestBlueskySendWithThreadGate() {
 
 func (s *BridgeTestSuite) TestBlueskyDeleteWithThreadGate() {
 	s.Run("happy path with thread gate deletion", func() {
-		bridge := s.blueskyBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.blueskyBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.New("https://bsky.social").
 			Post("/xrpc/com.atproto.server.createSession").

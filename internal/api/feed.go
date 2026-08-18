@@ -22,7 +22,7 @@ func (h *handler) GetFeed(c *gin.Context) {
 	}
 
 	pagination := pagination.NewPagination(c)
-	messages, err := h.storage.FindMessagesByTickerAndPagination(ticker, *pagination)
+	messages, err := h.stores.Messages.FindMessagesByTickerAndPagination(ticker, *pagination)
 	if err != nil {
 		c.JSON(http.StatusOK, response.ErrorResponse(response.CodeDefault, response.MessageFetchError))
 		return

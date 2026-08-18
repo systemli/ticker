@@ -34,7 +34,7 @@ func (s *MessagesTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 		s.cache = cache.NewCache(time.Minute)
 
@@ -54,7 +54,7 @@ func (s *MessagesTestSuite) TestGetMessages() {
 	s.Run("when database returns error", func() {
 		ticker := storage.Ticker{ID: 1}
 		s.ctx.Set("ticker", ticker)
-		s.store.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetMessages(s.ctx)
 
@@ -65,7 +65,7 @@ func (s *MessagesTestSuite) TestGetMessages() {
 	s.Run("when database returns messages", func() {
 		ticker := storage.Ticker{ID: 1}
 		s.ctx.Set("ticker", ticker)
-		s.store.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
+		s.store.Messages.On("FindMessagesByTickerAndPagination", ticker, mock.Anything, mock.Anything).Return([]storage.Message{}, nil).Once()
 		h := s.handler()
 		h.GetMessages(s.ctx)
 
@@ -120,7 +120,7 @@ func (s *MessagesTestSuite) TestPostMessage() {
 		json := `{"text":"text","attachments":[1]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, errors.New("storage error")).Once()
+		s.store.Uploads.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.PostMessage(s.ctx)
 
@@ -135,8 +135,8 @@ func (s *MessagesTestSuite) TestPostMessage() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.AddParam("tickerID", "1")
-		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
-		s.store.On("SaveMessage", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Uploads.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
+		s.store.Messages.On("SaveMessage", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PostMessage(s.ctx)
 
@@ -151,8 +151,8 @@ func (s *MessagesTestSuite) TestPostMessage() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(json))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.AddParam("tickerID", "1")
-		s.store.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
-		s.store.On("SaveMessage", mock.Anything).Return(nil).Once()
+		s.store.Uploads.On("FindUploadsByIDs", []int{1}).Return([]storage.Upload{}, nil).Once()
+		s.store.Messages.On("SaveMessage", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PostMessage(s.ctx)
 
@@ -185,7 +185,7 @@ func (s *MessagesTestSuite) TestDeleteMessage() {
 		message := storage.Message{ID: 1}
 		s.ctx.Set("ticker", ticker)
 		s.ctx.Set("message", message)
-		s.store.On("DeleteMessage", message).Return(errors.New("storage error")).Once()
+		s.store.Messages.On("DeleteMessage", message).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteMessage(s.ctx)
 
@@ -201,7 +201,7 @@ func (s *MessagesTestSuite) TestDeleteMessage() {
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.Set("ticker", ticker)
 		s.ctx.Set("message", message)
-		s.store.On("DeleteMessage", message).Return(nil).Once()
+		s.store.Messages.On("DeleteMessage", message).Return(nil).Once()
 		h := s.handler()
 		h.DeleteMessage(s.ctx)
 
@@ -213,7 +213,7 @@ func (s *MessagesTestSuite) TestDeleteMessage() {
 
 func (s *MessagesTestSuite) handler() handler {
 	return handler{
-		storage:  s.store,
+		stores:   s.store.Stores(),
 		config:   s.cfg,
 		cache:    s.cache,
 		realtime: realtime.New(),

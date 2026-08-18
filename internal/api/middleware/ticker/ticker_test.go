@@ -24,7 +24,7 @@ func (s *TickerTestSuite) TestPrefetchTicker() {
 	s.Run("when param is missing", func() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		mw := PrefetchTicker(store)
 
 		mw(c)
@@ -36,7 +36,7 @@ func (s *TickerTestSuite) TestPrefetchTicker() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("tickerID", "1")
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		store.On("FindTickerByUserAndID", mock.Anything, mock.Anything, mock.Anything).Return(storage.Ticker{}, errors.New("storage error"))
 		mw := PrefetchTicker(store)
 
@@ -49,7 +49,7 @@ func (s *TickerTestSuite) TestPrefetchTicker() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("tickerID", "1")
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		ticker := storage.Ticker{ID: 1}
 		store.On("FindTickerByUserAndID", mock.Anything, mock.Anything, mock.Anything).Return(ticker, nil)
 		mw := PrefetchTicker(store)
@@ -67,7 +67,7 @@ func (s *TickerTestSuite) TestPrefetchTickerFromRequest() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		mw := PrefetchTickerFromRequest(store)
 
 		mw(c)
@@ -83,7 +83,7 @@ func (s *TickerTestSuite) TestPrefetchTickerFromRequest() {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		c.Request.Header.Set("Origin", "https://demoticker.org")
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		store.On("FindTickerByOrigin", mock.Anything).Return(storage.Ticker{}, errors.New("not found"))
 		mw := PrefetchTickerFromRequest(store)
 
@@ -100,7 +100,7 @@ func (s *TickerTestSuite) TestPrefetchTickerFromRequest() {
 		c, _ := gin.CreateTestContext(w)
 		c.Request = httptest.NewRequest(http.MethodGet, "/v1/timeline", nil)
 		c.Request.Header.Set("Origin", "https://demoticker.org")
-		store := &storage.MockStorage{}
+		store := &storage.MockTickerStore{}
 		store.On("FindTickerByOrigin", mock.Anything).Return(storage.Ticker{}, nil)
 		mw := PrefetchTickerFromRequest(store)
 

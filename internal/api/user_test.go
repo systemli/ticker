@@ -30,7 +30,7 @@ func (s *UserTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 
 		subtest()
@@ -40,7 +40,7 @@ func (s *UserTestSuite) Run(name string, subtest func()) {
 func (s *UserTestSuite) TestGetUsers() {
 	s.Run("when storage returns an error", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, errors.New("storage error")).Once()
+		s.store.Users.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetUsers(s.ctx)
 
@@ -50,7 +50,7 @@ func (s *UserTestSuite) TestGetUsers() {
 
 	s.Run("when storage returns users", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, nil).Once()
+		s.store.Users.On("FindUsers", mock.Anything, mock.Anything).Return([]storage.User{}, nil).Once()
 		h := s.handler()
 		h.GetUsers(s.ctx)
 
@@ -126,7 +126,7 @@ func (s *UserTestSuite) TestPostUser() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(`{"email":"user@systemli.org","password":"password1234"}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PostUser(s.ctx)
 
@@ -138,7 +138,7 @@ func (s *UserTestSuite) TestPostUser() {
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/users", strings.NewReader(`{"email":"user@systemli.org","password":"password1234"}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("SaveUser", mock.Anything).Return(nil).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PostUser(s.ctx)
 
@@ -174,7 +174,7 @@ func (s *UserTestSuite) TestPutUser() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users", strings.NewReader(`{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[{"id":1}]}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutUser(s.ctx)
 
@@ -187,7 +187,7 @@ func (s *UserTestSuite) TestPutUser() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users", strings.NewReader(`{"email":"louis@systemli.org","password":"password1234","isSuperAdmin":true,"tickers":[{"id":1}]}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveUser", mock.Anything).Return(nil).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutUser(s.ctx)
 
@@ -219,7 +219,7 @@ func (s *UserTestSuite) TestDeleteUser() {
 	s.Run("when storage returns an error", func() {
 		s.ctx.Set("user", storage.User{ID: 1})
 		s.ctx.Set("me", storage.User{ID: 2, IsSuperAdmin: true})
-		s.store.On("DeleteUser", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Users.On("DeleteUser", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteUser(s.ctx)
 
@@ -230,7 +230,7 @@ func (s *UserTestSuite) TestDeleteUser() {
 	s.Run("when delete is successful", func() {
 		s.ctx.Set("user", storage.User{ID: 1})
 		s.ctx.Set("me", storage.User{ID: 2, IsSuperAdmin: true})
-		s.store.On("DeleteUser", mock.Anything).Return(nil).Once()
+		s.store.Users.On("DeleteUser", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.DeleteUser(s.ctx)
 
@@ -277,7 +277,7 @@ func (s *UserTestSuite) TestPutMe() {
 		s.ctx.Set("me", user)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(`{"password":"password1234","newPassword":"password5678"}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutMe(s.ctx)
 
@@ -290,7 +290,7 @@ func (s *UserTestSuite) TestPutMe() {
 		s.ctx.Set("me", user)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/users/me", strings.NewReader(`{"password":"password1234","newPassword":"password5678"}`))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveUser", mock.Anything).Return(nil).Once()
+		s.store.Users.On("SaveUser", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutMe(s.ctx)
 
@@ -301,8 +301,8 @@ func (s *UserTestSuite) TestPutMe() {
 
 func (s *UserTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
+		stores: s.store.Stores(),
+		config: s.cfg,
 	}
 }
 

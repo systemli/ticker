@@ -30,11 +30,11 @@ func (s *APITestSuite) SetupTest() {
 	logrus.SetOutput(io.Discard)
 
 	s.cfg = config.LoadConfig("")
-	s.store = &storage.MockStorage{}
+	s.store = storage.NewMockStorage()
 }
 
 func (s *APITestSuite) TestHealthz() {
-	server := API(s.cfg, s.store)
+	server := API(s.cfg, s.store.Stores())
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	w := httptest.NewRecorder()
 	server.Router.ServeHTTP(w, req)
@@ -47,8 +47,8 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when password is wrong", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
-		server := API(s.cfg, s.store)
+		s.store.Users.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
+		server := API(s.cfg, s.store.Stores())
 
 		body := `{"username":"louis@systemli.org","password":"WRONG"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
@@ -69,9 +69,9 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when login is successful", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
-		s.store.On("SaveUser", mock.Anything).Return(nil)
-		server := API(s.cfg, s.store)
+		s.store.Users.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
+		s.store.Users.On("SaveUser", mock.Anything).Return(nil)
+		server := API(s.cfg, s.store.Stores())
 
 		body := `{"username":"louis@systemli.org","password":"password"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))
@@ -96,10 +96,10 @@ func (s *APITestSuite) TestLogin() {
 	s.Run("when save user fails", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
-		s.store.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
-		s.store.On("SaveUser", mock.Anything).Return(errors.New("failed to save user"))
+		s.store.Users.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
+		s.store.Users.On("SaveUser", mock.Anything).Return(errors.New("failed to save user"))
 
-		server := API(s.cfg, s.store)
+		server := API(s.cfg, s.store.Stores())
 
 		body := `{"username":"louis@systemli.org","password":"password"}`
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/login", strings.NewReader(body))

@@ -22,16 +22,16 @@ func (s *FeaturesTestSuite) SetupTest() {
 func (s *FeaturesTestSuite) TestGetFeatures() {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	store := &storage.MockStorage{}
+	store := storage.NewMockStorage()
 
 	// Mock GetTelegramSettings to return empty token (disabled)
-	store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: ""})
+	store.Settings.MockGetTelegram(storage.TelegramSettings{Token: ""})
 	// Mock GetSignalGroupSettings to return empty settings (disabled)
-	store.On("GetSignalGroupSettings").Return(storage.DefaultSignalGroupSettings())
+	store.Settings.MockGetSignalGroup(storage.DefaultSignalGroupSettings())
 
 	h := handler{
-		storage: store,
-		config:  config.LoadConfig(""),
+		stores: store.Stores(),
+		config: config.LoadConfig(""),
 	}
 
 	h.GetFeatures(c)

@@ -65,7 +65,7 @@ func (h *handler) GetTickers(c *gin.Context) {
 	}
 
 	filter := storage.NewTickerFilter(c.Request)
-	tickers, err := h.storage.FindTickersByUser(me, filter, storage.WithPreload())
+	tickers, err := h.stores.Tickers.FindTickersByUser(me, filter, storage.WithPreload())
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
@@ -91,7 +91,7 @@ func (h *handler) GetTickerUsers(c *gin.Context) {
 		return
 	}
 
-	users, _ := h.storage.FindUsersByTicker(ticker)
+	users, _ := h.stores.Tickers.FindUsersByTicker(ticker)
 
 	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"users": response.UsersResponse(users)}))
 }
@@ -104,7 +104,7 @@ func (h *handler) PostTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -133,7 +133,7 @@ func (h *handler) PutTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -162,14 +162,14 @@ func (h *handler) PutTickerUsers(c *gin.Context) {
 	for _, user := range body.Users {
 		userIds = append(userIds, user.ID)
 	}
-	users, err := h.storage.FindUsersByIDs(userIds)
+	users, err := h.stores.Users.FindUsersByIDs(userIds)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
 	}
 
 	ticker.Users = users
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -201,9 +201,9 @@ func (h *handler) PutTickerWebsites(c *gin.Context) {
 	}
 
 	if len(websites) == 0 {
-		err = h.storage.DeleteTickerWebsites(&ticker)
+		err = h.stores.Tickers.DeleteTickerWebsites(&ticker)
 	} else {
-		err = h.storage.SaveTickerWebsites(&ticker, websites)
+		err = h.stores.Tickers.SaveTickerWebsites(&ticker, websites)
 	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
@@ -222,7 +222,7 @@ func (h *handler) DeleteTickerWebsites(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteTickerWebsites(&ticker)
+	err = h.stores.Tickers.DeleteTickerWebsites(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -252,7 +252,7 @@ func (h *handler) PutTickerTelegram(c *gin.Context) {
 		ticker.Telegram.ChannelName = body.ChannelName
 	}
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -268,7 +268,7 @@ func (h *handler) DeleteTickerTelegram(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteTelegram(&ticker)
+	err = h.stores.Tickers.ClearIntegration(&ticker, storage.IntegrationTelegram)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -318,7 +318,7 @@ func (h *handler) PutTickerMastodon(c *gin.Context) {
 
 	ticker.Mastodon.Active = body.Active
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -334,7 +334,7 @@ func (h *handler) DeleteTickerMastodon(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteMastodon(&ticker)
+	err = h.stores.Tickers.ClearIntegration(&ticker, storage.IntegrationMastodon)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -370,7 +370,7 @@ func (h *handler) PutTickerBluesky(c *gin.Context) {
 	ticker.Bluesky.Active = body.Active
 	ticker.Bluesky.ReplyRestriction = body.ReplyRestriction
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -386,7 +386,7 @@ func (h *handler) DeleteTickerBluesky(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteBluesky(&ticker)
+	err = h.stores.Tickers.ClearIntegration(&ticker, storage.IntegrationBluesky)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -409,7 +409,7 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	settings := h.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
 	groupClient := signal.NewGroupClientFromSettings(settings)
 	err = groupClient.CreateOrUpdateGroup(&ticker)
 	if err != nil {
@@ -419,7 +419,7 @@ func (h *handler) PutTickerSignalGroup(c *gin.Context) {
 	}
 	ticker.SignalGroup.Active = body.Active
 
-	err = h.storage.SaveTicker(&ticker)
+	err = h.stores.Tickers.SaveTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -435,7 +435,7 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	settings := h.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
 	groupClient := signal.NewGroupClientFromSettings(settings)
 
 	// Remove all members except the account number
@@ -452,7 +452,7 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteSignalGroup(&ticker)
+	err = h.stores.Tickers.ClearIntegration(&ticker, storage.IntegrationSignalGroup)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -478,7 +478,7 @@ func (h *handler) PutTickerSignalGroupAdmin(c *gin.Context) {
 		return
 	}
 
-	settings := h.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(h.stores.Settings, storage.SignalGroupSetting)
 	groupClient := signal.NewGroupClientFromSettings(settings)
 	err = groupClient.AddAdminMember(ticker.SignalGroup.GroupID, body.Number)
 	if err != nil {
@@ -497,7 +497,7 @@ func (h *handler) DeleteTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.DeleteTicker(&ticker)
+	err = h.stores.Tickers.DeleteTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -521,13 +521,13 @@ func (h *handler) DeleteTickerUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.storage.FindUserByID(userID)
+	user, err := h.stores.Users.FindUserByID(userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, response.ErrorResponse(response.CodeDefault, response.UserNotFound))
 		return
 	}
 
-	err = h.storage.DeleteTickerUser(&ticker, &user)
+	err = h.stores.Tickers.DeleteTickerUser(&ticker, &user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -543,7 +543,7 @@ func (h *handler) ResetTicker(c *gin.Context) {
 		return
 	}
 
-	err = h.storage.ResetTicker(&ticker)
+	err = h.stores.Tickers.ResetTicker(&ticker)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse(response.CodeDefault, response.StorageError))
 		return
@@ -594,6 +594,6 @@ func updateTicker(t *storage.Ticker, c *gin.Context) error {
 
 // getBotUsername retrieves the Telegram bot username from settings
 func (h *handler) getBotUsername() string {
-	telegramSettings := h.storage.GetTelegramSettings()
+	telegramSettings := storage.GetSettings(h.stores.Settings, storage.TelegramSetting)
 	return telegramSettings.BotUsername
 }

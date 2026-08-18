@@ -26,7 +26,7 @@ func (s *AuthTestSuite) SetupTest() {
 
 func (s *AuthTestSuite) TestAuthenticator() {
 	s.Run("when form is empty", func() {
-		mockStorage := &storage.MockStorage{}
+		mockStorage := &storage.MockUserStore{}
 		authenticator := Authenticator(mockStorage)
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())
 		c.Request = httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(`{}`))
@@ -37,7 +37,7 @@ func (s *AuthTestSuite) TestAuthenticator() {
 	})
 
 	s.Run("when user is not found", func() {
-		mockStorage := &storage.MockStorage{}
+		mockStorage := &storage.MockUserStore{}
 		mockStorage.On("FindUserByEmail", mock.Anything, mock.Anything).Return(storage.User{}, errors.New("not found"))
 
 		authenticator := Authenticator(mockStorage)
@@ -54,7 +54,7 @@ func (s *AuthTestSuite) TestAuthenticator() {
 		user, err := storage.NewUser("user@systemli.org", "password")
 		s.NoError(err)
 
-		mockStorage := &storage.MockStorage{}
+		mockStorage := &storage.MockUserStore{}
 		mockStorage.On("FindUserByEmail", mock.Anything, mock.Anything).Return(user, nil)
 		mockStorage.On("SaveUser", mock.Anything).Return(nil)
 		authenticator := Authenticator(mockStorage)
@@ -84,7 +84,7 @@ func (s *AuthTestSuite) TestAuthenticator() {
 
 func (s *AuthTestSuite) TestAuthorizator() {
 	s.Run("when user is not found", func() {
-		mockStorage := &storage.MockStorage{}
+		mockStorage := &storage.MockUserStore{}
 		mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found"))
 		authorizator := Authorizator(mockStorage)
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())
@@ -94,7 +94,7 @@ func (s *AuthTestSuite) TestAuthorizator() {
 	})
 
 	s.Run("when user is found", func() {
-		mockStorage := &storage.MockStorage{}
+		mockStorage := &storage.MockUserStore{}
 		mockStorage.On("FindUserByID", mock.Anything).Return(storage.User{ID: 1}, nil)
 		authorizator := Authorizator(mockStorage)
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())

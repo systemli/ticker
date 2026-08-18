@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/systemli/ticker/internal/api/pagination"
+	"github.com/systemli/ticker/internal/logger"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -14,6 +14,8 @@ const (
 	EqualTickerID = "ticker_id = ?"
 	EqualName     = "name = ?"
 )
+
+var log = logger.GetWithPackage("storage")
 
 type SqlStorage struct {
 	DB         *gorm.DB
@@ -27,7 +29,9 @@ func NewSqlStorage(db *gorm.DB, uploadPath string) *SqlStorage {
 	}
 }
 
-func (s *SqlStorage) FindUsers(filter UserFilter, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
+// --- Users ---------------------------------------------------------------
+
+func (s *SqlStorage) FindUsers(filter UserFilter, opts ...QueryOpt) ([]User, error) {
 	users := make([]User, 0)
 	db := s.prepareDb(opts...)
 
@@ -44,7 +48,7 @@ func (s *SqlStorage) FindUsers(filter UserFilter, opts ...func(*gorm.DB) *gorm.D
 	return users, err
 }
 
-func (s *SqlStorage) FindUserByID(id int, opts ...func(*gorm.DB) *gorm.DB) (User, error) {
+func (s *SqlStorage) FindUserByID(id int, opts ...QueryOpt) (User, error) {
 	var user User
 	db := s.prepareDb(opts...)
 	err := db.First(&user, id).Error
@@ -52,7 +56,7 @@ func (s *SqlStorage) FindUserByID(id int, opts ...func(*gorm.DB) *gorm.DB) (User
 	return user, err
 }
 
-func (s *SqlStorage) FindUsersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
+func (s *SqlStorage) FindUsersByIDs(ids []int, opts ...QueryOpt) ([]User, error) {
 	users := make([]User, 0)
 
 	if len(ids) == 0 {
@@ -65,15 +69,7 @@ func (s *SqlStorage) FindUsersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) 
 	return users, err
 }
 
-func (s *SqlStorage) FindUsersByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]User, error) {
-	users := make([]User, 0)
-	db := s.prepareDb(opts...)
-	err := db.Model(&ticker).Association("Users").Find(&users)
-
-	return users, err
-}
-
-func (s *SqlStorage) FindUserByEmail(email string, opts ...func(*gorm.DB) *gorm.DB) (User, error) {
+func (s *SqlStorage) FindUserByEmail(email string, opts ...QueryOpt) (User, error) {
 	var user User
 	db := s.prepareDb(opts...)
 	err := db.First(&user, "email = ?", email).Error
@@ -99,25 +95,31 @@ func (s *SqlStorage) DeleteUser(user User) error {
 	return s.DB.Delete(&user).Error
 }
 
-func (s *SqlStorage) DeleteTickerUsers(ticker *Ticker) error {
-	err := s.DB.Model(ticker).Association("Users").Clear()
+// --- Ticker <-> User membership -----------------------------------------
 
-	return err
+func (s *SqlStorage) FindUsersByTicker(ticker Ticker, opts ...QueryOpt) ([]User, error) {
+	users := make([]User, 0)
+	db := s.prepareDb(opts...)
+	err := db.Model(&ticker).Association("Users").Find(&users)
+
+	return users, err
+}
+
+func (s *SqlStorage) DeleteTickerUsers(ticker *Ticker) error {
+	return s.DB.Model(ticker).Association("Users").Clear()
 }
 
 func (s *SqlStorage) DeleteTickerUser(ticker *Ticker, user *User) error {
-	err := s.DB.Model(ticker).Association("Users").Delete(user)
-
-	return err
+	return s.DB.Model(ticker).Association("Users").Delete(user)
 }
 
 func (s *SqlStorage) AddTickerUser(ticker *Ticker, user *User) error {
-	err := s.DB.Model(ticker).Association("Users").Append(user)
-
-	return err
+	return s.DB.Model(ticker).Association("Users").Append(user)
 }
 
-func (s *SqlStorage) FindTickersByUser(user User, filter TickerFilter, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
+// --- Tickers -------------------------------------------------------------
+
+func (s *SqlStorage) FindTickersByUser(user User, filter TickerFilter, opts ...QueryOpt) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
 	db := s.prepareDb(opts...)
 
@@ -146,7 +148,7 @@ func (s *SqlStorage) FindTickersByUser(user User, filter TickerFilter, opts ...f
 	return tickers, err
 }
 
-func (s *SqlStorage) FindTickerByUserAndID(user User, id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+func (s *SqlStorage) FindTickerByUserAndID(user User, id int, opts ...QueryOpt) (Ticker, error) {
 	db := s.prepareDb(opts...)
 
 	var ticker Ticker
@@ -160,7 +162,7 @@ func (s *SqlStorage) FindTickerByUserAndID(user User, id int, opts ...func(*gorm
 	return ticker, err
 }
 
-func (s *SqlStorage) FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB) ([]Ticker, error) {
+func (s *SqlStorage) FindTickersByIDs(ids []int, opts ...QueryOpt) ([]Ticker, error) {
 	tickers := make([]Ticker, 0)
 	db := s.prepareDb(opts...)
 	err := db.Find(&tickers, ids).Error
@@ -168,7 +170,7 @@ func (s *SqlStorage) FindTickersByIDs(ids []int, opts ...func(*gorm.DB) *gorm.DB
 	return tickers, err
 }
 
-func (s *SqlStorage) FindTickerByOrigin(origin string, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+func (s *SqlStorage) FindTickerByOrigin(origin string, opts ...QueryOpt) (Ticker, error) {
 	var ticker Ticker
 	db := s.prepareDb(opts...)
 
@@ -179,7 +181,7 @@ func (s *SqlStorage) FindTickerByOrigin(origin string, opts ...func(*gorm.DB) *g
 	return ticker, err
 }
 
-func (s *SqlStorage) FindTickerByID(id int, opts ...func(*gorm.DB) *gorm.DB) (Ticker, error) {
+func (s *SqlStorage) FindTickerByID(id int, opts ...QueryOpt) (Ticker, error) {
 	var ticker Ticker
 	db := s.prepareDb(opts...)
 
@@ -293,7 +295,7 @@ func (s *SqlStorage) deleteTickerAssociations(ticker *Ticker) error {
 		return err
 	}
 
-	if err := s.DeleteIntegrations(ticker); err != nil {
+	if err := s.ClearIntegrations(ticker); err != nil {
 		log.WithError(err).WithField("ticker_id", ticker.ID).Error("failed to delete ticker integrations")
 		return err
 	}
@@ -301,49 +303,7 @@ func (s *SqlStorage) deleteTickerAssociations(ticker *Ticker) error {
 	return nil
 }
 
-func (s *SqlStorage) DeleteIntegrations(ticker *Ticker) error {
-	if err := s.DeleteMastodon(ticker); err != nil {
-		return err
-	}
-
-	if err := s.DeleteTelegram(ticker); err != nil {
-		return err
-	}
-
-	if err := s.DeleteBluesky(ticker); err != nil {
-		return err
-	}
-
-	if err := s.DeleteSignalGroup(ticker); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *SqlStorage) DeleteMastodon(ticker *Ticker) error {
-	ticker.Mastodon = TickerMastodon{}
-
-	return s.DB.Delete(TickerMastodon{}, EqualTickerID, ticker.ID).Error
-}
-
-func (s *SqlStorage) DeleteTelegram(ticker *Ticker) error {
-	ticker.Telegram = TickerTelegram{}
-
-	return s.DB.Delete(TickerTelegram{}, EqualTickerID, ticker.ID).Error
-}
-
-func (s *SqlStorage) DeleteBluesky(ticker *Ticker) error {
-	ticker.Bluesky = TickerBluesky{}
-
-	return s.DB.Delete(TickerBluesky{}, EqualTickerID, ticker.ID).Error
-}
-
-func (s *SqlStorage) DeleteSignalGroup(ticker *Ticker) error {
-	ticker.SignalGroup = TickerSignalGroup{}
-
-	return s.DB.Delete(TickerSignalGroup{}, EqualTickerID, ticker.ID).Error
-}
+// --- Uploads -------------------------------------------------------------
 
 func (s *SqlStorage) FindUploadByUUID(uuid string) (Upload, error) {
 	var upload Upload
@@ -403,7 +363,9 @@ func (s *SqlStorage) DeleteUploadsByTicker(ticker *Ticker) error {
 	return nil
 }
 
-func (s *SqlStorage) FindMessage(tickerID, messageID int, opts ...func(*gorm.DB) *gorm.DB) (Message, error) {
+// --- Messages ------------------------------------------------------------
+
+func (s *SqlStorage) FindMessage(tickerID, messageID int, opts ...QueryOpt) (Message, error) {
 	var message Message
 	db := s.prepareDb(opts...)
 
@@ -412,7 +374,7 @@ func (s *SqlStorage) FindMessage(tickerID, messageID int, opts ...func(*gorm.DB)
 	return message, err
 }
 
-func (s *SqlStorage) FindMessagesByTicker(ticker Ticker, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error) {
+func (s *SqlStorage) FindMessagesByTicker(ticker Ticker, opts ...QueryOpt) ([]Message, error) {
 	messages := make([]Message, 0)
 	db := s.prepareDb(opts...)
 
@@ -421,7 +383,7 @@ func (s *SqlStorage) FindMessagesByTicker(ticker Ticker, opts ...func(*gorm.DB) 
 	return messages, err
 }
 
-func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination, opts ...func(*gorm.DB) *gorm.DB) ([]Message, error) {
+func (s *SqlStorage) FindMessagesByTickerAndPagination(ticker Ticker, pagination pagination.Pagination, opts ...QueryOpt) ([]Message, error) {
 	messages := make([]Message, 0)
 	db := s.prepareDb(opts...)
 	query := db.Where(EqualTickerID, ticker.ID)
@@ -470,103 +432,9 @@ func (s *SqlStorage) DeleteMessages(ticker *Ticker) error {
 	return s.DB.Where(EqualTickerID, ticker.ID).Delete(&Message{}).Error
 }
 
-func (s *SqlStorage) GetInactiveSettings() InactiveSettings {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingInactiveName).Error
-	if err != nil {
-		return DefaultInactiveSettings()
-	}
+// --- Internals -----------------------------------------------------------
 
-	var inactiveSettings InactiveSettings
-	err = json.Unmarshal([]byte(setting.Value), &inactiveSettings)
-	if err != nil {
-		return DefaultInactiveSettings()
-	}
-
-	return inactiveSettings
-}
-
-func (s *SqlStorage) SaveInactiveSettings(inactiveSettings InactiveSettings) error {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingInactiveName).Error
-	if err != nil {
-		setting = Setting{Name: SettingInactiveName}
-	}
-
-	value, err := json.Marshal(inactiveSettings)
-	if err != nil {
-		return err
-	}
-	setting.Value = string(value)
-
-	return s.DB.Save(&setting).Error
-}
-
-func (s *SqlStorage) GetTelegramSettings() TelegramSettings {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingTelegramName).Error
-	if err != nil {
-		return DefaultTelegramSettings()
-	}
-
-	var telegramSettings TelegramSettings
-	err = json.Unmarshal([]byte(setting.Value), &telegramSettings)
-	if err != nil {
-		return DefaultTelegramSettings()
-	}
-
-	return telegramSettings
-}
-
-func (s *SqlStorage) SaveTelegramSettings(telegramSettings TelegramSettings) error {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingTelegramName).Error
-	if err != nil {
-		setting = Setting{Name: SettingTelegramName}
-	}
-
-	value, err := json.Marshal(telegramSettings)
-	if err != nil {
-		return err
-	}
-	setting.Value = string(value)
-
-	return s.DB.Save(&setting).Error
-}
-
-func (s *SqlStorage) GetSignalGroupSettings() SignalGroupSettings {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingSignalGroupName).Error
-	if err != nil {
-		return DefaultSignalGroupSettings()
-	}
-
-	var signalGroupSettings SignalGroupSettings
-	err = json.Unmarshal([]byte(setting.Value), &signalGroupSettings)
-	if err != nil {
-		return DefaultSignalGroupSettings()
-	}
-
-	return signalGroupSettings
-}
-
-func (s *SqlStorage) SaveSignalGroupSettings(signalGroupSettings SignalGroupSettings) error {
-	var setting Setting
-	err := s.DB.First(&setting, EqualName, SettingSignalGroupName).Error
-	if err != nil {
-		setting = Setting{Name: SettingSignalGroupName}
-	}
-
-	value, err := json.Marshal(signalGroupSettings)
-	if err != nil {
-		return err
-	}
-	setting.Value = string(value)
-
-	return s.DB.Save(&setting).Error
-}
-
-func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
+func (s *SqlStorage) prepareDb(opts ...QueryOpt) *gorm.DB {
 	db := s.DB
 	for _, opt := range opts {
 		db = opt(db)
@@ -576,21 +444,21 @@ func (s *SqlStorage) prepareDb(opts ...func(*gorm.DB) *gorm.DB) *gorm.DB {
 }
 
 // WithPreload is a helper function to preload all associations.
-func WithPreload() func(*gorm.DB) *gorm.DB {
+func WithPreload() QueryOpt {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Preload(clause.Associations)
 	}
 }
 
 // WithAttachments is a helper function to preload the attachments association.
-func WithAttachments() func(*gorm.DB) *gorm.DB {
+func WithAttachments() QueryOpt {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Preload("Attachments")
 	}
 }
 
 // WithTickers is a helper function to preload the tickers association.
-func WithTickers() func(*gorm.DB) *gorm.DB {
+func WithTickers() QueryOpt {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Preload("Tickers")
 	}

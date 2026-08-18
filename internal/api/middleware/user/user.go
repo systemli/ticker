@@ -9,7 +9,7 @@ import (
 	"github.com/systemli/ticker/internal/storage"
 )
 
-func PrefetchUser(s storage.Storage) gin.HandlerFunc {
+func PrefetchUser(s storage.UserStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := strconv.Atoi(c.Param("userID"))
 		if err != nil {

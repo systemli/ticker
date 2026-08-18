@@ -13,8 +13,9 @@ import (
 )
 
 type SignalGroupBridge struct {
-	config  config.Config
-	storage storage.Storage
+	config   config.Config
+	uploads  storage.UploadStore
+	settings storage.SettingsStore
 }
 
 type SignalGroupResponse struct {
@@ -22,7 +23,7 @@ type SignalGroupResponse struct {
 }
 
 func (sb *SignalGroupBridge) Update(ticker storage.Ticker) error {
-	settings := sb.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(sb.settings, storage.SignalGroupSetting)
 	if !settings.Enabled() || !ticker.SignalGroup.Connected() {
 		return nil
 	}
@@ -37,7 +38,7 @@ func (sb *SignalGroupBridge) Update(ticker storage.Ticker) error {
 }
 
 func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Message) error {
-	settings := sb.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(sb.settings, storage.SignalGroupSetting)
 	if !settings.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active {
 		return nil
 	}
@@ -48,7 +49,7 @@ func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Messag
 	var attachments []string
 	if len(message.Attachments) > 0 {
 		for _, attachment := range message.Attachments {
-			upload, err := sb.storage.FindUploadByUUID(attachment.UUID)
+			upload, err := sb.uploads.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
 				continue
@@ -94,7 +95,7 @@ func (sb *SignalGroupBridge) Send(ticker storage.Ticker, message *storage.Messag
 }
 
 func (sb *SignalGroupBridge) Delete(ticker storage.Ticker, message *storage.Message) error {
-	settings := sb.storage.GetSignalGroupSettings()
+	settings := storage.GetSettings(sb.settings, storage.SignalGroupSetting)
 	if !settings.Enabled() || !ticker.SignalGroup.Connected() || !ticker.SignalGroup.Active || message.SignalGroup.Timestamp == 0 {
 		return nil
 	}

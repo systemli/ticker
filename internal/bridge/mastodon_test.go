@@ -10,7 +10,7 @@ import (
 
 func (s *BridgeTestSuite) TestMastodonUpdate() {
 	s.Run("does nothing", func() {
-		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.mastodonBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Update(tickerWithBridges)
 		s.NoError(err)
@@ -19,15 +19,15 @@ func (s *BridgeTestSuite) TestMastodonUpdate() {
 
 func (s *BridgeTestSuite) TestMastodonSend() {
 	s.Run("when mastodon is inactive", func() {
-		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.mastodonBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Send(tickerWithoutBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when mastodon is active but upload cant not found", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.mastodonBridge(config.Config{}, mockStorage)
 
 		gock.New("https://systemli.social").
@@ -49,8 +49,8 @@ func (s *BridgeTestSuite) TestMastodonSend() {
 	})
 
 	s.Run("when mastodon is active and upload is not found", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("upload not found")).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, errors.New("upload not found")).Once()
 		bridge := s.mastodonBridge(config.Config{}, mockStorage)
 
 		gock.New("https://systemli.social").
@@ -72,8 +72,8 @@ func (s *BridgeTestSuite) TestMastodonSend() {
 	})
 
 	s.Run("when mastodon is active but post status fails", func() {
-		mockStorage := &storage.MockStorage{}
-		mockStorage.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
+		mockStorage := storage.NewMockStorage()
+		mockStorage.Uploads.On("FindUploadByUUID", "123").Return(storage.Upload{}, nil).Once()
 		bridge := s.mastodonBridge(config.Config{}, mockStorage)
 
 		gock.New("https://systemli.social").
@@ -89,14 +89,14 @@ func (s *BridgeTestSuite) TestMastodonSend() {
 
 func (s *BridgeTestSuite) TestMastodonDelete() {
 	s.Run("when message has no mastodon meta", func() {
-		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.mastodonBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Delete(tickerWithBridges, &messageWithoutBridges)
 		s.NoError(err)
 	})
 
 	s.Run("when mastodon is inactive", func() {
-		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.mastodonBridge(config.Config{}, storage.NewMockStorage())
 
 		err := bridge.Delete(tickerWithoutBridges, &messageWithBridges)
 		s.Error(err)
@@ -104,7 +104,7 @@ func (s *BridgeTestSuite) TestMastodonDelete() {
 	})
 
 	s.Run("when mastodon is active", func() {
-		bridge := s.mastodonBridge(config.Config{}, &storage.MockStorage{})
+		bridge := s.mastodonBridge(config.Config{}, storage.NewMockStorage())
 
 		gock.New("https://systemli.social").
 			Delete("/api/v1/statuses/123").
@@ -116,9 +116,9 @@ func (s *BridgeTestSuite) TestMastodonDelete() {
 	})
 }
 
-func (s *BridgeTestSuite) mastodonBridge(config config.Config, storage storage.Storage) *MastodonBridge {
+func (s *BridgeTestSuite) mastodonBridge(config config.Config, m *storage.MockStorage) *MastodonBridge {
 	return &MastodonBridge{
 		config:  config,
-		storage: storage,
+		uploads: m.Uploads,
 	}
 }

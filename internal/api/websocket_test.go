@@ -32,7 +32,7 @@ func (s *WebSocketTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 		s.cfg = config.LoadConfig("")
 		s.realtime = realtime.New()
 
@@ -51,7 +51,7 @@ func (s *WebSocketTestSuite) setupWebSocketServer(ticker storage.Ticker) (*httpt
 	// Create a real HTTP server with the WebSocket handler
 	router := gin.New()
 	h := handler{
-		storage:  s.store,
+		stores:   s.store.Stores(),
 		config:   s.cfg,
 		realtime: realtimeEngine, // Use the test-specific engine
 	}
@@ -286,7 +286,7 @@ func (s *WebSocketTestSuite) TestUpgraderConfiguration() {
 
 func (s *WebSocketTestSuite) handler() handler {
 	return handler{
-		storage:  s.store,
+		stores:   s.store.Stores(),
 		config:   s.cfg,
 		realtime: s.realtime,
 	}

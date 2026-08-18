@@ -41,7 +41,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 		return
 	}
 
-	ticker, err := h.storage.FindTickerByUserAndID(me, tickerID)
+	ticker, err := h.stores.Tickers.FindTickerByUserAndID(me, tickerID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.TickerNotFound))
 		return
@@ -72,7 +72,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 		}
 
 		u := storage.NewUpload(fileHeader.Filename, contentType, ticker.ID)
-		err = h.storage.SaveUpload(&u)
+		err = h.stores.Uploads.SaveUpload(&u)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
 			return

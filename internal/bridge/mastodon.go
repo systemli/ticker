@@ -11,7 +11,7 @@ import (
 
 type MastodonBridge struct {
 	config  config.Config
-	storage storage.Storage
+	uploads storage.UploadStore
 }
 
 func (mb *MastodonBridge) Update(ticker storage.Ticker) error {
@@ -29,7 +29,7 @@ func (mb *MastodonBridge) Send(ticker storage.Ticker, message *storage.Message) 
 	var mediaIDs []mastodon.ID
 	if len(message.Attachments) > 0 {
 		for _, attachment := range message.Attachments {
-			upload, err := mb.storage.FindUploadByUUID(attachment.UUID)
+			upload, err := mb.uploads.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
 				continue

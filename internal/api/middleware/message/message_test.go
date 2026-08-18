@@ -25,7 +25,7 @@ func (s *MessageTestSuite) TestMessage() {
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
 		c.Set("ticker", storage.Ticker{})
-		store := &storage.MockStorage{}
+		store := &storage.MockMessageStore{}
 		mw := PrefetchMessage(store)
 
 		mw(c)
@@ -38,7 +38,7 @@ func (s *MessageTestSuite) TestMessage() {
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("messageID", "1")
 		c.Set("ticker", storage.Ticker{})
-		store := &storage.MockStorage{}
+		store := &storage.MockMessageStore{}
 		store.On("FindMessage", mock.Anything, mock.Anything, mock.Anything).Return(storage.Message{}, errors.New("storage error"))
 		mw := PrefetchMessage(store)
 
@@ -52,7 +52,7 @@ func (s *MessageTestSuite) TestMessage() {
 		c, _ := gin.CreateTestContext(w)
 		c.AddParam("messageID", "1")
 		c.Set("ticker", storage.Ticker{})
-		store := &storage.MockStorage{}
+		store := &storage.MockMessageStore{}
 		message := storage.Message{ID: 1}
 		store.On("FindMessage", mock.Anything, mock.Anything, mock.Anything).Return(message, nil)
 		mw := PrefetchMessage(store)

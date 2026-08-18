@@ -40,12 +40,12 @@ func (s *TickerTestSuite) Run(name string, subtest func()) {
 	s.T().Run(name, func(t *testing.T) {
 		s.w = httptest.NewRecorder()
 		s.ctx, _ = gin.CreateTestContext(s.w)
-		s.store = &storage.MockStorage{}
+		s.store = storage.NewMockStorage()
 
 		// Add default mock expectation for GetTelegramSettings which is called by getBotUsername
-		s.store.On("GetTelegramSettings").Return(storage.TelegramSettings{Token: "", BotUsername: ""}).Maybe()
+		s.store.Settings.MockGetTelegram(storage.TelegramSettings{Token: "", BotUsername: ""}).Maybe()
 		// Add default mock expectation for GetSignalGroupSettings which is called by signal group handlers
-		s.store.On("GetSignalGroupSettings").Return(storage.SignalGroupSettings{
+		s.store.Settings.MockGetSignalGroup(storage.SignalGroupSettings{
 			ApiUrl:  "https://signal-cli.example.org/api/v1/rpc",
 			Account: "+1234567890",
 		}).Maybe()
@@ -68,7 +68,7 @@ func (s *TickerTestSuite) TestGetTickers() {
 
 	s.Run("when storage returns an error", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, errors.New("storage error")).Once()
+		s.store.Tickers.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, errors.New("storage error")).Once()
 		h := s.handler()
 		h.GetTickers(s.ctx)
 
@@ -78,7 +78,7 @@ func (s *TickerTestSuite) TestGetTickers() {
 
 	s.Run("when storage returns tickers", func() {
 		s.ctx.Set("me", storage.User{IsSuperAdmin: true})
-		s.store.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil).Once()
+		s.store.Tickers.On("FindTickersByUser", mock.Anything, mock.Anything, mock.Anything).Return([]storage.Ticker{}, nil).Once()
 		h := s.handler()
 		h.GetTickers(s.ctx)
 
@@ -117,7 +117,7 @@ func (s *TickerTestSuite) TestGetTickerUsers() {
 
 	s.Run("when ticker found", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("FindUsersByTicker", mock.Anything, mock.Anything).Return([]storage.User{}, nil).Once()
+		s.store.Tickers.On("FindUsersByTicker", mock.Anything, mock.Anything).Return([]storage.User{}, nil).Once()
 		h := s.handler()
 		h.GetTickerUsers(s.ctx)
 
@@ -140,7 +140,7 @@ func (s *TickerTestSuite) TestPostTicker() {
 		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/admin/tickers", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PostTicker(s.ctx)
 
@@ -196,7 +196,7 @@ func (s *TickerTestSuite) TestPostTicker() {
 				Lon: 1,
 			},
 		}
-		s.store.On("SaveTicker", &ticker).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", &ticker).Return(nil).Once()
 		h := s.handler()
 		h.PostTicker(s.ctx)
 
@@ -230,7 +230,7 @@ func (s *TickerTestSuite) TestPutTicker() {
 		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTicker(s.ctx)
 
@@ -245,7 +245,7 @@ func (s *TickerTestSuite) TestPutTicker() {
 		body := `{"title":"title","description":"description"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutTicker(s.ctx)
 
@@ -280,7 +280,7 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("FindUsersByIDs", mock.Anything).Return(nil, errors.New("storage error")).Once()
+		s.store.Users.On("FindUsersByIDs", mock.Anything).Return(nil, errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTickerUsers(s.ctx)
 
@@ -293,8 +293,8 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Users.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTickerUsers(s.ctx)
 
@@ -307,8 +307,8 @@ func (s *TickerTestSuite) TestPutTickerUsers() {
 		body := `{"users":[{"id":1},{"id":2},{"id":3}]}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/user", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Users.On("FindUsersByIDs", mock.Anything).Return([]storage.User{{ID: 1}, {ID: 2}, {ID: 3}}, nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutTickerUsers(s.ctx)
 
@@ -346,7 +346,7 @@ func (s *TickerTestSuite) TestPutTickerWebsites() {
 		s.NoError(err)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/websites", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTickerWebsites", mock.Anything, mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTickerWebsites", mock.Anything, mock.Anything).Return(errors.New("storage error")).Once()
 
 		h := s.handler()
 		h.PutTickerWebsites(s.ctx)
@@ -365,7 +365,7 @@ func (s *TickerTestSuite) TestPutTickerWebsites() {
 		s.NoError(err)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/websites", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTickerWebsites", mock.Anything, mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTickerWebsites", mock.Anything, mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerWebsites(s.ctx)
@@ -385,7 +385,7 @@ func (s *TickerTestSuite) TestPutTickerWebsites() {
 		s.NoError(err)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/websites", bytes.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("DeleteTickerWebsites", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("DeleteTickerWebsites", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerWebsites(s.ctx)
@@ -409,7 +409,7 @@ func (s *TickerTestSuite) TestDeleteTickerWebsites() {
 		s.ctx.Set("ticker", storage.Ticker{})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/websites/https://example.org", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("DeleteTickerWebsites", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("DeleteTickerWebsites", mock.Anything).Return(errors.New("storage error")).Once()
 
 		h := s.handler()
 		h.DeleteTickerWebsites(s.ctx)
@@ -423,7 +423,7 @@ func (s *TickerTestSuite) TestDeleteTickerWebsites() {
 		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "http://example.org"}}})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/websites/https://example.org", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("DeleteTickerWebsites", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("DeleteTickerWebsites", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.DeleteTickerWebsites(s.ctx)
@@ -459,7 +459,7 @@ func (s *TickerTestSuite) TestPutTickerTelegram() {
 		body := `{"active":true,"channelName":"@channel_name"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTickerTelegram(s.ctx)
 
@@ -472,7 +472,7 @@ func (s *TickerTestSuite) TestPutTickerTelegram() {
 		body := `{"active":true,"channelName":"@channel_name"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/telegram", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutTickerTelegram(s.ctx)
 
@@ -492,7 +492,7 @@ func (s *TickerTestSuite) TestDeleteTickerTelegram() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteTelegram", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationTelegram).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerTelegram(s.ctx)
 
@@ -502,7 +502,7 @@ func (s *TickerTestSuite) TestDeleteTickerTelegram() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteTelegram", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationTelegram).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerTelegram(s.ctx)
 
@@ -554,7 +554,7 @@ func (s *TickerTestSuite) TestPutTickerMastodon() {
 		body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","accessToken":"access_toklen"}`, server.URL)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.PutTickerMastodon(s.ctx)
 
@@ -573,7 +573,7 @@ func (s *TickerTestSuite) TestPutTickerMastodon() {
 		body := fmt.Sprintf(`{"server":"%s","token":"token","secret":"secret","accessToken":"access_toklen"}`, server.URL)
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/mastodon", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.PutTickerMastodon(s.ctx)
 
@@ -593,7 +593,7 @@ func (s *TickerTestSuite) TestDeleteTickerMastodon() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteMastodon", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationMastodon).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerMastodon(s.ctx)
 
@@ -603,7 +603,7 @@ func (s *TickerTestSuite) TestDeleteTickerMastodon() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteMastodon", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationMastodon).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerMastodon(s.ctx)
 
@@ -637,7 +637,7 @@ func (s *TickerTestSuite) TestPutTickerBluesky() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 
 		h := s.handler()
 		h.PutTickerBluesky(s.ctx)
@@ -651,7 +651,7 @@ func (s *TickerTestSuite) TestPutTickerBluesky() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerBluesky(s.ctx)
@@ -676,7 +676,7 @@ func (s *TickerTestSuite) TestPutTickerBluesky() {
 		body := `{"active":true,"handle":"bluesky","appKey":"appKey"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerBluesky(s.ctx)
@@ -701,7 +701,7 @@ func (s *TickerTestSuite) TestPutTickerBluesky() {
 		body := `{"active":true,"handle":"bluesky","appKey":"appKey","replyRestriction":"followers"}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/bluesky", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.AnythingOfType("*storage.Ticker")).Run(func(args mock.Arguments) {
+		s.store.Tickers.On("SaveTicker", mock.AnythingOfType("*storage.Ticker")).Run(func(args mock.Arguments) {
 			ticker := args.Get(0).(*storage.Ticker)
 			s.Equal("followers", ticker.Bluesky.ReplyRestriction)
 		}).Return(nil).Once()
@@ -748,7 +748,7 @@ func (s *TickerTestSuite) TestDeleteTickerBluesky() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteBluesky", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationBluesky).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerBluesky(s.ctx)
 
@@ -758,7 +758,7 @@ func (s *TickerTestSuite) TestDeleteTickerBluesky() {
 
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteBluesky", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationBluesky).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerBluesky(s.ctx)
 
@@ -947,7 +947,7 @@ func (s *TickerTestSuite) TestPutTickerSignalGroup() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(errors.New("storage error")).Once()
 
 		h := s.handler()
 		h.PutTickerSignalGroup(s.ctx)
@@ -992,7 +992,7 @@ func (s *TickerTestSuite) TestPutTickerSignalGroup() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerSignalGroup(s.ctx)
@@ -1038,7 +1038,7 @@ func (s *TickerTestSuite) TestPutTickerSignalGroup() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerSignalGroup(s.ctx)
@@ -1084,7 +1084,7 @@ func (s *TickerTestSuite) TestPutTickerSignalGroup() {
 		body := `{"active":true}`
 		s.ctx.Request = httptest.NewRequest(http.MethodPut, "/v1/admin/tickers/1/signal_group", strings.NewReader(body))
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("SaveTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("SaveTicker", mock.Anything).Return(nil).Once()
 
 		h := s.handler()
 		h.PutTickerSignalGroup(s.ctx)
@@ -1175,7 +1175,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 		})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("DeleteSignalGroup", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationSignalGroup).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.DeleteTickerSignalGroup(s.ctx)
 
@@ -1254,7 +1254,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 		})
 		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
 		s.ctx.Request.Header.Add("Content-Type", "application/json")
-		s.store.On("DeleteSignalGroup", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("ClearIntegration", mock.Anything, storage.IntegrationSignalGroup).Return(nil).Once()
 		h := s.handler()
 		h.DeleteTickerSignalGroup(s.ctx)
 
@@ -1349,7 +1349,7 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
+		s.store.Tickers.On("DeleteTicker", mock.Anything).Return(errors.New("storage error"))
 		h := s.handler()
 		h.DeleteTicker(s.ctx)
 
@@ -1360,7 +1360,7 @@ func (s *TickerTestSuite) TestDeleteTicker() {
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "localhost"}}})
-		s.store.On("DeleteTicker", mock.Anything).Return(nil)
+		s.store.Tickers.On("DeleteTicker", mock.Anything).Return(nil)
 		h := s.handler()
 		h.DeleteTicker(s.ctx)
 
@@ -1393,7 +1393,7 @@ func (s *TickerTestSuite) TestDeleteTickerUser() {
 	s.Run("when user not found", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
 		s.ctx.AddParam("userID", "1")
-		s.store.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found")).Once()
+		s.store.Users.On("FindUserByID", mock.Anything).Return(storage.User{}, errors.New("not found")).Once()
 		h := s.handler()
 		h.DeleteTickerUser(s.ctx)
 
@@ -1404,8 +1404,8 @@ func (s *TickerTestSuite) TestDeleteTickerUser() {
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
 		s.ctx.AddParam("userID", "1")
-		s.store.On("FindUserByID", mock.Anything).Return(storage.User{}, nil).Once()
-		s.store.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(errors.New("storage error"))
+		s.store.Users.On("FindUserByID", mock.Anything).Return(storage.User{}, nil).Once()
+		s.store.Tickers.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(errors.New("storage error"))
 		h := s.handler()
 		h.DeleteTickerUser(s.ctx)
 
@@ -1416,8 +1416,8 @@ func (s *TickerTestSuite) TestDeleteTickerUser() {
 	s.Run("when storage returns ticker", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
 		s.ctx.AddParam("userID", "1")
-		s.store.On("FindUserByID", mock.Anything).Return(storage.User{}, nil).Once()
-		s.store.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(nil)
+		s.store.Users.On("FindUserByID", mock.Anything).Return(storage.User{}, nil).Once()
+		s.store.Tickers.On("DeleteTickerUser", mock.Anything, mock.Anything).Return(nil)
 		h := s.handler()
 		h.DeleteTickerUser(s.ctx)
 
@@ -1437,7 +1437,7 @@ func (s *TickerTestSuite) TestResetTicker() {
 
 	s.Run("when storage returns error", func() {
 		s.ctx.Set("ticker", storage.Ticker{})
-		s.store.On("ResetTicker", mock.Anything).Return(errors.New("storage error")).Once()
+		s.store.Tickers.On("ResetTicker", mock.Anything).Return(errors.New("storage error")).Once()
 		h := s.handler()
 		h.ResetTicker(s.ctx)
 
@@ -1448,7 +1448,7 @@ func (s *TickerTestSuite) TestResetTicker() {
 	s.Run("happy path", func() {
 		s.cache.Set("response:localhost:/v1/init", true, time.Minute)
 		s.ctx.Set("ticker", storage.Ticker{Websites: []storage.TickerWebsite{{Origin: "localhost"}}})
-		s.store.On("ResetTicker", mock.Anything).Return(nil).Once()
+		s.store.Tickers.On("ResetTicker", mock.Anything).Return(nil).Once()
 		h := s.handler()
 		h.ResetTicker(s.ctx)
 
@@ -1462,9 +1462,9 @@ func (s *TickerTestSuite) TestResetTicker() {
 
 func (s *TickerTestSuite) handler() handler {
 	return handler{
-		storage: s.store,
-		config:  s.cfg,
-		cache:   s.cache,
+		stores: s.store.Stores(),
+		config: s.cfg,
+		cache:  s.cache,
 	}
 }
 

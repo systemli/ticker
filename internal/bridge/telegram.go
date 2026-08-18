@@ -7,8 +7,9 @@ import (
 )
 
 type TelegramBridge struct {
-	config  config.Config
-	storage storage.Storage
+	config   config.Config
+	uploads  storage.UploadStore
+	settings storage.SettingsStore
 }
 
 func (tb *TelegramBridge) Update(ticker storage.Ticker) error {
@@ -21,7 +22,7 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 	}
 
 	// Get Telegram token from database settings
-	telegramSettings := tb.storage.GetTelegramSettings()
+	telegramSettings := storage.GetSettings(tb.settings, storage.TelegramSetting)
 	if telegramSettings.Token == "" {
 		return nil
 	}
@@ -41,7 +42,7 @@ func (tb *TelegramBridge) Send(ticker storage.Ticker, message *storage.Message) 
 	} else {
 		var photos []interface{}
 		for i, attachment := range message.Attachments {
-			upload, err := tb.storage.FindUploadByUUID(attachment.UUID)
+			upload, err := tb.uploads.FindUploadByUUID(attachment.UUID)
 			if err != nil {
 				log.WithError(err).Error("failed to find upload")
 				continue
@@ -88,7 +89,7 @@ func (tb *TelegramBridge) Delete(ticker storage.Ticker, message *storage.Message
 	}
 
 	// Get Telegram token from database settings
-	telegramSettings := tb.storage.GetTelegramSettings()
+	telegramSettings := storage.GetSettings(tb.settings, storage.TelegramSetting)
 	if telegramSettings.Token == "" {
 		return nil
 	}
