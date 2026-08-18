@@ -1,12 +1,19 @@
 site_name: Systemli Ticker
 site_author: Systemli
+site_description: >-
+  Documentation for the Systemli Ticker: a service to distribute short messages
+  in support of events, demonstrations, or other time-sensitive events.
 repo_url: https://github.com/systemli/ticker
 
 nav:
   - Home: index.md
+  - Installation: installation.md
   - Configuration: configuration.md
+  - Integrations: integrations.md
+  - Operations: operations.md
+  - Troubleshooting: troubleshooting.md
+  - Development: development.md
   - API: api.md
-  - Quick Install Guide: quick-install.md
 
 theme:
   name: material
@@ -20,6 +27,7 @@ theme:
     - navigation.instant
     - navigation.tabs
     - navigation.tabs.sticky
+    - content.code.copy
 
 plugins:
   - search
@@ -35,4 +43,16 @@ extra:
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - tables
   - pymdownx.betterem
+  - pymdownx.details
+  - pymdownx.superfences
+  # Lets the docs embed compose.yaml and friends from the repository root, so
+  # the published instructions can never drift from the shipped files.
+  # check_paths makes the build fail if a referenced file is moved or renamed.
+  - pymdownx.snippets:
+      base_path:
+        - docs
+        - .
+      check_paths: true
