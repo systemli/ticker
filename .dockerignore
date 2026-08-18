@@ -1,0 +1,17 @@
+# Note: the release Dockerfile does `COPY ticker /ticker`, so the prebuilt
+# `ticker` binary must NOT be excluded here.
+
+.git
+.github
+.idea
+.vscode
+.DS_Store
+
+docs/
+site/
+testdata/
+uploads/
+
+*.db
+config.yml
+coverage.txt

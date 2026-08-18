@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -45,10 +46,9 @@ var (
 				}
 			}()
 
-			// Wait for interrupt signal to gracefully shutdown the server with a timeout of 5 seconds.
-			quit := make(chan os.Signal, 1)
-			signal.Notify(quit, os.Interrupt)
-			<-quit
+			// Wait for a shutdown signal, then gracefully shutdown the server with a
+			// timeout of 5 seconds.
+			waitForShutdown()
 
 			log.Infoln("shutdown ticker")
 
@@ -67,3 +67,12 @@ var (
 		},
 	}
 )
+
+// waitForShutdown blocks until the process is asked to terminate. SIGTERM is
+// what container runtimes and systemd send, so it is handled alongside SIGINT.
+func waitForShutdown() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(quit)
+	<-quit
+}

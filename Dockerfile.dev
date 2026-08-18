@@ -1,0 +1,22 @@
+# Development image only, used by compose.dev.yaml.
+#
+# The release image (./Dockerfile) is intentionally FROM scratch and expects a
+# prebuilt binary, because goreleaser cross-compiles it and injects the version
+# via ldflags. Do not merge the two.
+
+FROM golang:1.25-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /out/ticker .
+
+FROM alpine:3.24
+RUN apk add --no-cache ca-certificates curl \
+    && adduser -D -u 10001 ticker \
+    && mkdir -p /data/uploads \
+    && chown -R 10001 /data
+COPY --from=build /out/ticker /usr/local/bin/ticker
+USER 10001
+ENTRYPOINT ["ticker"]
+CMD ["run"]

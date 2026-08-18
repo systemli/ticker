@@ -1,19 +1,32 @@
-# listen binds ticker to specific address and port
+# listen binds ticker to a specific address and port.
+# Use ":8080" (all interfaces) when running in a container.
 listen: "localhost:8080"
-# log_level sets log level for logrus
-log_level: "error"
-# log_format sets log format for logrus (default: json)
+# log_level sets the log level: debug, info, warn or error
+log_level: "info"
+# log_format sets the log format: json or text
 log_format: "json"
 # configuration for the database
 database:
-  type: "sqlite" # postgres, mysql, sqlite
-  dsn: "ticker.db" # postgres: "host=localhost port=5432 user=ticker dbname=ticker password=ticker sslmode=disable"
-# secret used for JSON Web Tokens
-secret: "slorp-panfil-becall-dorp-hashab-incus-biter-lyra-pelage-sarraf-drunk"
-# listen port for prometheus metrics exporter
+  # postgres, mysql or sqlite
+  #
+  # Note: sqlite requires a binary built with cgo. The official Docker image and
+  # the released binaries are built without it, so use postgres or mysql there.
+  type: "sqlite"
+  # sqlite:   "ticker.db"
+  # postgres: "host=localhost port=5432 user=ticker password=ticker dbname=ticker sslmode=disable TimeZone=UTC"
+  # mysql:    "ticker:ticker@tcp(localhost:3306)/ticker?charset=utf8mb4&parseTime=True&loc=Local"
+  dsn: "ticker.db"
+# secret used to sign JSON Web Tokens.
+#
+# Leave empty ONLY for local development: a random secret is then generated on
+# every start, which invalidates all sessions on every restart. Generate one with
+#   openssl rand -hex 32
+secret: ""
+# listen address for the prometheus metrics exporter
 metrics_listen: ":8181"
 upload:
-  # path where to store the uploaded files
+  # path where uploaded files are stored
   path: "uploads"
-  # base url for uploaded assets
+  # public base URL of this API, used to build attachment links.
+  # No "/v1" and no trailing slash.
   url: "http://localhost:8080"

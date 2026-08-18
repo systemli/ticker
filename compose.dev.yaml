@@ -1,0 +1,138 @@
+# Development stack. Same topology as compose.yaml, but over plain HTTP on
+# *.localhost hostnames, with the API built from your working tree.
+#
+#   docker compose -f compose.dev.yaml up -d --build
+#   docker compose -f compose.dev.yaml run --rm ticker user create \
+#       --email dev@localhost --super-admin
+#
+#   Admin:     http://admin.ticker.localhost
+#   Frontend:  http://ticker.localhost
+#   API:       http://api.ticker.localhost
+#   Traefik:   http://localhost:8081
+#
+# Browsers resolve *.localhost to 127.0.0.1 themselves. If your setup does not,
+# add the three names to /etc/hosts.
+
+name: ticker-dev
+
+services:
+  traefik:
+    image: traefik:v3.7
+    command:
+      - --log.level=INFO
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=ticker-dev
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.transport.respondingTimeouts.readTimeout=0
+    ports:
+      - "80:80"
+      - "8081:8080"
+    # On SELinux hosts - Podman, Fedora, RHEL - SELinux denies access to the
+    # mounted socket even when the file permissions allow it, and Traefik then
+    # discovers no containers and answers 404 for everything. Disabling the
+    # label for this container is enough; it is a no-op elsewhere.
+    security_opt:
+      - label=disable
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - default
+
+  ticker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TICKER_LISTEN: ":8080"
+      TICKER_METRICS_LISTEN: ":8181"
+      TICKER_LOG_LEVEL: "debug"
+      TICKER_LOG_FORMAT: "text"
+      TICKER_SECRET: "dev-secret-do-not-use-in-production"
+      TICKER_DATABASE_TYPE: "postgres"
+      TICKER_DATABASE_DSN: "host=postgres port=5432 user=ticker password=ticker dbname=ticker sslmode=disable TimeZone=UTC"
+      TICKER_UPLOAD_PATH: "/data/uploads"
+      TICKER_UPLOAD_URL: "http://api.ticker.localhost"
+    volumes:
+      - ticker-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.ticker.loadbalancer.server.port=8080
+
+      - traefik.http.routers.ticker-api.rule=Host(`api.ticker.localhost`)
+      - traefik.http.routers.ticker-api.entrypoints=web
+      - traefik.http.routers.ticker-api.service=ticker
+
+      - traefik.http.middlewares.api-strip.stripprefix.prefixes=/api
+      - traefik.http.middlewares.api-v1.addprefix.prefix=/v1
+
+      - "traefik.http.middlewares.frontend-origin.headers.customrequestheaders.Origin=http://ticker.localhost"
+      - traefik.http.routers.frontend-api.rule=Host(`ticker.localhost`) && PathPrefix(`/api/`)
+      - traefik.http.routers.frontend-api.priority=100
+      - traefik.http.routers.frontend-api.entrypoints=web
+      - traefik.http.routers.frontend-api.service=ticker
+      - traefik.http.routers.frontend-api.middlewares=api-strip,api-v1,frontend-origin
+
+      - "traefik.http.middlewares.admin-origin.headers.customrequestheaders.Origin=http://admin.ticker.localhost"
+      - traefik.http.routers.admin-api.rule=Host(`admin.ticker.localhost`) && PathPrefix(`/api/`)
+      - traefik.http.routers.admin-api.priority=100
+      - traefik.http.routers.admin-api.entrypoints=web
+      - traefik.http.routers.admin-api.service=ticker
+      - traefik.http.routers.admin-api.middlewares=api-strip,api-v1,admin-origin
+
+  admin:
+    image: systemli/ticker-admin:latest
+    networks:
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.admin.rule=Host(`admin.ticker.localhost`)
+      - traefik.http.routers.admin.entrypoints=web
+      - traefik.http.services.admin.loadbalancer.server.port=80
+
+  frontend:
+    image: systemli/ticker-frontend:latest
+    networks:
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`ticker.localhost`)
+      - traefik.http.routers.frontend.entrypoints=web
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ticker
+      POSTGRES_USER: ticker
+      POSTGRES_PASSWORD: ticker
+    ports:
+      # Exposed so `go run . run` on the host can use the same database.
+      # Override if you already run PostgreSQL locally:
+      #   TICKER_DEV_DB_PORT=5433 docker compose -f compose.dev.yaml up -d
+      - "127.0.0.1:${TICKER_DEV_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticker -d ticker"]
+      interval: 5s
+      retries: 10
+    networks:
+      - default
+
+networks:
+  default:
+    name: ticker-dev
+
+volumes:
+  ticker-data:
