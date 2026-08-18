@@ -1,0 +1,198 @@
+# Production stack for the Systemli Ticker.
+#
+# Documentation: https://systemli.github.io/ticker/
+#
+#   cp .env.example .env   # then fill it in
+#   docker compose up -d
+#
+# Traefik owns all routing. The admin and frontend images are used exactly as
+# published: they contain a relative "/api" base URL, and Traefik rewrites
+# /api/** to /v1/** on their own hostnames. It also injects the Origin header,
+# which the API needs in order to know which ticker a request belongs to --
+# browsers omit Origin on same-origin GET requests.
+
+name: ticker
+
+services:
+  traefik:
+    image: traefik:v3.7
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - --log.level=INFO
+      - --accesslog=true
+      - --api.dashboard=false
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=ticker-proxy
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.asDefault=true
+      # The realtime endpoint (/v1/ws) holds connections open and pings every
+      # 54s. The default 60s read timeout leaves almost no margin, so disable it.
+      - --entrypoints.websecure.transport.respondingTimeouts.readTimeout=0
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?set ACME_EMAIL in .env}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Read-only, but still root-equivalent on the host. See the Security
+      # section of the installation guide for how to put a socket proxy here.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/letsencrypt
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # One-shot: the ticker image is built FROM scratch and runs as uid 10001.
+  # Docker creates a fresh named volume owned by root, so without this the
+  # uploads directory is not writable and every upload fails.
+  ticker-init:
+    image: alpine:3.24
+    user: root
+    command: ["sh", "-c", "mkdir -p /data/uploads && chown -R 10001 /data && chmod -R u+rwX /data"]
+    volumes:
+      - ticker-data:/data
+    restart: "no"
+
+  ticker:
+    image: systemli/ticker:${TICKER_TAG:-latest}
+    # The released image is currently built for amd64 only.
+    platform: linux/amd64
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ticker-init:
+        condition: service_completed_successfully
+    environment:
+      TICKER_LISTEN: ":8080"
+      TICKER_METRICS_LISTEN: ":8181"
+      TICKER_LOG_LEVEL: "info"
+      TICKER_LOG_FORMAT: "json"
+      TICKER_SECRET: ${TICKER_SECRET:?set TICKER_SECRET in .env (openssl rand -hex 32)}
+      # SQLite is not an option here: the released binary is built without cgo,
+      # so its SQLite driver is a non-functional stub.
+      TICKER_DATABASE_TYPE: "postgres"
+      TICKER_DATABASE_DSN: "host=postgres port=5432 user=ticker password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env} dbname=ticker sslmode=disable TimeZone=UTC"
+      TICKER_UPLOAD_PATH: "/data/uploads"
+      # Attachment URLs are absolute and built from this value. It must be the
+      # public API base -- no /v1, no trailing slash -- because /media is served
+      # by the API at its root.
+      TICKER_UPLOAD_URL: "https://${API_HOST:?set API_HOST in .env}"
+    volumes:
+      - ticker-data:/data
+    networks:
+      # The default route must be the internet-facing network; the integrations
+      # need outbound access to Telegram, Mastodon, Bluesky and Signal.
+      proxy:
+        priority: 100
+      internal:
+        priority: 50
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ticker-proxy
+      - traefik.http.services.ticker.loadbalancer.server.port=8080
+      # The image has no shell, so it cannot carry a container HEALTHCHECK.
+      # Traefik can poll the endpoint from outside instead.
+      - traefik.http.services.ticker.loadbalancer.healthcheck.path=/healthz
+      - traefik.http.services.ticker.loadbalancer.healthcheck.interval=30s
+
+      # --- Public API host: /v1/**, /media/**, /healthz, feeds ---
+      - traefik.http.routers.ticker-api.rule=Host(`${API_HOST}`)
+      - traefik.http.routers.ticker-api.entrypoints=websecure
+      - traefik.http.routers.ticker-api.tls.certresolver=le
+      - traefik.http.routers.ticker-api.service=ticker
+
+      # --- Shared /api/** -> /v1/** rewrite, applied in this order ---
+      - traefik.http.middlewares.api-strip.stripprefix.prefixes=/api
+      - traefik.http.middlewares.api-v1.addprefix.prefix=/v1
+
+      # --- /api on the public frontend host ---
+      # Origin must be injected: the API resolves which ticker to serve from it,
+      # and a same-origin GET fetch() does not send one.
+      - "traefik.http.middlewares.frontend-origin.headers.customrequestheaders.Origin=https://${FRONTEND_HOST}"
+      - traefik.http.routers.frontend-api.rule=Host(`${FRONTEND_HOST}`) && PathPrefix(`/api/`)
+      - traefik.http.routers.frontend-api.priority=100
+      - traefik.http.routers.frontend-api.entrypoints=websecure
+      - traefik.http.routers.frontend-api.tls.certresolver=le
+      - traefik.http.routers.frontend-api.service=ticker
+      - traefik.http.routers.frontend-api.middlewares=api-strip,api-v1,frontend-origin
+
+      # --- /api on the admin host ---
+      - "traefik.http.middlewares.admin-origin.headers.customrequestheaders.Origin=https://${ADMIN_HOST}"
+      - traefik.http.routers.admin-api.rule=Host(`${ADMIN_HOST}`) && PathPrefix(`/api/`)
+      - traefik.http.routers.admin-api.priority=100
+      - traefik.http.routers.admin-api.entrypoints=websecure
+      - traefik.http.routers.admin-api.tls.certresolver=le
+      - traefik.http.routers.admin-api.service=ticker
+      - traefik.http.routers.admin-api.middlewares=api-strip,api-v1,admin-origin
+
+  admin:
+    image: systemli/ticker-admin:${ADMIN_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ticker-proxy
+      - traefik.http.routers.admin.rule=Host(`${ADMIN_HOST:?set ADMIN_HOST in .env}`)
+      - traefik.http.routers.admin.entrypoints=websecure
+      - traefik.http.routers.admin.tls.certresolver=le
+      - traefik.http.services.admin.loadbalancer.server.port=80
+
+  frontend:
+    image: systemli/ticker-frontend:${FRONTEND_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ticker-proxy
+      - traefik.http.routers.frontend.rule=Host(`${FRONTEND_HOST:?set FRONTEND_HOST in .env}`)
+      - traefik.http.routers.frontend.entrypoints=websecure
+      - traefik.http.routers.frontend.tls.certresolver=le
+      - traefik.http.services.frontend.loadbalancer.server.port=80
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ticker
+      POSTGRES_USER: ticker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticker -d ticker"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+networks:
+  proxy:
+    name: ticker-proxy
+  internal:
+    name: ticker-internal
+    internal: true
+
+volumes:
+  ticker-data:
+  postgres-data:
+  traefik-acme:
