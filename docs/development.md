@@ -174,6 +174,14 @@ mkdocs serve          # http://localhost:8000
 mkdocs build --strict # fails on broken links
 ```
 
+`requirements.txt` is a lock file with pinned versions and hashes, generated from
+`requirements.in`. To change a documentation dependency, edit `requirements.in` and regenerate:
+
+```shell
+pip install pip-tools
+pip-compile --generate-hashes --allow-unsafe requirements.in
+```
+
 `--strict` is worth running before opening a pull request. Pages must be listed in the `nav` section
 of `mkdocs.yml`, and code blocks that embed repository files with `--8<--` fail the build if the file
 is moved.

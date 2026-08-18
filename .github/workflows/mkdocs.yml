@@ -7,9 +7,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -18,6 +15,8 @@ jobs:
   build:
     name: Build Documentation
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,8 +28,12 @@ jobs:
           cache: "pip"
           cache-dependency-path: "requirements.txt"
 
+      # requirements.txt is a fully pinned lock with hashes, generated from
+      # requirements.in with pip-compile --generate-hashes. Installing with
+      # --require-hashes and --only-binary pins every transitive dependency and
+      # avoids executing setup scripts from source distributions.
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: "pip install --require-hashes --only-binary :all: -r requirements.txt"
 
       # --strict fails on broken internal links, pages missing from the nav and
       # embedded snippets whose source file has moved.
