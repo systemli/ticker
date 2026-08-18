@@ -10,6 +10,9 @@
 # /api/** to /v1/** on their own hostnames. It also injects the Origin header,
 # which the API needs in order to know which ticker a request belongs to --
 # browsers omit Origin on same-origin GET requests.
+#
+# The API has no hostname of its own. Attachments are served below /v1, so they
+# arrive through the same /api path as every other request.
 
 name: ticker
 
@@ -90,10 +93,6 @@ services:
       TICKER_DATABASE_TYPE: "postgres"
       TICKER_DATABASE_DSN: "host=postgres port=5432 user=ticker password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env} dbname=ticker sslmode=disable TimeZone=UTC"
       TICKER_UPLOAD_PATH: "/data/uploads"
-      # Attachment URLs are absolute and built from this value. It must be the
-      # public API base -- no /v1, no trailing slash -- because /media is served
-      # by the API at its root.
-      TICKER_UPLOAD_URL: "https://${API_HOST:?set API_HOST in .env}"
     volumes:
       - ticker-data:/data
     networks:
@@ -112,11 +111,15 @@ services:
       - traefik.http.services.ticker.loadbalancer.healthcheck.path=/healthz
       - traefik.http.services.ticker.loadbalancer.healthcheck.interval=30s
 
-      # --- Public API host: /v1/**, /media/**, /healthz, feeds ---
-      - traefik.http.routers.ticker-api.rule=Host(`${API_HOST}`)
-      - traefik.http.routers.ticker-api.entrypoints=websecure
-      - traefik.http.routers.ticker-api.tls.certresolver=le
-      - traefik.http.routers.ticker-api.service=ticker
+      # --- /healthz, for uptime monitoring ---
+      # It lives outside /v1, so the /api rewrite below cannot reach it. Without
+      # its own router the frontend's SPA fallback would answer with index.html
+      # and a monitor would report healthy no matter what.
+      - traefik.http.routers.ticker-health.rule=Host(`${FRONTEND_HOST}`) && Path(`/healthz`)
+      - traefik.http.routers.ticker-health.priority=100
+      - traefik.http.routers.ticker-health.entrypoints=websecure
+      - traefik.http.routers.ticker-health.tls.certresolver=le
+      - traefik.http.routers.ticker-health.service=ticker
 
       # --- Shared /api/** -> /v1/** rewrite, applied in this order ---
       - traefik.http.middlewares.api-strip.stripprefix.prefixes=/api
@@ -145,6 +148,13 @@ services:
   admin:
     image: systemli/ticker-admin:${ADMIN_TAG:-latest}
     restart: unless-stopped
+    depends_on:
+      - ticker
+    environment:
+      # The image renders its nginx config at start and proxies /api itself. In
+      # this stack Traefik gets there first, but nginx refuses to start without
+      # the value.
+      TICKER_API_URL: "http://ticker:8080/v1"
     networks:
       - proxy
     labels:
@@ -158,6 +168,10 @@ services:
   frontend:
     image: systemli/ticker-frontend:${FRONTEND_TAG:-latest}
     restart: unless-stopped
+    depends_on:
+      - ticker
+    environment:
+      TICKER_API_URL: "http://ticker:8080/v1"
     networks:
       - proxy
     labels:

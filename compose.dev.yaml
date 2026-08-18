@@ -7,11 +7,12 @@
 #
 #   Admin:     http://admin.ticker.localhost
 #   Frontend:  http://ticker.localhost
-#   API:       http://api.ticker.localhost
 #   Traefik:   http://localhost:8081
 #
+# The API has no hostname of its own; it is reached through /api on both.
+#
 # Browsers resolve *.localhost to 127.0.0.1 themselves. If your setup does not,
-# add the three names to /etc/hosts.
+# add the two names to /etc/hosts.
 
 name: ticker-dev
 
@@ -57,7 +58,6 @@ services:
       TICKER_DATABASE_TYPE: "postgres"
       TICKER_DATABASE_DSN: "host=postgres port=5432 user=ticker password=ticker dbname=ticker sslmode=disable TimeZone=UTC"
       TICKER_UPLOAD_PATH: "/data/uploads"
-      TICKER_UPLOAD_URL: "http://api.ticker.localhost"
     volumes:
       - ticker-data:/data
     healthcheck:
@@ -71,9 +71,10 @@ services:
       - traefik.enable=true
       - traefik.http.services.ticker.loadbalancer.server.port=8080
 
-      - traefik.http.routers.ticker-api.rule=Host(`api.ticker.localhost`)
-      - traefik.http.routers.ticker-api.entrypoints=web
-      - traefik.http.routers.ticker-api.service=ticker
+      - traefik.http.routers.ticker-health.rule=Host(`ticker.localhost`) && Path(`/healthz`)
+      - traefik.http.routers.ticker-health.priority=100
+      - traefik.http.routers.ticker-health.entrypoints=web
+      - traefik.http.routers.ticker-health.service=ticker
 
       - traefik.http.middlewares.api-strip.stripprefix.prefixes=/api
       - traefik.http.middlewares.api-v1.addprefix.prefix=/v1
@@ -94,6 +95,11 @@ services:
 
   admin:
     image: systemli/ticker-admin:latest
+    depends_on:
+      ticker:
+        condition: service_healthy
+    environment:
+      TICKER_API_URL: "http://ticker:8080/v1"
     networks:
       - default
     labels:
@@ -104,6 +110,11 @@ services:
 
   frontend:
     image: systemli/ticker-frontend:latest
+    depends_on:
+      ticker:
+        condition: service_healthy
+    environment:
+      TICKER_API_URL: "http://ticker:8080/v1"
     networks:
       - default
     labels:
