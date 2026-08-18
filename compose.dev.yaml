@@ -30,6 +30,12 @@ services:
     ports:
       - "80:80"
       - "8081:8080"
+    # On SELinux hosts - Podman, Fedora, RHEL - SELinux denies access to the
+    # mounted socket even when the file permissions allow it, and Traefik then
+    # discovers no containers and answers 404 for everything. Disabling the
+    # label for this container is enough; it is a no-op elsewhere.
+    security_opt:
+      - label=disable
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

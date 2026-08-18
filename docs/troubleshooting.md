@@ -155,14 +155,50 @@ after repeated failures. Confirm each hostname resolves to this machine before r
 
 ## Traefik returns 404 for everything
 
-Traefik cannot read the Docker socket, so it discovered no containers.
+Every hostname answers 404 while the Traefik dashboard itself works. Traefik discovered no
+containers, so it has no routes — the dashboard is served internally and does not depend on
+discovery.
 
 ```shell
-docker compose logs traefik | grep -i permission
+docker compose logs traefik | grep -i "permission denied"
 ```
 
-Confirm `/var/run/docker.sock` is mounted and readable. Note this is a frequent issue under rootless
-container runtimes such as Podman, where the socket belongs to a different user.
+If that reports `permission denied while trying to connect to the docker API at
+unix:///var/run/docker.sock`, Traefik cannot read the socket.
+
+**On SELinux hosts — Podman, Fedora, RHEL — this happens even though the file permissions are
+correct.** SELinux denies the container access to the mounted socket and the denial surfaces as a
+permission error. Disabling the label for the Traefik container is enough, and does not relabel
+anything on the host:
+
+```yaml
+  traefik:
+    security_opt:
+      - label=disable
+```
+
+`compose.dev.yaml` already sets this. Add it to your production stack only if you hit the error;
+it is a no-op on hosts without SELinux.
+
+To confirm the socket is reachable at all:
+
+```shell
+docker run --rm --security-opt label=disable \
+  -v /var/run/docker.sock:/var/run/docker.sock alpine:3.24 \
+  test -w /var/run/docker.sock && echo reachable
+```
+
+Otherwise check that the socket is mounted, and that its path is right for your runtime — rootless
+Podman also exposes a per-user socket under `$XDG_RUNTIME_DIR/podman/podman.sock`.
+
+Once discovery works, the routers appear here:
+
+```shell
+curl -s http://localhost:8081/api/http/routers | jq '.[].name'   # dev stack
+```
+
+You should see `ticker-api`, `frontend`, `frontend-api`, `admin` and `admin-api`, each suffixed
+`@docker`. A suffix of `@internal` only means Traefik's own dashboard routes.
 
 ## Getting more detail
 
