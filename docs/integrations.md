@@ -34,37 +34,92 @@ then set the channel name on the ticker.
 
 ## Signal
 
-**Instance-wide.** Signal support talks to a [signal-cli](https://github.com/AsamK/signal-cli) REST
-endpoint, which is **not part of the Ticker stack** — you run it yourself. A common choice is
-[signal-cli-rest-api](https://github.com/bbernhard/signal-cli-rest-api).
+**Instance-wide.** Signal support talks to [signal-cli](https://github.com/AsamK/signal-cli) running
+in daemon mode, which is **not part of the Ticker stack** — you run it yourself.
+
+!!! important "signal-cli's own JSON-RPC interface is required"
+
+    Ticker calls signal-cli's native JSON-RPC methods (`send`, `updateGroup`, `listGroups`,
+    `quitGroup`, `remoteDelete`) directly. A REST wrapper around signal-cli exposes different
+    endpoints and will **not** work — point Ticker at the official image's `--http` endpoint.
 
 Add it to the stack on the internal network:
 
 ```yaml
   signal-cli:
-    image: bbernhard/signal-cli-rest-api:latest
-    environment:
-      MODE: json-rpc
+    image: ghcr.io/asamk/signal-cli:0.13.2
+    # The published image is amd64 only.
+    platform: linux/amd64
+    restart: unless-stopped
+    # The image's entrypoint is already
+    # "signal-cli --config=/var/lib/signal-cli", so only the subcommand is given.
+    # --http must bind 0.0.0.0: the default is localhost, which is unreachable
+    # from other containers.
+    command: ["daemon", "--http=0.0.0.0:8080"]
     volumes:
-      - signal-cli-data:/home/.local/share/signal-cli
+      - signal-cli-data:/var/lib/signal-cli
     networks:
       - internal
 ```
 
-Register the phone number with signal-cli first, following its own documentation. Then, as a super
-admin, configure the Signal settings:
+…and add `signal-cli-data:` to the `volumes:` block at the bottom of the file.
+
+The container runs as UID `999` and `/var/lib/signal-cli` already exists in the image, so a fresh
+named volume inherits the right ownership — unlike the API's uploads volume, this one needs no
+preparation.
+
+### Register the account first
+
+signal-cli needs a registered or linked Signal account before the daemon is useful. Do this once,
+against the same volume, following
+[signal-cli's own documentation](https://github.com/AsamK/signal-cli/wiki):
+
+```shell
+# Link this instance as a secondary device to an existing Signal account
+docker compose run --rm signal-cli link -n "Ticker"
+```
+
+This prints a `sgnl://linkdevice?uuid=…` URI. Turn it into a QR code (for example with `qrencode`)
+and scan it from Signal on your phone under *Linked devices*.
+
+Registering a dedicated number instead of linking is also possible; see signal-cli's documentation,
+as it involves a captcha and an SMS verification step.
+
+Afterwards start the daemon and confirm it answers:
+
+```shell
+docker compose up -d signal-cli
+docker compose exec ticker-init sh -c \
+  'wget -qO- --post-data="{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"listGroups\",\"params\":{\"account\":\"+491234567890\"}}" \
+   --header="Content-Type: application/json" http://signal-cli:8080/api/v1/rpc'
+```
+
+In daemon mode signal-cli continuously receives messages, which the Signal protocol requires for
+group functionality to work reliably.
+
+### Configure Ticker
+
+As a super admin, fill in the Signal settings in the admin interface:
 
 | Field | Meaning |
 | --- | --- |
-| `apiUrl` | URL of the signal-cli JSON-RPC endpoint, for example `http://signal-cli:8080/api/v1/rpc` |
-| `account` | the registered phone number in international format, e.g. `+491234567890` |
-| `avatar` | optional path to an avatar image used for created groups |
+| `apiUrl` | Full URL of signal-cli's JSON-RPC endpoint, including the path: `http://signal-cli:8080/api/v1/rpc` |
+| `account` | The registered phone number in international format, e.g. `+491234567890` |
+| `avatar` | Optional path to an avatar image for created groups |
+
+The endpoint path `/api/v1/rpc` is not optional — it is where `--http` serves JSON-RPC, and Ticker
+POSTs to exactly the URL you configure.
+
+`avatar` is passed through to signal-cli, which reads it from **its own** filesystem. The path must
+therefore exist inside the signal-cli container, not in the Ticker container. Mount the file in if
+you want one.
 
 Stored as the `signal_group_settings` record. Signal is considered enabled once **both** `apiUrl`
-and `account` are set.
+and `account` are set; `avatar` is optional.
 
 **Per ticker.** Enabling Signal on a ticker creates a Signal group and returns an invite link that
-you can publish. Ticker admins can be promoted to group admins.
+you can publish. Ticker admins can be promoted to group admins. Messages posted to the ticker are
+sent to the group, and deleting a message removes it there too.
 
 ## Mastodon
 
