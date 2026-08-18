@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +28,7 @@ func (s *MediaTestSuite) SetupTest() {
 
 	s.w = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.w)
-	s.ctx.Request = httptest.NewRequest(http.MethodGet, "/media", nil)
+	s.ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/media", nil)
 	s.store = &storage.MockStorage{}
 	s.cfg = config.LoadConfig("")
 }
@@ -42,14 +44,28 @@ func (s *MediaTestSuite) TestGetMedia() {
 	})
 
 	s.Run("when upload found", func() {
-		upload := storage.NewUpload("image.jpg", "image/jpeg", 1)
+		upload := storage.NewUpload("image/png", 1)
+		uploadPath := s.T().TempDir()
+		fullPath := upload.FullPath(uploadPath)
+		s.NoError(os.MkdirAll(filepath.Dir(fullPath), 0750))
+		s.NoError(os.WriteFile(fullPath, []byte("not really a png"), 0600))
+
 		s.store.On("FindUploadByUUID", mock.Anything).Return(upload, nil).Once()
-		s.store.On("UploadPath").Return("./uploads").Once()
+		s.store.On("UploadPath").Return(uploadPath).Once()
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/media/"+upload.FileName(), nil)
+		ctx.AddParam("fileName", upload.FileName())
 
 		h := s.handler()
-		h.GetMedia(s.ctx)
+		h.GetMedia(ctx)
 
-		s.Equal(http.StatusNotFound, s.w.Code)
+		s.Equal(http.StatusOK, w.Code)
+		s.Equal("image/png", w.Header().Get("Content-Type"))
+		s.Equal("nosniff", w.Header().Get("X-Content-Type-Options"))
+		s.Equal("public, max-age=2592000, immutable", w.Header().Get("Cache-Control"))
+		s.Contains(w.Header().Get("Content-Security-Policy"), "default-src 'none'")
 		s.store.AssertExpectations(s.T())
 	})
 }
