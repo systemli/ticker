@@ -46,12 +46,9 @@ var (
 				}
 			}()
 
-			// Wait for an interrupt or termination signal to gracefully shutdown the
-			// server with a timeout of 5 seconds. SIGTERM is what container runtimes
-			// and systemd send, so it must be handled alongside SIGINT.
-			quit := make(chan os.Signal, 1)
-			signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-			<-quit
+			// Wait for a shutdown signal, then gracefully shutdown the server with a
+			// timeout of 5 seconds.
+			waitForShutdown()
 
 			log.Infoln("shutdown ticker")
 
@@ -70,3 +67,12 @@ var (
 		},
 	}
 )
+
+// waitForShutdown blocks until the process is asked to terminate. SIGTERM is
+// what container runtimes and systemd send, so it is handled alongside SIGINT.
+func waitForShutdown() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(quit)
+	<-quit
+}
