@@ -82,7 +82,7 @@ gunzip -c ticker-db.sql.gz | docker compose exec -T postgres psql -U ticker tick
 ## Health and monitoring
 
 ```shell
-curl https://api.ticker.example.org/healthz
+curl https://ticker.example.org/healthz
 # OK
 ```
 

@@ -7,12 +7,12 @@
     [route definitions](https://github.com/systemli/ticker/blob/main/internal/api/api.go) are the
     authoritative reference for it.
 
-All endpoints are served under the `/v1` prefix, with two exceptions that live at the root:
+All endpoints are served under the `/v1` prefix, including `GET /v1/media/{file}` for uploaded
+attachments. The only exception is `GET /healthz`, which lives at the root.
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /media/{file}` | uploaded attachments |
-| `GET /healthz` | health check |
+Attachment URLs in responses are **relative to the site that served them**, of the form
+`/api/media/{file}` — that is the path the admin and frontend expose the API under. When you talk to
+the API directly, replace `/api` with `/v1`.
 
 ## Identifying a ticker
 
@@ -24,7 +24,7 @@ Clients that do not send an `Origin` header — RSS readers, scripts — can pas
 query parameter, which takes precedence:
 
 ```shell
-curl 'https://api.ticker.example.org/v1/feed?origin=https://ticker.example.org'
+curl 'https://ticker.example.org/api/feed?origin=https://ticker.example.org'
 ```
 
 Requests that match no ticker return HTTP 200 with a `ticker not found` error body, or, for `/init`,

@@ -27,8 +27,9 @@ docker compose -f compose.dev.yaml up -d --build
 | --- | --- |
 | <http://ticker.localhost> | public frontend |
 | <http://admin.ticker.localhost> | admin interface |
-| <http://api.ticker.localhost> | API |
 | <http://localhost:8081> | Traefik dashboard |
+
+The API has no address of its own; it answers under `/api` on both hostnames.
 
 Create a user, then set up a ticker:
 
@@ -123,17 +124,20 @@ npm run dev
 | ticker-admin | <http://localhost:3000> |
 | ticker-frontend | <http://localhost:4000> |
 
-Point them at an API with a `.env` file. The variable must include the `/v1` suffix:
+Both dev servers proxy `/api` to `http://localhost:8080/v1`, so run the API alongside them with
+`go run . run` and nothing needs configuring.
 
-```shell title=".env"
-TICKER_API_URL=http://localhost:8080/v1
-```
+!!! warning "Delete a leftover `.env`"
+
+    `TICKER_API_URL` overrides the proxy with an absolute address. Requests then work but attachment
+    images do not, because their URLs are relative and resolve against the dev server instead. The
+    file is gitignored, so an old one may still be sitting in your checkout.
 
 !!! warning "Register the dev server's own origin"
 
-    With an absolute `TICKER_API_URL`, the browser sends the **dev server's** address as `Origin`.
-    For the public frontend that means the ticker needs `http://localhost:4000` registered under its
-    websites, or you will only ever see the inactive page. The admin interface is unaffected.
+    The proxy sends the **dev server's** address as `Origin`. For the public frontend that means the
+    ticker needs `http://localhost:4000` registered under its websites, or you will only ever see
+    the inactive page. The admin interface is unaffected.
 
 Other commands, in both repositories:
 

@@ -26,7 +26,6 @@ For container deployments, environment variables alone are usually enough.
 | `database.dsn` | `TICKER_DATABASE_DSN` | `ticker.db` | Connection string, see below. |
 | `metrics_listen` | `TICKER_METRICS_LISTEN` | `:8181` | Address for the Prometheus exporter, on a separate listener. |
 | `upload.path` | `TICKER_UPLOAD_PATH` | `uploads` | Directory for uploaded files. |
-| `upload.url` | `TICKER_UPLOAD_URL` | `http://localhost:8080` | Public base URL used to build attachment links. |
 
 That is the complete list. There is no environment variable for any setting not named above.
 
@@ -110,32 +109,30 @@ The schema is migrated automatically at startup; there is no separate migrate co
 
 ## Uploads
 
-Two settings work together:
-
-- `TICKER_UPLOAD_PATH` is where files are written. It must be a **persistent, writable** directory,
-  otherwise attachments are lost when the container is replaced while the database still references
-  them.
-- `TICKER_UPLOAD_URL` is the **public base URL of the API**, and is used to build absolute
-  attachment links of the form `<TICKER_UPLOAD_URL>/media/<file>`.
+There is one setting: `TICKER_UPLOAD_PATH`, the directory files are written to. It must be
+**persistent and writable**, otherwise attachments are lost when the container is replaced while the
+database still references them.
 
 ```shell
 TICKER_UPLOAD_PATH=/data/uploads
-TICKER_UPLOAD_URL=https://api.ticker.example.org
 ```
 
-`TICKER_UPLOAD_URL` must be the API's own public hostname, with **no `/v1`** and **no trailing
-slash**. Media is served by the API at its root, so:
+Nothing else needs configuring. Attachments are served at `/v1/media/<file>` and the URLs in API
+responses are relative — `/api/media/<file>`, resolved against whichever site served the response.
+So the same response works for both interfaces, and the API needs no public address of its own.
 
-- `https://api.ticker.example.org/v1` produces `…/v1/media/x`, which is a 404.
-- Pointing it at the frontend produces links the frontend answers with its own HTML page rather
-  than an image.
+!!! note "`TICKER_UPLOAD_URL` was removed"
 
-These URLs are generated per response rather than stored, so correcting the value fixes existing
-messages too, once the response cache expires.
+    Earlier versions built absolute attachment links from it. It is ignored now; the API logs a
+    warning when it is still set so you can drop it from your environment.
 
 Uploads accept `image/jpeg`, `image/gif` and `image/png` only, and the API rejects request bodies
 over 10 MB. If a reverse proxy in front of it imposes a smaller limit, uploads fail there first —
 nginx defaults to 1 MB, for instance.
+
+The stored file extension is derived from the detected content type, not from the uploaded filename,
+and media responses carry `Content-Type` from the database plus `X-Content-Type-Options: nosniff`.
+That matters because attachments share an origin with the admin interface.
 
 ## Metrics
 
