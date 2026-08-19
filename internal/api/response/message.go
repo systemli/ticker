@@ -1,10 +1,8 @@
 package response
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/systemli/ticker/internal/config"
 	"github.com/systemli/ticker/internal/storage"
 )
 
@@ -24,12 +22,11 @@ type MessageAttachment struct {
 	ContentType string `json:"contentType"`
 }
 
-func MessageResponse(message storage.Message, config config.Config) Message {
+func MessageResponse(message storage.Message) Message {
 	var attachments []MessageAttachment
 
 	for _, attachment := range message.Attachments {
-		name := fmt.Sprintf("%s.%s", attachment.UUID, attachment.Extension)
-		attachments = append(attachments, MessageAttachment{URL: MediaURL(config.Upload.URL, name), ContentType: attachment.ContentType})
+		attachments = append(attachments, MessageAttachment{URL: storage.MediaURL(attachment.FileName()), ContentType: attachment.ContentType})
 	}
 
 	return Message{
@@ -44,14 +41,10 @@ func MessageResponse(message storage.Message, config config.Config) Message {
 	}
 }
 
-func MessagesResponse(messages []storage.Message, config config.Config) []Message {
+func MessagesResponse(messages []storage.Message) []Message {
 	msgs := make([]Message, 0)
 	for _, message := range messages {
-		msgs = append(msgs, MessageResponse(message, config))
+		msgs = append(msgs, MessageResponse(message))
 	}
 	return msgs
-}
-
-func MediaURL(uploadURL, name string) string {
-	return fmt.Sprintf("%s/media/%s", uploadURL, name)
 }

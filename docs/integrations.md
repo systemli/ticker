@@ -147,5 +147,5 @@ logs if a message did not arrive somewhere:
 docker compose logs ticker | grep bridge_name
 ```
 
-Attachments are sent along, using the absolute URLs built from `TICKER_UPLOAD_URL`. If that value is
-wrong, posts arrive with broken images — see [Configuration](configuration.md#uploads).
+Attachments are sent along as files, read straight from `TICKER_UPLOAD_PATH` — no public URL is
+involved, so an integration keeps working even if the interfaces are unreachable.

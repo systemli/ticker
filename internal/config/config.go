@@ -30,7 +30,6 @@ type Database struct {
 
 type Upload struct {
 	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
 }
 
 func defaultConfig() Config {
@@ -45,7 +44,6 @@ func defaultConfig() Config {
 		MetricsListen: ":8181",
 		Upload: Upload{
 			Path: "uploads",
-			URL:  "http://localhost:8080",
 		},
 		FileBackend: afero.NewOsFs(),
 	}
@@ -91,7 +89,7 @@ func LoadConfig(path string) Config {
 		c.Upload.Path = os.Getenv("TICKER_UPLOAD_PATH")
 	}
 	if os.Getenv("TICKER_UPLOAD_URL") != "" {
-		c.Upload.URL = os.Getenv("TICKER_UPLOAD_URL")
+		log.Warn("TICKER_UPLOAD_URL is no longer used and can be removed, attachment links are relative to the site serving them")
 	}
 
 	return c

@@ -94,6 +94,30 @@ info:
   title: Ticker API
   version: "2.0"
 paths:
+  /media/{fileName}:
+    get:
+      description: |-
+        Serves an uploaded attachment. Attachment URLs in other responses are relative to the site
+        serving them and take the form /api/media/{fileName}; against the API directly the path is
+        /v1/media/{fileName}.
+      parameters:
+        - description: File name of the attachment, e.g. 6a204bd8-9ee6-4478-bcd6-9b3b1e1f0d3a.jpg
+          in: path
+          name: fileName
+          required: true
+          type: string
+      produces:
+        - image/gif
+        - image/jpeg
+        - image/png
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+      summary: Retrieves an uploaded attachment
+      tags:
+        - public
   /init:
     get:
       consumes:

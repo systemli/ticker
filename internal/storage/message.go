@@ -75,6 +75,10 @@ type Attachment struct {
 	ContentType string
 }
 
+func (a *Attachment) FileName() string {
+	return fmt.Sprintf("%s.%s", a.UUID, a.Extension)
+}
+
 func (m *Message) AddAttachment(upload Upload) {
 	attachment := Attachment{
 		UUID:        upload.UUID,

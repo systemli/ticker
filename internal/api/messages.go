@@ -27,7 +27,7 @@ func (h *handler) GetMessages(c *gin.Context) {
 		return
 	}
 
-	data := map[string]any{"messages": response.MessagesResponse(messages, h.config)}
+	data := map[string]any{"messages": response.MessagesResponse(messages)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -38,7 +38,7 @@ func (h *handler) GetMessage(c *gin.Context) {
 		return
 	}
 
-	data := map[string]any{"message": response.MessageResponse(message, h.config)}
+	data := map[string]any{"message": response.MessageResponse(message)}
 	c.JSON(http.StatusOK, response.SuccessResponse(data))
 }
 
@@ -81,7 +81,7 @@ func (h *handler) PostMessage(c *gin.Context) {
 		return
 	}
 
-	serializedMessage := response.MessageResponse(message, h.config)
+	serializedMessage := response.MessageResponse(message)
 	h.realtime.Broadcast(realtime.Message{
 		Type:     "message_created",
 		TickerID: ticker.ID,

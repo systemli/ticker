@@ -23,15 +23,13 @@ Check, in order:
 
     ```shell
     # With an origin: "settings" comes back populated
-    curl -s -H 'Origin: https://ticker.example.org' \
-      https://api.ticker.example.org/v1/init
+    curl -s 'https://ticker.example.org/api/init?origin=https://ticker.example.org'
 
-    # Without one: "settings" is empty — this is what a missing Origin looks like
-    curl -s https://api.ticker.example.org/v1/init
+    # Relying on the proxy to add it — this must look the same
+    curl -s https://ticker.example.org/api/init
     ```
 
-    If the request through your frontend (`https://ticker.example.org/api/init`) looks like the
-    second, the proxy is not setting `Origin`.
+    If the second response has an empty `settings`, the proxy is not setting `Origin`.
 
 !!! note "Changes take up to five minutes"
 
@@ -107,21 +105,20 @@ Also make sure the proxy does not time out idle connections aggressively — the
 
 ## Images are broken
 
-**Everywhere, including in Telegram or Mastodon posts** — `TICKER_UPLOAD_URL` is wrong. It must be
-the API's public base URL, with no `/v1` and no trailing slash:
+Attachment URLs are relative — `/api/media/<uuid>.png` — so they are served by whichever site the
+page came from. Check one directly:
 
 ```shell
-TICKER_UPLOAD_URL=https://api.ticker.example.org
+curl -I https://ticker.example.org/api/media/<uuid>.png
 ```
 
-Verify a link resolves:
+**Images and the rest of the interface are both broken** — the `/api` path is not routed to the API
+at all. See [the empty interface](#everything-in-the-interface-is-empty-with-no-error) above.
 
-```shell
-curl -I https://api.ticker.example.org/media/<uuid>.png
-```
-
-Note `/media` is served at the API's root, so it is **not** reachable through the `/api` rewrite —
-`https://ticker.example.org/api/media/...` is expected to 404.
+**Images are broken but everything else works, on a self-built interface image** — the build has an
+absolute `TICKER_API_URL` baked in. Requests then go to that address while images resolve against
+the site's own origin, which serves no `/api`. Build without it so the relative `/api` default
+applies.
 
 **Only for older messages** — the uploads directory was not persistent and the files are gone, while
 the database still references them. Confirm `TICKER_UPLOAD_PATH` points into a named volume, and

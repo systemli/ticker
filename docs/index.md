@@ -16,7 +16,7 @@ A complete installation is three services, published as three Docker images:
 
 | Component | Image | Role |
 | --- | --- | --- |
-| [ticker](https://github.com/systemli/ticker) | `systemli/ticker` | The API. Stores everything, serves the public endpoints and media, dispatches to integrations. |
+| [ticker](https://github.com/systemli/ticker) | `systemli/ticker` | The API. Stores everything, serves the public endpoints and media, dispatches to integrations. It needs no public hostname of its own. |
 | [ticker-admin](https://github.com/systemli/ticker-admin) | `systemli/ticker-admin` | Admin interface. Editors log in here to manage tickers, messages and users. |
 | [ticker-frontend](https://github.com/systemli/ticker-frontend) | `systemli/ticker-frontend` | The public page your readers visit. |
 
@@ -26,28 +26,26 @@ data of their own.
 ## How a request flows
 
 ```
-                        ┌─────────────────────────────┐
-   readers ────────────▶│  ticker.example.org         │
-                        │  ticker-frontend (SPA)      │
-                        │  /api/**  ──────────────────┼──┐
-                        └─────────────────────────────┘  │
-                                                         │
-                        ┌─────────────────────────────┐  │   ┌──────────────┐
-   editors ────────────▶│  admin.ticker.example.org   │  ├──▶│  ticker      │
-                        │  ticker-admin (SPA)         │  │   │  (API)       │
-                        │  /api/**  ──────────────────┼──┤   │              │
-                        └─────────────────────────────┘  │   └──────┬───────┘
-                                                         │          │
-                        ┌─────────────────────────────┐  │   ┌──────▼───────┐
-   feeds, media ───────▶│  api.ticker.example.org     │──┘   │  PostgreSQL  │
-                        │  /v1/**, /media/**          │      └──────────────┘
-                        └─────────────────────────────┘
+   readers         ┌─────────────────────────────┐
+   feeds, ────────▶│  ticker.example.org         │
+   media           │  ticker-frontend (SPA)      │
+                   │  /api/**  ──────────────────┼──┐
+                   └─────────────────────────────┘  │      ┌──────────────┐
+                                                    ├─────▶│  ticker      │
+                   ┌─────────────────────────────┐  │      │  (API)       │
+   editors ───────▶│  admin.ticker.example.org   │  │      │              │
+                   │  ticker-admin (SPA)         │  │      └──────┬───────┘
+                   │  /api/**  ──────────────────┼──┘             │
+                   └─────────────────────────────┘         ┌──────▼───────┐
+                                                           │  PostgreSQL  │
+                                                           └──────────────┘
 ```
 
 Two details of this shape matter, and explain most of the configuration:
 
-- **The API needs its own public hostname.** Attachment URLs are absolute and served by the API
-  at `/media/...`, outside the `/v1` prefix. RSS readers also fetch feeds directly.
+- **The API has no public hostname of its own.** Everything it serves — the public endpoints,
+  attachments, RSS feeds — lives below `/v1`, and both interfaces expose that as `/api` on their own
+  address. Attachment URLs in API responses are relative for the same reason.
 - **The API works out which ticker a request is for from the browser's `Origin` header.** That is
   why the public frontend's address must be registered on the ticker itself, and why the reverse
   proxy has to pass a correct `Origin` along. See [Installation](installation.md).

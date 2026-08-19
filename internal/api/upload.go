@@ -15,8 +15,6 @@ import (
 	"github.com/systemli/ticker/internal/util"
 )
 
-var allowedContentTypes = []string{"image/jpeg", "image/gif", "image/png"}
-
 func (h *handler) PostUpload(c *gin.Context) {
 	me, err := helper.Me(c)
 	if err != nil {
@@ -65,13 +63,13 @@ func (h *handler) PostUpload(c *gin.Context) {
 		}
 
 		contentType := util.DetectContentType(file)
-		if !util.ContainsString(allowedContentTypes, contentType) {
+		if _, allowed := storage.ExtensionForContentType(contentType); !allowed {
 			log.Error(fmt.Sprintf("%s is not allowed to uploaded", contentType))
 			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, "failed to upload"))
 			return
 		}
 
-		u := storage.NewUpload(fileHeader.Filename, contentType, ticker.ID)
+		u := storage.NewUpload(contentType, ticker.ID)
 		err = h.storage.SaveUpload(&u)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.FormError))
@@ -108,7 +106,7 @@ func (h *handler) PostUpload(c *gin.Context) {
 		uploads = append(uploads, u)
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"uploads": response.UploadsResponse(uploads, h.config)}))
+	c.JSON(http.StatusOK, response.SuccessResponse(map[string]interface{}{"uploads": response.UploadsResponse(uploads)}))
 }
 
 func preparePath(upload storage.Upload, config config.Config) error {

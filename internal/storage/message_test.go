@@ -8,7 +8,7 @@ import (
 )
 
 func TestAddAttachments(t *testing.T) {
-	upload := NewUpload("image.jpg", "image/jped", 1)
+	upload := NewUpload("image/jpeg", 1)
 	message := NewMessage()
 	message.AddAttachments([]Upload{upload})
 

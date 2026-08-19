@@ -9,20 +9,19 @@ automatically.
 - A host with Docker and the Compose plugin.
 - Ports **80** and **443** reachable from the internet. Port 80 is required for the Let's Encrypt
   HTTP challenge, even though all traffic is redirected to HTTPS.
-- **Three hostnames** pointing at the host, each with an `A` record and — please — an `AAAA`
+- **Two hostnames** pointing at the host, each with an `A` record and — please — an `AAAA`
   record:
 
     | Example | Purpose |
     | --- | --- |
     | `ticker.example.org` | the public page readers visit |
     | `admin.ticker.example.org` | the admin interface |
-    | `api.ticker.example.org` | the API, media files and feeds |
 
-!!! note "Why three hostnames?"
+!!! note "Where is the API?"
 
-    The admin and frontend are separate applications, and the API needs its own name because it
-    serves attachments at `/media/...` and RSS feeds directly to readers. You can use any names
-    you like; only their DNS records and your `.env` need to agree.
+    It has no hostname of its own. Everything it serves — the public endpoints, attachments and RSS
+    feeds — is reachable under `/api` on both names above. You can use any names you like; only
+    their DNS records and your `.env` need to agree.
 
 ## 1. Get the files
 
@@ -68,7 +67,7 @@ docker compose logs -f traefik
 Then check that the API is alive:
 
 ```shell
-curl https://api.ticker.example.org/healthz
+curl https://ticker.example.org/healthz
 # OK
 ```
 
@@ -131,16 +130,16 @@ Finally mark the ticker **active**, otherwise the same inactive page is shown.
 # Through the frontend, exactly as a browser does it
 curl -s https://ticker.example.org/api/init | jq .data.ticker
 
-# Directly against the API, supplying the origin yourself
-curl -s -H 'Origin: https://ticker.example.org' \
-  https://api.ticker.example.org/v1/init | jq .data.ticker
+# Supplying the origin yourself, the way an RSS reader has to
+curl -s 'https://ticker.example.org/api/init?origin=https://ticker.example.org' | jq .data.ticker
 ```
 
 Both must return your ticker rather than `null`.
 
 Now open the frontend, post a message from the admin interface, and confirm it appears **without
 reloading the page** — that proves the realtime WebSocket connection works. Upload an image to a
-message and confirm it renders, which proves `TICKER_UPLOAD_URL` is correct.
+message and confirm it renders in the frontend *and* in the admin interface — attachment URLs are
+relative, so that proves both hostnames serve `/api` correctly.
 
 ## Next steps
 
@@ -163,8 +162,10 @@ so without it the API cannot tell which ticker is being requested and returns th
 every visitor. It would also collapse its response cache into a single shared entry across all
 tickers.
 
-The API's own hostname is routed straight through with no rewriting, because `/media/...`, `/feed`
-and `/healthz` are served outside the `/v1` prefix.
+Everything the API serves lives below `/v1`, attachments at `/v1/media/...` included, so the same
+two steps cover images and feeds. The one exception is `/healthz`, which sits at the root and gets
+its own small router on the frontend hostname — without it the frontend's single-page fallback would
+answer `/healthz` with `index.html` and an uptime monitor would report healthy no matter what.
 
 ## Using a different reverse proxy
 
@@ -174,8 +175,9 @@ hostnames:
 - rewrites `/api/**` to `/v1/**`;
 - sets `Origin` to the public origin of that hostname;
 - forwards WebSocket upgrades (`Connection`, `Upgrade`, HTTP/1.1) for `/api/ws`;
-- allows request bodies of at least 10 MB, which is the API's own limit;
-- and serves the API on its own hostname for `/media/**` and feeds.
+- and allows request bodies of at least 10 MB, which is the API's own limit.
+
+Attachments and feeds need no separate rule; they are below `/v1` like everything else.
 
 An nginx equivalent of the `/api/` block:
 
@@ -224,9 +226,9 @@ labels:
   - traefik.http.routers.admin.middlewares=admin-allow
 ```
 
-Note this protects the admin *interface* only. The API hostname must stay public for media and
-feeds, so apply the same middleware to the `admin-api` router if you want the API path restricted
-too.
+Note this protects the admin *interface* only; add the same middleware to the `admin-api` router to
+cover its `/api` path as well. The frontend hostname must stay public — that is where readers, RSS
+clients and attachments arrive.
 
 **Avoid mounting the Docker socket directly.** Traefik reads it to discover containers, and even
 mounted read-only it is equivalent to root on the host. In a more sensitive setup, put a

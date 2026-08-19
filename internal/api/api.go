@@ -125,9 +125,8 @@ func API(config config.Config, store storage.Storage) *Server {
 		public.GET(`/timeline`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 10*time.Second, handler.GetTimeline))
 		public.GET(`/feed`, ticker.PrefetchTickerFromRequest(store), response_cache.CachePage(inMemoryCache, 5*time.Minute, handler.GetFeed))
 		public.GET(`/ws`, ticker.PrefetchTickerFromRequest(store), handler.HandleWebSocket)
+		public.GET(`/media/:fileName`, handler.GetMedia)
 	}
-
-	r.GET(`/media/:fileName`, handler.GetMedia)
 
 	r.GET("/healthz", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")

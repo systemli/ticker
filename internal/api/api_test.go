@@ -43,6 +43,34 @@ func (s *APITestSuite) TestHealthz() {
 	s.store.AssertExpectations(s.T())
 }
 
+func (s *APITestSuite) TestMediaRoute() {
+	s.Run("is served below /v1", func() {
+		s.store.On("FindUploadByUUID", mock.Anything).Return(storage.Upload{}, errors.New("not found")).Once()
+		server := API(s.cfg, s.store)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/media/uuid.png", nil)
+		w := httptest.NewRecorder()
+		server.Router.ServeHTTP(w, req)
+
+		// The route exists; the upload itself does not.
+		s.Equal(http.StatusNotFound, w.Code)
+		s.Equal("not found", w.Body.String())
+		s.store.AssertExpectations(s.T())
+	})
+
+	s.Run("is not served at the root anymore", func() {
+		server := API(s.cfg, s.store)
+
+		req := httptest.NewRequest(http.MethodGet, "/media/uuid.png", nil)
+		w := httptest.NewRecorder()
+		server.Router.ServeHTTP(w, req)
+
+		s.Equal(http.StatusNotFound, w.Code)
+		// Gin's own 404, not the handler's: no route matched at all.
+		s.Equal("404 page not found", w.Body.String())
+	})
+}
+
 func (s *APITestSuite) TestLogin() {
 	s.Run("when password is wrong", func() {
 		user, err := storage.NewUser("user@systemli.org", "password")
