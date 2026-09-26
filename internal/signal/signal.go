@@ -3,7 +3,10 @@ package signal
 import (
 	"context"
 	"errors"
+	"strings"
+	"unicode"
 
+	"github.com/google/uuid"
 	"github.com/systemli/ticker/internal/storage"
 	"github.com/ybbus/jsonrpc/v3"
 )
@@ -132,9 +135,19 @@ func (gc *GroupClient) getGroup(groupID string) (ListGroupsResponseGroup, error)
 	return ListGroupsResponseGroup{}, nil
 }
 
+// recipientIdentifier maps user input to a signal-cli recipient:
+// phone numbers and UUIDs pass through, anything else is treated as a username.
+func recipientIdentifier(input string) string {
+	input = strings.TrimSpace(input)
+	if input == "" || strings.HasPrefix(input, "+") || unicode.IsDigit(rune(input[0])) ||
+		strings.HasPrefix(input, "u:") || uuid.Validate(input) == nil {
+		return input
+	}
+	return "u:" + strings.TrimPrefix(input, "@")
+}
+
 func (gc *GroupClient) AddAdminMember(groupId string, number string) error {
-	numbers := make([]string, 0, 1)
-	numbers = append(numbers, number)
+	numbers := []string{recipientIdentifier(number)}
 
 	params := struct {
 		Account string   `json:"account"`
