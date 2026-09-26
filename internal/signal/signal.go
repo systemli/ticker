@@ -100,6 +100,38 @@ func (gc *GroupClient) QuitGroup(groupID string) error {
 	return nil
 }
 
+// EndGroup terminates the group for all members and leaves it. signal-cli
+// before 0.14.8 lacks terminateGroup, so all members are removed instead.
+func (gc *GroupClient) EndGroup(groupID string) error {
+	err := gc.terminateGroup(groupID)
+	if isMethodNotFound(err) {
+		err = gc.RemoveAllMembers(groupID)
+	}
+	if err != nil {
+		return err
+	}
+
+	return gc.QuitGroup(groupID)
+}
+
+func (gc *GroupClient) terminateGroup(groupID string) error {
+	params := struct {
+		Account string `json:"account"`
+		GroupID string `json:"group-id"`
+	}{
+		Account: gc.settings.Account,
+		GroupID: groupID,
+	}
+
+	var response any
+	return gc.client.CallFor(context.Background(), &response, "terminateGroup", &params)
+}
+
+func isMethodNotFound(err error) bool {
+	var rpcErr *jsonrpc.RPCError
+	return errors.As(err, &rpcErr) && rpcErr.Code == -32601
+}
+
 func (gc *GroupClient) ListGroups() ([]ListGroupsResponseGroup, error) {
 	ctx := context.Background()
 

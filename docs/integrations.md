@@ -40,14 +40,14 @@ in daemon mode, which is **not part of the Ticker stack** — you run it yoursel
 !!! important "signal-cli's own JSON-RPC interface is required"
 
     Ticker calls signal-cli's native JSON-RPC methods (`send`, `updateGroup`, `listGroups`,
-    `quitGroup`, `remoteDelete`) directly. A REST wrapper around signal-cli exposes different
+    `terminateGroup`, `quitGroup`, `remoteDelete`) directly. A REST wrapper around signal-cli exposes different
     endpoints and will **not** work — point Ticker at the official image's `--http` endpoint.
 
 Add it to the stack on the internal network:
 
 ```yaml
   signal-cli:
-    image: ghcr.io/asamk/signal-cli:0.13.2
+    image: ghcr.io/asamk/signal-cli:0.14.8
     # The published image is amd64 only.
     platform: linux/amd64
     restart: unless-stopped
