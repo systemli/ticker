@@ -208,20 +208,27 @@ func (gc *GroupClient) RemoveAllMembers(groupId string) error {
 		return err
 	}
 
-	numbers := make([]string, 0, len(g.Members))
+	recipients := make([]string, 0, len(g.Members))
 	for _, m := range g.Members {
-		// Exclude the account number
+		// Exclude the account itself
 		if m.Number == gc.settings.Account {
 			continue
 		}
-		numbers = append(numbers, m.Number)
+		// Members with a private number are only known by UUID
+		if m.Uuid != "" {
+			recipients = append(recipients, m.Uuid)
+			continue
+		}
+		if m.Number != "" {
+			recipients = append(recipients, m.Number)
+		}
 	}
 
-	if len(numbers) == 0 {
+	if len(recipients) == 0 {
 		return nil
 	}
 
-	return gc.removeMembers(groupId, numbers)
+	return gc.removeMembers(groupId, recipients)
 }
 
 func (gc *GroupClient) removeMembers(groupId string, numbers []string) error {

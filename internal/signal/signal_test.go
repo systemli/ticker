@@ -522,6 +522,41 @@ func (s *GroupClientTestSuite) TestRemoveAllMembers() {
 		s.True(gock.IsDone())
 	})
 
+	s.Run("removes members without a phone number by uuid", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"listGroups"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"result": []map[string]any{
+					{
+						"id": "group-id-123",
+						"members": []map[string]any{
+							{"number": "+491234567890", "uuid": "00000000-0000-0000-0000-000000000000"},
+							{"number": nil, "uuid": "11111111-1111-1111-1111-111111111111"},
+						},
+					},
+				},
+				"id": 1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"remove-member":\["11111111-1111-1111-1111-111111111111"\]`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+
+		err := gc.RemoveAllMembers("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+
 	s.Run("does nothing when only the account is a member", func() {
 		gc := s.newClient()
 

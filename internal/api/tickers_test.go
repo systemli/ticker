@@ -1127,7 +1127,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 
 	s.Run("when storage returns error", func() {
 		// terminateGroup
-	 	gock.New("https://signal-cli.example.org").
+		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
 			MatchHeader("Content-Type", "application/json").
 			Reply(200).
@@ -1168,7 +1168,7 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 
 	s.Run("when storage returns ticker", func() {
 		// terminateGroup
-	 	gock.New("https://signal-cli.example.org").
+		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
 			MatchHeader("Content-Type", "application/json").
 			Reply(200).
