@@ -27,6 +27,11 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
+
+	// Buffer sizes for the engine's internal channels.
+	broadcastBufferSize  = 256
+	registerBufferSize   = 64
+	unregisterBufferSize = 64
 )
 
 var log = logger.GetWithPackage("realtime")
@@ -116,9 +121,9 @@ type Message struct {
 func New() *Engine {
 	return &Engine{
 		clients:    make(map[int]map[*Client]bool),
-		broadcast:  make(chan Message),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		broadcast:  make(chan Message, broadcastBufferSize),
+		register:   make(chan *Client, registerBufferSize),
+		unregister: make(chan *Client, unregisterBufferSize),
 		shutdown:   make(chan struct{}),
 		done:       make(chan struct{}),
 	}

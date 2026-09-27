@@ -279,6 +279,102 @@ func (s *GroupClientTestSuite) TestQuitGroup() {
 	})
 }
 
+func (s *GroupClientTestSuite) TestEndGroup() {
+	s.Run("happy path", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"terminateGroup"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"quitGroup"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+
+		err := gc.EndGroup("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("falls back to removing members when terminateGroup is unknown", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"terminateGroup"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"error":   map[string]interface{}{"code": -32601, "message": "Method not implemented"},
+				"id":      1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"listGroups"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result": []map[string]interface{}{
+					{
+						"id": "group-id-123",
+						"members": []map[string]interface{}{
+							{"number": "+491234567890", "uuid": "00000000-0000-0000-0000-000000000000"},
+							{"number": "+499876543210", "uuid": "11111111-1111-1111-1111-111111111111"},
+						},
+						"groupInviteLink": "https://signal.group/#sample",
+					},
+				},
+				"id": 1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"updateGroup"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"quitGroup"`).
+			Reply(200).
+			JSON(map[string]interface{}{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+
+		err := gc.EndGroup("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("returns error when terminateGroup fails", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"terminateGroup"`).
+			Reply(500)
+
+		err := gc.EndGroup("group-id-123")
+		s.Error(err)
+		s.True(gock.IsDone())
+	})
+}
+
 func (s *GroupClientTestSuite) TestListGroups() {
 	s.Run("happy path", func() {
 		gc := s.newClient()
@@ -419,6 +515,41 @@ func (s *GroupClientTestSuite) TestRemoveAllMembers() {
 				"jsonrpc": "2.0",
 				"result":  map[string]int{"timestamp": 1},
 				"id":      2,
+			})
+
+		err := gc.RemoveAllMembers("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("removes members without a phone number by uuid", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"listGroups"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"result": []map[string]any{
+					{
+						"id": "group-id-123",
+						"members": []map[string]any{
+							{"number": "+491234567890", "uuid": "00000000-0000-0000-0000-000000000000"},
+							{"number": nil, "uuid": "11111111-1111-1111-1111-111111111111"},
+						},
+					},
+				},
+				"id": 1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"remove-member":\["11111111-1111-1111-1111-111111111111"\]`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
 			})
 
 		err := gc.RemoveAllMembers("group-id-123")

@@ -438,17 +438,10 @@ func (h *handler) DeleteTickerSignalGroup(c *gin.Context) {
 	settings := h.storage.GetSignalGroupSettings()
 	groupClient := signal.NewGroupClientFromSettings(settings)
 
-	// Remove all members except the account number
-	err = groupClient.RemoveAllMembers(ticker.SignalGroup.GroupID)
+	err = groupClient.EndGroup(ticker.SignalGroup.GroupID)
 	if err != nil {
-		log.WithError(err).Error("failed to remove members")
-		return
-	}
-
-	// Quit the group
-	err = groupClient.QuitGroup(ticker.SignalGroup.GroupID)
-	if err != nil {
-		log.WithError(err).Error("failed to quit group")
+		log.WithError(err).Error("failed to end signal group")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse(response.CodeDefault, response.SignalGroupError))
 		return
 	}
 

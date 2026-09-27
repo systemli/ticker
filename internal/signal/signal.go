@@ -3,7 +3,10 @@ package signal
 import (
 	"context"
 	"errors"
+	"strings"
+	"unicode"
 
+	"github.com/google/uuid"
 	"github.com/systemli/ticker/internal/storage"
 	"github.com/ybbus/jsonrpc/v3"
 )
@@ -97,6 +100,38 @@ func (gc *GroupClient) QuitGroup(groupID string) error {
 	return nil
 }
 
+// EndGroup terminates the group for all members and leaves it. signal-cli
+// before 0.14.8 lacks terminateGroup, so all members are removed instead.
+func (gc *GroupClient) EndGroup(groupID string) error {
+	err := gc.terminateGroup(groupID)
+	if isMethodNotFound(err) {
+		err = gc.RemoveAllMembers(groupID)
+	}
+	if err != nil {
+		return err
+	}
+
+	return gc.QuitGroup(groupID)
+}
+
+func (gc *GroupClient) terminateGroup(groupID string) error {
+	params := struct {
+		Account string `json:"account"`
+		GroupID string `json:"group-id"`
+	}{
+		Account: gc.settings.Account,
+		GroupID: groupID,
+	}
+
+	var response any
+	return gc.client.CallFor(context.Background(), &response, "terminateGroup", &params)
+}
+
+func isMethodNotFound(err error) bool {
+	var rpcErr *jsonrpc.RPCError
+	return errors.As(err, &rpcErr) && rpcErr.Code == -32601
+}
+
 func (gc *GroupClient) ListGroups() ([]ListGroupsResponseGroup, error) {
 	ctx := context.Background()
 
@@ -132,9 +167,19 @@ func (gc *GroupClient) getGroup(groupID string) (ListGroupsResponseGroup, error)
 	return ListGroupsResponseGroup{}, nil
 }
 
+// recipientIdentifier maps user input to a signal-cli recipient:
+// phone numbers and UUIDs pass through, anything else is treated as a username.
+func recipientIdentifier(input string) string {
+	input = strings.TrimSpace(input)
+	if input == "" || strings.HasPrefix(input, "+") || unicode.IsDigit(rune(input[0])) ||
+		strings.HasPrefix(input, "u:") || uuid.Validate(input) == nil {
+		return input
+	}
+	return "u:" + strings.TrimPrefix(input, "@")
+}
+
 func (gc *GroupClient) AddAdminMember(groupId string, number string) error {
-	numbers := make([]string, 0, 1)
-	numbers = append(numbers, number)
+	numbers := []string{recipientIdentifier(number)}
 
 	params := struct {
 		Account string   `json:"account"`
@@ -163,20 +208,27 @@ func (gc *GroupClient) RemoveAllMembers(groupId string) error {
 		return err
 	}
 
-	numbers := make([]string, 0, len(g.Members))
+	recipients := make([]string, 0, len(g.Members))
 	for _, m := range g.Members {
-		// Exclude the account number
+		// Exclude the account itself
 		if m.Number == gc.settings.Account {
 			continue
 		}
-		numbers = append(numbers, m.Number)
+		// Members with a private number are only known by UUID
+		if m.Uuid != "" {
+			recipients = append(recipients, m.Uuid)
+			continue
+		}
+		if m.Number != "" {
+			recipients = append(recipients, m.Number)
+		}
 	}
 
-	if len(numbers) == 0 {
+	if len(recipients) == 0 {
 		return nil
 	}
 
-	return gc.removeMembers(groupId, numbers)
+	return gc.removeMembers(groupId, recipients)
 }
 
 func (gc *GroupClient) removeMembers(groupId string, numbers []string) error {

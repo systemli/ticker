@@ -1104,54 +1104,37 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 		s.store.AssertExpectations(s.T())
 	})
 
+	s.Run("when ending the group fails", func() {
+		// terminateGroup
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			MatchHeader("Content-Type", "application/json").
+			Reply(500)
+
+		s.ctx.Set("ticker", storage.Ticker{
+			SignalGroup: storage.TickerSignalGroup{
+				GroupID: "sample-group-id",
+			},
+		})
+		s.ctx.Request = httptest.NewRequest(http.MethodDelete, "/v1/admin/tickers/1/signal_group", nil)
+		s.ctx.Request.Header.Add("Content-Type", "application/json")
+		h := s.handler()
+		h.DeleteTickerSignalGroup(s.ctx)
+
+		s.Equal(http.StatusBadRequest, s.w.Code)
+		s.store.AssertExpectations(s.T())
+	})
+
 	s.Run("when storage returns error", func() {
-		// listGroups
+		// terminateGroup
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
 			MatchHeader("Content-Type", "application/json").
 			Reply(200).
 			JSON(map[string]interface{}{
 				"jsonrpc": "2.0",
-				"result": []map[string]interface{}{
-					{
-						"id":          "sample-group-id",
-						"name":        "Sample",
-						"description": "Sample",
-						"members": []map[string]interface{}{
-							{
-								"number": "+1234567890",
-								"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
-							},
-							{
-								"number": "+9999999999",
-								"uuid":   "99999999-90ab-cdef-1234-567890abcdef",
-							},
-						},
-						"groupInviteLink": "https://signal.group/#sample",
-					},
-				},
-				"id": 1,
-			})
-		// updateGroup (remove members)
-		gock.New("https://signal-cli.example.org").
-			Post("/api/v1/rpc").
-			MatchHeader("Content-Type", "application/json").
-			Reply(200).
-			JSON(map[string]interface{}{
-				"jsonrpc": "2.0",
-				"result": []map[string]interface{}{
-					{
-						"results": []interface{}{
-							map[string]interface{}{
-								"recipientAddress": map[string]string{
-									"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
-									"number": "+1234567890",
-								},
-								"type": "SUCCESS",
-							},
-						},
-						"timestamp": 1,
-					},
+				"result": map[string]interface{}{
+					"timestamp": 1,
 				},
 				"id": 1,
 			})
@@ -1184,53 +1167,15 @@ func (s *TickerTestSuite) TestDeleteTickerSignalGroup() {
 	})
 
 	s.Run("when storage returns ticker", func() {
-		// listGroups
+		// terminateGroup
 		gock.New("https://signal-cli.example.org").
 			Post("/api/v1/rpc").
 			MatchHeader("Content-Type", "application/json").
 			Reply(200).
 			JSON(map[string]interface{}{
 				"jsonrpc": "2.0",
-				"result": []map[string]interface{}{
-					{
-						"id":          "sample-group-id",
-						"name":        "Sample",
-						"description": "Sample",
-						"members": []map[string]interface{}{
-							{
-								"number": "+1234567890",
-								"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
-							},
-							{
-								"number": "+9999999999",
-								"uuid":   "99999999-90ab-cdef-1234-567890abcdef",
-							},
-						},
-						"groupInviteLink": "https://signal.group/#sample",
-					},
-				},
-				"id": 1,
-			})
-		// updateGroup (remove members)
-		gock.New("https://signal-cli.example.org").
-			Post("/api/v1/rpc").
-			MatchHeader("Content-Type", "application/json").
-			Reply(200).
-			JSON(map[string]interface{}{
-				"jsonrpc": "2.0",
-				"result": []map[string]interface{}{
-					{
-						"results": []interface{}{
-							map[string]interface{}{
-								"recipientAddress": map[string]string{
-									"uuid":   "12345678-90ab-cdef-1234-567890abcdef",
-									"number": "+1234567890",
-								},
-								"type": "SUCCESS",
-							},
-						},
-						"timestamp": 1,
-					},
+				"result": map[string]interface{}{
+					"timestamp": 1,
 				},
 				"id": 1,
 			})
