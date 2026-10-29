@@ -107,11 +107,22 @@ func (gc *GroupClient) EndGroup(groupID string) error {
 	if isMethodNotFound(err) {
 		err = gc.RemoveAllMembers(groupID)
 	}
-	if err != nil {
+	// The group may already be terminated, e.g. by a previous delete attempt
+	if err != nil && !isGroupTerminated(err) {
 		return err
 	}
 
-	return gc.QuitGroup(groupID)
+	// Leaving a terminated group fails server-side, but the group is gone anyway
+	err = gc.QuitGroup(groupID)
+	if isGroupTerminated(err) {
+		return nil
+	}
+	return err
+}
+
+func isGroupTerminated(err error) bool {
+	var rpcErr *jsonrpc.RPCError
+	return errors.As(err, &rpcErr) && strings.Contains(rpcErr.Message, "GroupTerminatedException")
 }
 
 func (gc *GroupClient) terminateGroup(groupID string) error {

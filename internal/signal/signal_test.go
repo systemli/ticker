@@ -373,6 +373,60 @@ func (s *GroupClientTestSuite) TestEndGroup() {
 		s.Error(err)
 		s.True(gock.IsDone())
 	})
+
+	s.Run("ignores terminated group error on quitGroup", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"terminateGroup"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"result":  map[string]int{"timestamp": 1},
+				"id":      1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"quitGroup"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"error":   map[string]any{"code": -3, "message": "Failed to send message: StatusCode: 423 (GroupTerminatedException)"},
+				"id":      1,
+			})
+
+		err := gc.EndGroup("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
+
+	s.Run("ignores already terminated group", func() {
+		gc := s.newClient()
+
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"terminateGroup"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"error":   map[string]any{"code": -3, "message": "Failed to send message: StatusCode: 423 (GroupTerminatedException)"},
+				"id":      1,
+			})
+		gock.New("https://signal-cli.example.org").
+			Post("/api/v1/rpc").
+			BodyString(`"method":"quitGroup"`).
+			Reply(200).
+			JSON(map[string]any{
+				"jsonrpc": "2.0",
+				"error":   map[string]any{"code": -3, "message": "Failed to send message: StatusCode: 423 (GroupTerminatedException)"},
+				"id":      1,
+			})
+
+		err := gc.EndGroup("group-id-123")
+		s.NoError(err)
+		s.True(gock.IsDone())
+	})
 }
 
 func (s *GroupClientTestSuite) TestListGroups() {
